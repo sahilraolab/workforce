@@ -1,0 +1,468 @@
+<%- include('../partials/breadcrumb', { items: [{ label: t('attendance_title') }] }) %>
+
+<%
+  // Use allWorkers (unfiltered) for summary counts so chips always show full counts
+  const _all = locals.allWorkers || workers;
+  const presentCount  = _all.filter(w => w.attendances && w.attendances[0] && w.attendances[0].status === 'present').length;
+  const halfCount     = _all.filter(w => w.attendances && w.attendances[0] && w.attendances[0].status === 'half_day').length;
+  const absentCount   = _all.filter(w => w.attendances && w.attendances[0] && w.attendances[0].status === 'absent').length;
+  const unmarkedCount = _all.filter(w => !w.attendances || !w.attendances[0]).length;
+%>
+
+<!-- Page header -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h4 class="mb-0 fw-bold"><i class="bi bi-calendar-check me-2" style="color:var(--em-accent)"></i><%= t('attendance_title') %></h4>
+    <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:2px"><%= workers.length %> workers</div>
+  </div>
+  <a href="/attendance/muster-roll" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-grid me-1"></i><span class="d-none d-sm-inline"><%= t('attendance_muster_roll') %></span><span class="d-sm-none">Muster</span>
+  </a>
+</div>
+
+<!-- Date + Site filters — sticky on mobile for easy access -->
+<div class="card mb-3" style="border-radius:10px;position:sticky;top:var(--nav-h);z-index:10">
+  <div class="card-body py-2 px-3">
+    <form class="d-flex align-items-center gap-2 flex-wrap" method="GET">
+      <!-- Date navigator -->
+      <div class="d-flex align-items-center gap-1">
+        <% const prevDate = new Date(date); prevDate.setDate(prevDate.getDate()-1);
+           const nextDate = new Date(date); nextDate.setDate(nextDate.getDate()+1);
+           const isToday  = date === new Date().toISOString().slice(0,10);
+        %>
+        <a href="?date=<%= prevDate.toISOString().slice(0,10) %><%= selectedSite ? '&site_id='+selectedSite : '' %>"
+          class="btn btn-outline-secondary btn-sm" style="padding:.3rem .55rem"><i class="bi bi-chevron-left"></i></a>
+        <input type="date" name="date" class="form-control form-control-sm" value="<%= date %>"
+          onchange="this.form.submit()" style="max-width:150px;font-size:.82rem">
+        <a href="?date=<%= nextDate.toISOString().slice(0,10) %><%= selectedSite ? '&site_id='+selectedSite : '' %>"
+          class="btn btn-outline-secondary btn-sm" style="padding:.3rem .55rem"><i class="bi bi-chevron-right"></i></a>
+        <% if (!isToday) { %>
+        <a href="?<%= selectedSite ? 'site_id='+selectedSite : '' %>"
+          class="btn btn-sm" style="background:var(--eos-blue-50);color:var(--eos-blue-800);font-size:.75rem;padding:.3rem .7rem;border-radius:6px">
+          Today
+        </a>
+        <% } %>
+      </div>
+      <select name="site_id" class="form-select form-select-sm" onchange="this.form.submit()" style="max-width:160px">
+        <option value=""><%= t('common_all_sites') %></option>
+        <% sites.forEach(s => { %>
+          <option value="<%= s.id %>" <%= selectedSite == s.id ? 'selected' : '' %>><%= s.name %></option>
+        <% }) %>
+      </select>
+    </form>
+  </div>
+</div>
+
+<% if (workers.length === 0) { %>
+<div class="eos-alert info">
+  <i class="bi bi-info-circle-fill"></i>
+  <div class="eos-alert-text"><%= t('attendance_no_workers') %></div>
+</div>
+<% } else { %>
+
+<!-- Day summary + bulk actions card -->
+<div class="att-summary-card mb-3">
+  <!-- Row 1: stat counters -->
+  <div class="att-stat-row">
+    <a href="?date=<%= date %><%= selectedSite ? '&site_id='+selectedSite : '' %>"
+       class="att-stat <%= !query.status_filter ? 'att-stat-active' : '' %>">
+      <span class="att-stat-num"><%= _all.length %></span>
+      <span class="att-stat-lbl">Total</span>
+    </a>
+    <a href="?date=<%= date %><%= selectedSite ? '&site_id='+selectedSite : '' %>&status_filter=present"
+       class="att-stat att-stat-p <%= query.status_filter === 'present' ? 'att-stat-active' : '' %>">
+      <span class="att-stat-num"><%= presentCount %></span>
+      <span class="att-stat-lbl">Present</span>
+    </a>
+    <a href="?date=<%= date %><%= selectedSite ? '&site_id='+selectedSite : '' %>&status_filter=half_day"
+       class="att-stat att-stat-h <%= query.status_filter === 'half_day' ? 'att-stat-active' : '' %>">
+      <span class="att-stat-num"><%= halfCount %></span>
+      <span class="att-stat-lbl">Half-day</span>
+    </a>
+    <a href="?date=<%= date %><%= selectedSite ? '&site_id='+selectedSite : '' %>&status_filter=absent"
+       class="att-stat att-stat-a <%= query.status_filter === 'absent' ? 'att-stat-active' : '' %>">
+      <span class="att-stat-num"><%= absentCount %></span>
+      <span class="att-stat-lbl">Absent</span>
+    </a>
+    <a href="?date=<%= date %><%= selectedSite ? '&site_id='+selectedSite : '' %>&status_filter=unmarked"
+       class="att-stat att-stat-u <%= query.status_filter === 'unmarked' ? 'att-stat-active' : '' %>">
+      <span class="att-stat-num"><%= unmarkedCount %></span>
+      <span class="att-stat-lbl">Unmarked</span>
+    </a>
+  </div>
+  <!-- Row 2: bulk actions -->
+  <div class="att-bulk-row">
+    <span class="att-bulk-label">Mark all as:</span>
+    <button class="att-bulk-btn att-bulk-p" onclick="markAll('present')">
+      <i class="bi bi-check-all"></i> Present
+    </button>
+    <button class="att-bulk-btn att-bulk-a" onclick="markAll('absent')">
+      <i class="bi bi-x"></i> Absent
+    </button>
+    <span class="att-autosave-badge ms-auto">
+      <i class="bi bi-cloud-check"></i> Auto-saves
+    </span>
+  </div>
+</div>
+
+<!-- Mobile: worker attendance cards -->
+<div class="d-md-none att-card-list">
+  <% workers.forEach(w => {
+    const att    = w.attendances && w.attendances[0];
+    const status = att ? att.status : '';
+    const ot     = att ? (att.ot_hours > 0 ? att.ot_hours : '') : '';
+    const savedNote = att ? (att.notes || '') : '';
+    const initials = w.name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0,2);
+    const needsNote = status === 'absent' || status === 'half_day';
+  %>
+  <div class="att-card" id="row-<%= w.id %>">
+    <div class="att-card-left">
+      <a href="/workers/<%= w.id %>" style="text-decoration:none;flex-shrink:0">
+        <div class="att-avatar <%= status === 'present' ? 'av-present' : status === 'absent' ? 'av-absent' : status === 'half_day' ? 'av-half' : '' %>">
+          <%= initials %>
+        </div>
+      </a>
+      <div style="flex:1;min-width:0">
+        <a href="/workers/<%= w.id %>" class="att-name" style="text-decoration:none;color:inherit"><%= w.name %></a>
+        <div class="att-meta"><%= w.site ? w.site.name : '—' %></div>
+        <!-- OT input — shown when P or H is selected -->
+        <div class="att-ot-row" id="ot-row-<%= w.id %>" style="display:<%= (status && status !== 'absent') ? 'flex' : 'none' %>">
+          <label style="font-size:.7rem;color:var(--em-ink-3);white-space:nowrap;margin-top:4px">OT:</label>
+          <input type="number" class="form-control form-control-sm"
+            id="ot-<%= w.id %>" value="<%= ot %>" min="0" step="0.5" max="12"
+            placeholder="hrs" autocomplete="off"
+            style="width:64px;font-size:.78rem;height:26px;padding:2px 6px"
+            onfocus="this.select()" oninput="saveMobileOT(<%= w.id %>, this)">
+        </div>
+        <!-- Note input — shown when H or A is selected -->
+        <div class="att-note-row" id="note-row-<%= w.id %>" style="display:<%= needsNote ? 'flex' : 'none' %>">
+          <div class="input-voice-wrap" style="flex:1;margin-top:4px">
+            <input type="text" class="form-control form-control-sm"
+              id="note-<%= w.id %>" value="<%= savedNote %>" autocomplete="off"
+              placeholder="<%= status === 'absent' ? 'Reason for absence' : 'Reason / half-day' %>"
+              style="font-size:.75rem;height:30px;padding:4px 34px 4px 8px"
+              oninput="saveNote(<%= w.id %>)">
+            <button class="mic-btn" type="button" style="right:.5rem;width:20px;height:20px;font-size:.68rem;padding:0"
+              title="Speak to fill" onclick="startVoiceForNote(<%= w.id %>)">
+              <i class="bi bi-mic-fill"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="att-btn-group">
+      <button class="att-btn att-btn-p <%= status === 'present'  ? 'active' : '' %>"
+        onclick="markAttendance(<%= w.id %>, 'present', this)" data-status="present" title="Present">P</button>
+      <button class="att-btn att-btn-h <%= status === 'half_day' ? 'active' : '' %>"
+        onclick="markAttendance(<%= w.id %>, 'half_day', this)" data-status="half_day" title="Half day">H</button>
+      <button class="att-btn att-btn-a <%= status === 'absent'   ? 'active' : '' %>"
+        onclick="markAttendance(<%= w.id %>, 'absent', this)" data-status="absent" title="Absent">A</button>
+    </div>
+  </div>
+  <% }) %>
+</div>
+
+<!-- Desktop: compact table (md and up) -->
+<div class="d-none d-md-block">
+  <div class="card" style="border-radius:12px">
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0" style="font-size:.84rem">
+        <thead style="background:var(--em-line-2)">
+          <tr>
+            <th style="padding:.65rem 1rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--em-ink-3);font-weight:700;border:none"><%= t('attendance_col_worker') %></th>
+            <th style="padding:.65rem 1rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--em-ink-3);font-weight:700;border:none"><%= t('common_site') %></th>
+            <th style="padding:.65rem 1rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--em-ink-3);font-weight:700;border:none"><%= t('common_status') %></th>
+            <th style="padding:.65rem 1rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--em-ink-3);font-weight:700;border:none;width:120px"><%= t('attendance_col_ot_hours') %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% workers.forEach(w => {
+            const att    = w.attendances && w.attendances[0];
+            const status = att ? att.status : '';
+            const ot     = att ? att.ot_hours || 0 : 0;
+          %>
+          <tr id="row-<%= w.id %>" style="border-color:var(--em-line-2)">
+            <td style="padding:.75rem 1rem;border-color:var(--em-line-2)">
+              <span class="fw-semibold"><%= w.name %></span>
+            </td>
+            <td style="padding:.75rem 1rem;border-color:var(--em-line-2);color:var(--em-ink-3);font-size:.8rem">
+              <%= w.site ? w.site.name : '—' %>
+            </td>
+            <td style="padding:.75rem 1rem;border-color:var(--em-line-2)">
+              <div class="d-flex gap-1">
+                <button class="att-btn-desk att-btn-p <%= status === 'present'  ? 'active' : '' %>"
+                  onclick="markAttendance(<%= w.id %>, 'present', this)" data-status="present">Present</button>
+                <button class="att-btn-desk att-btn-h <%= status === 'half_day' ? 'active' : '' %>"
+                  onclick="markAttendance(<%= w.id %>, 'half_day', this)" data-status="half_day">Half day</button>
+                <button class="att-btn-desk att-btn-a <%= status === 'absent'   ? 'active' : '' %>"
+                  onclick="markAttendance(<%= w.id %>, 'absent', this)" data-status="absent">Absent</button>
+              </div>
+            </td>
+            <td style="padding:.75rem 1rem;border-color:var(--em-line-2)">
+              <input type="number" class="form-control form-control-sm" style="width:80px"
+                id="ot-d-<%= w.id %>" value="<%= ot %>" min="0" step="0.5" max="12"
+                placeholder="0" autocomplete="off"
+                onfocus="this.select()"
+                oninput="saveOT(<%= w.id %>, '<%= status || 'present' %>')">
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<style>
+/* ── Mobile attendance cards ── */
+.att-card-list { display:flex;flex-direction:column;gap:8px; }
+.att-card {
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  background:#fff;border:0.5px solid var(--em-line);border-radius:12px;
+  padding:12px 14px;
+}
+.att-card-left { display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0; }
+.att-avatar {
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;
+  background:var(--em-line-2);color:var(--em-ink-3);
+  border:2px solid var(--em-line);transition:all .15s;
+}
+.att-avatar.av-present { background:#dcfce7;color:#15803d;border-color:#86efac; }
+.att-avatar.av-absent  { background:#fee2e2;color:#b91c1c;border-color:#fca5a5; }
+.att-avatar.av-half    { background:#fef9c3;color:#a16207;border-color:#fde047; }
+.att-name { font-size:.88rem;font-weight:600;color:var(--em-ink); }
+.att-meta { font-size:.72rem;color:var(--em-ink-3);margin-top:1px; }
+.att-ot-row, .att-note-row { display:flex;align-items:center;gap:6px;margin-top:5px; }
+
+/* ── Attendance summary card ── */
+.att-summary-card {
+  background:#fff;border:0.5px solid var(--em-line);border-radius:14px;overflow:hidden;
+}
+.att-stat-row {
+  display:grid;grid-template-columns:repeat(5,1fr);
+  border-bottom:1px solid var(--em-line-2);
+}
+.att-stat {
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:12px 4px 10px;text-decoration:none;transition:background .12s;
+  border-right:1px solid var(--em-line-2);
+  color:var(--em-ink-2);
+}
+.att-stat:last-child { border-right:none; }
+.att-stat:hover { background:var(--em-surface-2); }
+.att-stat-num {
+  font-size:1.35rem;font-weight:800;line-height:1;color:var(--em-ink);
+}
+.att-stat-lbl {
+  font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--em-ink-3);margin-top:3px;white-space:nowrap;
+}
+.att-stat-active .att-stat-num { color:var(--em-accent); }
+.att-stat-active .att-stat-lbl { color:var(--em-accent); }
+.att-stat-active { background:var(--em-surface-2); }
+.att-stat-p .att-stat-num { color:#16a34a; }
+.att-stat-p.att-stat-active { background:#f0fdf4; }
+.att-stat-h .att-stat-num { color:#ca8a04; }
+.att-stat-h.att-stat-active { background:#fefce8; }
+.att-stat-a .att-stat-num { color:#dc2626; }
+.att-stat-a.att-stat-active { background:#fff1f2; }
+.att-stat-u .att-stat-num { color:var(--em-ink-3); }
+
+/* ── Bulk action row ── */
+.att-bulk-row {
+  display:flex;align-items:center;gap:8px;padding:9px 12px;flex-wrap:wrap;
+  background:var(--em-surface-2);
+}
+.att-bulk-label {
+  font-size:.7rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--em-ink-3);flex-shrink:0;
+}
+.att-bulk-btn {
+  display:inline-flex;align-items:center;gap:4px;
+  border:1.5px solid transparent;border-radius:8px;
+  font-size:.78rem;font-weight:600;padding:4px 12px;cursor:pointer;transition:all .12s;
+}
+.att-bulk-p { background:#ecfdf5;border-color:#a7f3d0;color:#065f46; }
+.att-bulk-p:hover { background:#16a34a;border-color:#16a34a;color:#fff; }
+.att-bulk-a { background:#fff1f2;border-color:#fecdd3;color:#7f1d1d; }
+.att-bulk-a:hover { background:#dc2626;border-color:#dc2626;color:#fff; }
+.att-autosave-badge {
+  font-size:.7rem;color:var(--em-ink-3);display:flex;align-items:center;gap:4px;
+}
+
+/* Status filter chips (kept for muster roll reuse) */
+.att-chip {
+  display:inline-flex;align-items:center;gap:4px;
+  border-radius:20px;padding:5px 12px;font-size:.78rem;font-weight:600;
+  border:1px solid var(--em-line);background:var(--em-surface);color:var(--em-ink-2);
+  text-decoration:none;transition:all .12s;cursor:pointer;
+}
+.att-chip:hover, .att-chip.active-chip {
+  background:var(--em-ink);color:#fff;border-color:var(--em-ink);
+}
+.att-chip-p { border-color:#a7f3d0;background:#ecfdf5;color:#065f46; }
+.att-chip-p:hover, .att-chip-p.active-chip { background:#16a34a;border-color:#16a34a;color:#fff; }
+.att-chip-h { border-color:#fde68a;background:#fffbeb;color:#78350f; }
+.att-chip-h:hover, .att-chip-h.active-chip { background:#ca8a04;border-color:#ca8a04;color:#fff; }
+.att-chip-a { border-color:#fecdd3;background:#fff1f2;color:#7f1d1d; }
+.att-chip-a:hover, .att-chip-a.active-chip { background:#dc2626;border-color:#dc2626;color:#fff; }
+.att-chip-u { border-color:var(--em-line);background:var(--em-surface-2);color:var(--em-ink-3); }
+.att-chip-u:hover, .att-chip-u.active-chip { background:var(--em-ink-2);border-color:var(--em-ink-2);color:#fff; }
+
+/* Big tap buttons for mobile */
+.att-btn-group { display:flex;gap:6px;flex-shrink:0;padding-top:2px; }
+.att-btn {
+  width:40px;height:40px;border-radius:10px;border:1.5px solid transparent;
+  font-size:.82rem;font-weight:800;cursor:pointer;transition:all .12s;
+  display:flex;align-items:center;justify-content:center;
+}
+.att-btn-p { background:#f0fdf4;border-color:#bbf7d0;color:#15803d; }
+.att-btn-p.active { background:#16a34a;border-color:#16a34a;color:#fff; }
+.att-btn-h { background:#fefce8;border-color:#fef08a;color:#a16207; }
+.att-btn-h.active { background:#ca8a04;border-color:#ca8a04;color:#fff; }
+.att-btn-a { background:#fff1f2;border-color:#fecdd3;color:#b91c1c; }
+.att-btn-a.active { background:#dc2626;border-color:#dc2626;color:#fff; }
+
+/* Desktop compact buttons */
+.att-btn-desk {
+  font-size:.75rem;font-weight:600;padding:4px 12px;border-radius:6px;
+  border:1.5px solid transparent;cursor:pointer;transition:all .12s;
+}
+.att-btn-desk.att-btn-p { background:#f0fdf4;border-color:#bbf7d0;color:#15803d; }
+.att-btn-desk.att-btn-p.active { background:#16a34a;border-color:#16a34a;color:#fff; }
+.att-btn-desk.att-btn-h { background:#fefce8;border-color:#fef08a;color:#a16207; }
+.att-btn-desk.att-btn-h.active { background:#ca8a04;border-color:#ca8a04;color:#fff; }
+.att-btn-desk.att-btn-a { background:#fff1f2;border-color:#fecdd3;color:#b91c1c; }
+.att-btn-desk.att-btn-a.active { background:#dc2626;border-color:#dc2626;color:#fff; }
+</style>
+
+<script>
+const ATTENDANCE_DATE = '<%= date %>';
+const CSRF = '<%= csrfToken %>';
+
+function getOTValue(workerId) {
+  const mobile = document.getElementById('ot-' + workerId);
+  const desk   = document.getElementById('ot-d-' + workerId);
+  return mobile ? mobile.value : (desk ? desk.value : '');
+}
+
+function getNoteValue(workerId) {
+  const input = document.getElementById('note-' + workerId);
+  return input ? input.value : '';
+}
+
+function getCurrentStatus(workerId) {
+  const card = document.querySelector(`.att-card#row-${workerId}`);
+  if (card) {
+    const activeBtn = card.querySelector('.att-btn.active');
+    if (activeBtn) return activeBtn.dataset.status;
+  }
+  const row = document.querySelector(`tr#row-${workerId}`);
+  if (row) {
+    const activeBtn = row.querySelector('.att-btn-desk.active');
+    if (activeBtn) return activeBtn.dataset.status;
+  }
+  return null;
+}
+
+async function postAttendance(workerId, status) {
+  return fetch('/attendance/mark', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      worker_id: workerId, date: ATTENDANCE_DATE, status,
+      ot_hours: getOTValue(workerId),
+      notes: getNoteValue(workerId),
+      _csrf: CSRF,
+    }),
+  });
+}
+
+async function markAttendance(workerId, status, btn) {
+  // Optimistic UI — mobile card
+  const mobileCard = document.querySelector(`.att-card#row-${workerId}`);
+  if (mobileCard) {
+    const avatar = mobileCard.querySelector('.att-avatar');
+    avatar.classList.remove('av-present','av-absent','av-half');
+    if (status === 'present')  avatar.classList.add('av-present');
+    if (status === 'absent')   avatar.classList.add('av-absent');
+    if (status === 'half_day') avatar.classList.add('av-half');
+    mobileCard.querySelectorAll('.att-btn').forEach(b => b.classList.remove('active'));
+    mobileCard.querySelectorAll('[data-status="' + status + '"]').forEach(b => b.classList.add('active'));
+    // Show/hide OT row (not for absent) and note row (for absent/half_day)
+    const otRow   = document.getElementById('ot-row-' + workerId);
+    const noteRow = document.getElementById('note-row-' + workerId);
+    if (otRow)   otRow.style.display   = (status !== 'absent') ? 'flex' : 'none';
+    if (noteRow) noteRow.style.display = (status !== 'present') ? 'flex' : 'none';
+    // Update note placeholder
+    const noteInput = document.getElementById('note-' + workerId);
+    if (noteInput) noteInput.placeholder = status === 'absent' ? 'Reason for absence' : 'Reason for half-day';
+  }
+  // Optimistic UI — desktop
+  const deskRow = document.querySelector(`tr#row-${workerId}`);
+  if (deskRow) {
+    deskRow.querySelectorAll('.att-btn-desk').forEach(b => b.classList.remove('active'));
+    deskRow.querySelectorAll('[data-status="' + status + '"]').forEach(b => b.classList.add('active'));
+  }
+
+  updateSummary();
+
+  try {
+    const resp = await postAttendance(workerId, status);
+    const data = await resp.json();
+    if (!data.success) console.error('Attendance mark failed:', data);
+  } catch(e) { console.error('Network error:', e); }
+}
+
+async function saveOT(workerId, currentStatus) {
+  if (!currentStatus) return;
+  await postAttendance(workerId, currentStatus);
+}
+
+async function saveMobileOT(workerId) {
+  const status = getCurrentStatus(workerId);
+  if (status) await saveOT(workerId, status);
+}
+
+const _noteTimers = {};
+function saveNote(workerId) {
+  clearTimeout(_noteTimers[workerId]);
+  _noteTimers[workerId] = setTimeout(async () => {
+    const status = getCurrentStatus(workerId);
+    if (status) await postAttendance(workerId, status);
+  }, 800);
+}
+
+function startVoiceForNote(workerId) {
+  const input = document.getElementById('note-' + workerId);
+  if (!input || !('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    alert('Voice input not supported on this browser');
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const rec = new SR();
+  rec.lang = 'en-IN';
+  rec.onresult = (e) => {
+    input.value = e.results[0][0].transcript;
+    saveNote(workerId);
+  };
+  rec.start();
+}
+
+function markAll(status) {
+  document.querySelectorAll('[data-status]').forEach(btn => {
+    if (btn.dataset.status === status && !btn.classList.contains('active')) {
+      btn.click();
+    }
+  });
+}
+
+function updateSummary() {
+  // Recount from active buttons
+  const pCount = document.querySelectorAll('.att-btn-p.active, .att-btn-desk.att-btn-p.active').length / 2 || 0;
+  // Quick approach: just let the page reflect server state on refresh
+}
+</script>

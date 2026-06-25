@@ -1,0 +1,45 @@
+<%
+  const role = user ? user.role : '';
+  const p    = currentPath || '';
+  function item(href, icon, label, match) {
+    const active = (match ? p.startsWith(match) : p === href) ? 'active' : '';
+    return `<a href="${href}" class="sb-link ${active}">
+      <i class="bi ${icon}"></i><span>${label}</span>
+    </a>`;
+  }
+%>
+<aside id="sidebar">
+  <nav class="sb-nav">
+    <div class="sb-group-label"><%= t('group_main') %></div>
+    <%- item('/dashboard', 'bi-speedometer2', t('nav_dashboard')) %>
+    <%- item('/workers', 'bi-people', t('nav_workers'), '/workers') %>
+
+    <% if (role !== 'auditor') { %>
+      <%- item('/attendance', 'bi-calendar-check', t('nav_attendance'), '/attendance') %>
+    <% } %>
+
+    <% if (['hr_payroll','company_admin','super_admin','auditor'].includes(role)) { %>
+      <%- item('/payroll', 'bi-cash-stack', t('nav_payroll'), '/payroll') %>
+    <% } %>
+
+    <%- item('/reports', 'bi-bar-chart-line', t('nav_reports'), '/reports') %>
+
+    <% if (['company_admin','super_admin'].includes(role)) { %>
+    <div class="sb-group-label"><%= t('group_management') %></div>
+    <%- item('/sites', 'bi-geo-alt', t('nav_sites'), '/sites') %>
+    <%- item('/settings/licenses', 'bi-patch-check', t('nav_licenses') || 'Licenses', '/settings/licenses') %>
+    <%- item('/settings/users', 'bi-person-gear', t('nav_users'), '/settings/users') %>
+    <%- item('/settings/wage-master', 'bi-currency-rupee', t('nav_wage_master'), '/settings/wage-master') %>
+    <%- item('/settings/profile', 'bi-gear', t('nav_settings'),
+      p.startsWith('/settings') && !p.startsWith('/settings/users') && !p.startsWith('/settings/wage-master') && !p.startsWith('/settings/licenses') ? '/settings' : null) %>
+    <% } else { %>
+    <div class="sb-group-label"><%= t('group_account') %></div>
+    <%- item('/settings/profile', 'bi-gear', t('nav_settings'), '/settings') %>
+    <% } %>
+
+    <% if (role === 'super_admin') { %>
+    <div class="sb-group-label"><%= t('group_super_admin') %></div>
+    <%- item('/admin/companies', 'bi-building', t('nav_companies'), '/admin/companies') %>
+    <% } %>
+  </nav>
+</aside>

@@ -1,0 +1,260 @@
+<%- include('../partials/breadcrumb', { items: [{ label: t('attendance_title'), href: '/attendance' }, { label: t('attendance_muster_roll') }] }) %>
+
+<%
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const prevMonth = month === 1 ? 12 : month - 1;
+  const prevYear  = month === 1 ? year - 1 : year;
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextYear  = month === 12 ? year + 1 : year;
+
+  function siteParam() {
+    let p = selectedSite ? '&site_id=' + selectedSite : '';
+    if (query && query.worker_filter) p += '&worker_filter=' + query.worker_filter;
+    return p;
+  }
+%>
+
+<!-- Page header -->
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div>
+    <h4 class="mb-0 fw-bold"><i class="bi bi-grid-3x3 me-2" style="color:var(--em-accent)"></i>Muster Roll</h4>
+    <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:3px">Monthly attendance grid — <%= monthNames[month-1] %> <%= year %></div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="?month=<%= month %>&year=<%= year %>&site_id=<%= selectedSite || '' %>&export=csv"
+       class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-filetype-csv me-1"></i><span class="d-none d-sm-inline">Export CSV</span>
+    </a>
+    <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-printer me-1"></i><span class="d-none d-sm-inline">Print</span>
+    </button>
+  </div>
+</div>
+
+<!-- Filter + Month nav bar -->
+<div class="card mb-3" style="border-radius:12px">
+  <div class="card-body" style="padding:.75rem 1rem">
+    <!-- Month navigation row -->
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <a href="?month=<%= prevMonth %>&year=<%= prevYear %><%= siteParam() %>"
+         class="btn btn-outline-secondary btn-sm" style="width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+      <span style="font-size:1rem;font-weight:700;color:var(--em-ink)">
+        <%= monthNames[month-1] %> <%= year %>
+      </span>
+      <a href="?month=<%= nextMonth %>&year=<%= nextYear %><%= siteParam() %>"
+         class="btn btn-outline-secondary btn-sm" style="width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+    </div>
+    <!-- Site filter row -->
+    <form method="GET" class="d-flex align-items-center gap-2">
+      <input type="hidden" name="month" value="<%= month %>">
+      <input type="hidden" name="year"  value="<%= year %>">
+      <% if (query && query.worker_filter) { %>
+        <input type="hidden" name="worker_filter" value="<%= query.worker_filter %>">
+      <% } %>
+      <select name="site_id" class="form-select form-select-sm" style="flex:1" onchange="this.form.submit()">
+        <option value="">All Sites</option>
+        <% sites.forEach(s => { %>
+          <option value="<%= s.id %>" <%= selectedSite == s.id ? 'selected' : '' %>><%= s.name %></option>
+        <% }) %>
+      </select>
+      <% if (selectedSite) { %>
+        <a href="?month=<%= month %>&year=<%= year %>" class="btn btn-outline-secondary btn-sm flex-shrink-0">Clear</a>
+      <% } %>
+    </form>
+  </div>
+</div>
+
+<%
+  // Summary stats across ALL workers (unfiltered) for chip counts
+  const _allW = locals.allWorkers || workers;
+  let totalP = 0, totalH = 0, totalA = 0, totalUnmarked = 0;
+  let wWithPresent = 0, wWithHalf = 0, wWithAbsent = 0, wWithUnmarked = 0;
+  _allW.forEach(w => {
+    let hasP = false, hasH = false, hasA = false, hasU = false;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const s = attMap[w.id] && attMap[w.id][d];
+      if (s === 'present')   { totalP++; hasP = true; }
+      else if (s === 'half_day') { totalH++; hasH = true; }
+      else if (s === 'absent')   { totalA++; hasA = true; }
+      else { totalUnmarked++; hasU = true; }
+    }
+    if (hasP) wWithPresent++;
+    if (hasH) wWithHalf++;
+    if (hasA) wWithAbsent++;
+    if (hasU) wWithUnmarked++;
+  });
+  const totalSlots = _allW.length * daysInMonth;
+  const pctPresent = totalSlots > 0 ? Math.round((totalP / totalSlots) * 100) : 0;
+
+  const _wf  = (query && query.worker_filter) || '';
+  const _sp  = selectedSite ? '&site_id=' + selectedSite : '';
+  const _mp  = 'month=' + month + '&year=' + year + _sp;
+  function chipHref(f) {
+    return '?' + _mp + (f === _wf ? '' : '&worker_filter=' + f);
+  }
+%>
+
+<!-- Summary chips (clickable filters) -->
+<% if (_allW.length > 0) { %>
+<div class="att-summary-card mb-3">
+  <div class="att-stat-row">
+    <a href="<%= '?' + _mp %>" class="att-stat <%= !_wf ? 'att-stat-active' : '' %>">
+      <span class="att-stat-num"><%= _allW.length %></span>
+      <span class="att-stat-lbl">Workers</span>
+    </a>
+    <a href="<%= chipHref('present') %>" class="att-stat att-stat-p <%= _wf==='present' ? 'att-stat-active' : '' %>">
+      <span class="att-stat-num"><%= wWithPresent %></span>
+      <span class="att-stat-lbl">Present</span>
+    </a>
+    <a href="<%= chipHref('half_day') %>" class="att-stat att-stat-h <%= _wf==='half_day' ? 'att-stat-active' : '' %>">
+      <span class="att-stat-num"><%= wWithHalf %></span>
+      <span class="att-stat-lbl">Half-day</span>
+    </a>
+    <a href="<%= chipHref('absent') %>" class="att-stat att-stat-a <%= _wf==='absent' ? 'att-stat-active' : '' %>">
+      <span class="att-stat-num"><%= wWithAbsent %></span>
+      <span class="att-stat-lbl">Absent</span>
+    </a>
+    <a href="<%= chipHref('unmarked') %>" class="att-stat att-stat-u <%= _wf==='unmarked' ? 'att-stat-active' : '' %>">
+      <span class="att-stat-num"><%= wWithUnmarked %></span>
+      <span class="att-stat-lbl">Unmarked</span>
+    </a>
+  </div>
+  <div class="att-bulk-row">
+    <span style="font-size:.7rem;color:var(--em-ink-3)"><i class="bi bi-calendar3 me-1"></i><%= monthNames[month-1] %> <%= year %></span>
+    <span class="ms-auto" style="font-size:.7rem;color:var(--em-ink-3)">
+      <i class="bi bi-bar-chart-fill me-1" style="color:var(--em-accent)"></i><%= pctPresent %>% attendance rate
+    </span>
+  </div>
+</div>
+<% } %>
+
+<!-- Mobile: worker cards with horizontal scroll mini-grid -->
+<div class="d-md-none">
+  <% if (workers.length === 0) { %>
+  <div class="card" style="border-radius:12px">
+    <div class="card-body text-center py-4 text-muted small">No workers found for the selected filters.</div>
+  </div>
+  <% } %>
+  <% workers.forEach(w => {
+    let wP = 0, wH = 0, wA = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const s = attMap[w.id] && attMap[w.id][d];
+      if (s === 'present') wP++;
+      else if (s === 'half_day') wH++;
+      else if (s === 'absent') wA++;
+    }
+    const wPct = daysInMonth > 0 ? Math.round((wP / daysInMonth) * 100) : 0;
+  %>
+  <div class="card mb-2" style="border-radius:12px;overflow:hidden">
+    <div class="card-body" style="padding:.75rem 1rem .5rem">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <div class="worker-card-avatar <%= wPct >= 80 ? 'av-green' : wPct >= 60 ? 'av-amber' : 'av-red' %>"
+             style="width:34px;height:34px;font-size:.85rem;flex-shrink:0">
+          <%= w.name.charAt(0).toUpperCase() %>
+        </div>
+        <div style="flex:1;min-width:0">
+          <a href="/workers/<%= w.id %>" class="fw-semibold text-decoration-none" style="color:var(--em-ink);font-size:.88rem"><%= w.name %></a>
+          <div style="font-size:.72rem;color:var(--em-ink-3)"><%= w.site ? w.site.name : '—' %></div>
+        </div>
+        <div class="d-flex gap-2" style="flex-shrink:0">
+          <span style="font-size:.75rem;font-weight:700;color:var(--eos-green-600)">P:<%= wP %></span>
+          <span style="font-size:.75rem;font-weight:700;color:var(--eos-amber-600)">H:<%= wH %></span>
+          <span style="font-size:.75rem;font-weight:700;color:var(--eos-red-600)">A:<%= wA %></span>
+        </div>
+      </div>
+      <!-- Mini attendance dots row -->
+      <div style="display:flex;gap:2px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px">
+        <% for (let d = 1; d <= daysInMonth; d++) {
+          const s = attMap[w.id] && attMap[w.id][d];
+          const dotColor = s === 'present' ? '#16a34a' : s === 'half_day' ? '#d97706' : s === 'absent' ? '#dc2626' : '#d1d5db';
+          const dotTitle = d + ': ' + (s || 'unmarked');
+        %>
+        <div title="<%= dotTitle %>" style="width:8px;height:8px;border-radius:50%;background:<%= dotColor %>;flex-shrink:0;margin-top:2px"></div>
+        <% } %>
+      </div>
+      <div style="font-size:.65rem;color:var(--em-ink-3);margin-top:2px">each dot = 1 day (1–<%= daysInMonth %>)</div>
+    </div>
+  </div>
+  <% }) %>
+</div>
+
+<!-- Desktop: full grid table with sticky first column -->
+<div class="d-none d-md-block">
+  <div class="card" style="border-radius:12px;overflow:hidden">
+    <div class="card-body p-0">
+      <div class="table-responsive" style="max-height:70vh;overflow:auto">
+        <table class="table table-bordered table-sm mb-0" style="font-size:.72rem;min-width:800px">
+          <thead style="position:sticky;top:0;z-index:2">
+            <tr style="background:var(--em-ink)">
+              <th style="min-width:150px;position:sticky;left:0;z-index:3;background:var(--em-ink);color:#fff;padding:8px 12px;font-weight:600">Worker</th>
+              <% for (let d = 1; d <= daysInMonth; d++) {
+                const dow = new Date(year, month-1, d).getDay();
+                const isWeekend = dow === 0 || dow === 6;
+              %>
+              <th class="text-center" style="background:<%= isWeekend ? '#374151' : 'var(--em-ink)' %>;color:#fff;min-width:26px;padding:8px 3px">
+                <%= d %><br><span style="font-size:.6rem;opacity:.6"><%= ['Su','Mo','Tu','We','Th','Fr','Sa'][dow] %></span>
+              </th>
+              <% } %>
+              <th class="text-center" style="background:var(--em-ink);color:var(--eos-green-300);min-width:30px">P</th>
+              <th class="text-center" style="background:var(--em-ink);color:#fbbf24;min-width:30px">H</th>
+              <th class="text-center" style="background:var(--em-ink);color:var(--eos-red-300);min-width:30px">A</th>
+              <th class="text-center" style="background:var(--em-ink);color:#9ca3af;min-width:30px">%</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (workers.length === 0) { %>
+              <tr><td colspan="<%= daysInMonth + 5 %>" class="text-center py-4 text-muted">No workers found.</td></tr>
+            <% } %>
+            <% workers.forEach((w, idx) => {
+              let wP = 0, wH = 0, wA = 0;
+            %>
+            <tr style="background:<%= idx % 2 === 0 ? '#fff' : 'var(--em-surface)' %>">
+              <td style="position:sticky;left:0;z-index:1;background:<%= idx % 2 === 0 ? '#fff' : 'var(--em-surface)' %>;font-weight:600;padding:6px 12px">
+                <a href="/workers/<%= w.id %>" class="text-decoration-none" style="color:var(--em-ink)"><%= w.name %></a>
+                <% if (w.site) { %>
+                <div style="font-size:.65rem;color:var(--em-ink-3)"><%= w.site.name %></div>
+                <% } %>
+              </td>
+              <% for (let d = 1; d <= daysInMonth; d++) {
+                const s = attMap[w.id] && attMap[w.id][d];
+                if (s === 'present') wP++;
+                else if (s === 'half_day') wH++;
+                else if (s === 'absent') wA++;
+                const cellBg = s === 'present' ? 'var(--eos-green-50)' : s === 'absent' ? 'var(--eos-red-50)' : s === 'half_day' ? '#fffbeb' : 'transparent';
+                const cellColor = s === 'present' ? 'var(--eos-green-600)' : s === 'absent' ? 'var(--eos-red-600)' : s === 'half_day' ? 'var(--eos-amber-600)' : 'var(--em-ink-3)';
+                const dow = new Date(year, month-1, d).getDay();
+                const isWeekend = dow === 0 || dow === 6;
+              %>
+              <td class="text-center" style="padding:5px 2px;background:<%= isWeekend && !s ? 'var(--em-surface-2)' : cellBg %>;color:<%= cellColor %>;font-weight:600">
+                <%= s === 'present' ? 'P' : s === 'absent' ? 'A' : s === 'half_day' ? 'H' : (isWeekend ? '·' : '') %>
+              </td>
+              <% } %>
+              <td class="text-center fw-bold" style="color:var(--eos-green-600)"><%= wP %></td>
+              <td class="text-center fw-bold" style="color:var(--eos-amber-600)"><%= wH %></td>
+              <td class="text-center fw-bold" style="color:var(--eos-red-600)"><%= wA %></td>
+              <td class="text-center" style="color:<%= Math.round(wP/daysInMonth*100) >= 80 ? 'var(--eos-green-600)' : 'var(--eos-amber-600)' %>;font-weight:600">
+                <%= daysInMonth > 0 ? Math.round(wP / daysInMonth * 100) : 0 %>%
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+@media print {
+  .em-sidebar, .em-bottomnav, .em-topbar, .em-breadcrumb, .card:first-of-type, .d-flex.gap-2.flex-wrap { display: none !important; }
+  .d-md-none { display: none !important; }
+  .d-none.d-md-block { display: block !important; }
+  .table-responsive { max-height: none !important; overflow: visible !important; }
+  .card { border: none !important; box-shadow: none !important; border-radius: 0 !important; }
+  table { font-size: 8px !important; }
+}
+</style>

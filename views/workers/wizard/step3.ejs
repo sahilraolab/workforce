@@ -1,0 +1,126 @@
+<%- include('./_progress') %>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white"><h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-text me-2 text-primary"></i>Step 3 — Document Upload</h5></div>
+  <div class="card-body p-4">
+
+    <div class="alert alert-info small">
+      <i class="bi bi-info-circle me-1"></i>
+      Supported formats: JPG, PNG, PDF. Max 2MB per document. Passport photo: <strong>max 100KB</strong> (JPG/PNG only).
+    </div>
+
+    <form action="/workers/register/step3?_csrf=<%= encodeURIComponent(csrfToken) %>" method="POST" enctype="multipart/form-data" novalidate>
+
+      <!-- Bank details -->
+      <div class="card mb-4">
+        <div class="card-header small fw-semibold bg-light">Bank Details</div>
+        <div class="card-body row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Bank Account Number</label>
+            <input type="text" name="bank_account" class="form-control" value="<%= draft.bank_account || '' %>"
+              pattern="\d{9,18}" placeholder="9–18 digits" autocomplete="off">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">IFSC Code</label>
+            <input type="text" name="ifsc_code" class="form-control" value="<%= draft.ifsc_code || '' %>"
+              pattern="[A-Z]{4}0[A-Z0-9]{6}" maxlength="11" placeholder="e.g. SBIN0001234" style="text-transform:uppercase">
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Aadhaar Card -->
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <label class="form-label fw-semibold d-block">
+                Aadhaar Card <span class="text-danger">*</span>
+                <% if (draft._uploads && draft._uploads.aadhaar) { %><span class="badge bg-success ms-2">Uploaded</span><% } %>
+              </label>
+              <input type="file" name="aadhaar" class="form-control" accept=".jpg,.jpeg,.png,.pdf">
+              <div class="form-text">PDF, JPG, or PNG. Max 2MB.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Passport Photo -->
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <label class="form-label fw-semibold d-block">
+                Passport Photo <span class="text-danger">*</span>
+                <% if (draft._uploads && draft._uploads.passport_photo) { %><span class="badge bg-success ms-2">Uploaded</span><% } %>
+              </label>
+              <input type="file" name="passport_photo" class="form-control"
+                accept=".jpg,.jpeg,.png"
+                data-max-kb="100"
+                data-warn-id="photo-warn"
+                data-show-size="photo-size">
+              <div class="form-text">JPG or PNG only. <strong>Max 100KB.</strong></div>
+              <div id="photo-warn" class="file-size-warn" style="display:none"></div>
+              <div id="photo-size" class="small text-muted mt-1"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bank Passbook / Cancelled Cheque -->
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <label class="form-label fw-semibold d-block">
+                Bank Passbook / Cancelled Cheque <span class="text-danger">*</span>
+                <% if (draft._uploads && draft._uploads.bank_passbook) { %><span class="badge bg-success ms-2">Uploaded</span><% } %>
+              </label>
+              <input type="file" name="bank_passbook" class="form-control" accept=".jpg,.jpeg,.png,.pdf">
+              <div class="form-text">PDF or JPG. Max 2MB.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- UAN Card (optional) -->
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <label class="form-label fw-semibold d-block">
+                UAN Card <span class="badge bg-secondary ms-2">Optional</span>
+                <% if (draft._uploads && draft._uploads.uan_card) { %><span class="badge bg-success ms-2">Uploaded</span><% } %>
+              </label>
+              <input type="file" name="uan_card" class="form-control" accept=".jpg,.jpeg,.png,.pdf">
+              <div class="form-text">PDF, JPG, or PNG. Max 2MB.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ESIC Card (required if ESIC applicable) -->
+        <% if (draft.esic_applicable === 'yes') { %>
+        <div class="col-md-6">
+          <div class="card h-100 border-warning">
+            <div class="card-body">
+              <label class="form-label fw-semibold d-block">
+                ESIC Card <span class="text-danger">*</span>
+                <% if (draft._uploads && draft._uploads.esic_card) { %><span class="badge bg-success ms-2">Uploaded</span><% } %>
+              </label>
+              <input type="file" name="esic_card" class="form-control" accept=".jpg,.jpeg,.png,.pdf">
+              <div class="form-text">Required — ESIC applicable for this worker.</div>
+            </div>
+          </div>
+        </div>
+        <% } %>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-4 gap-2">
+        <div class="d-flex gap-2">
+          <a href="/workers/register/step2" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back
+          </a>
+          <button type="submit" formaction="/workers/register/save-draft" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-floppy me-1"></i>Save & Exit
+          </button>
+        </div>
+        <button type="submit" class="btn btn-primary">
+          Next: Family Details <i class="bi bi-arrow-right ms-1"></i>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

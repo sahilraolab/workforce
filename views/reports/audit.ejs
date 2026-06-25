@@ -1,0 +1,166 @@
+<%- include('../partials/report-nav', { reportNavActive: 'audit' }) %>
+<%- include('../partials/breadcrumb', { items: [{ label: 'Audit Log' }] }) %>
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div>
+    <h4 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2" style="color:var(--em-accent)"></i>Audit Log</h4>
+    <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:3px">Complete record of all user actions across the system</div>
+  </div>
+  <a href="?<%= new URLSearchParams({...query, export:'csv'}).toString() %>" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-filetype-csv me-1"></i>Export CSV
+  </a>
+</div>
+
+<!-- Filter bar -->
+<div class="card mb-3" style="border-radius:12px">
+  <div class="card-body" style="padding:.75rem 1rem">
+    <form class="d-flex align-items-center gap-2 flex-wrap">
+      <select name="entity" class="form-select form-select-sm" style="max-width:160px" onchange="this.form.submit()">
+        <option value="">All Entities</option>
+        <% ['Worker','Site','Company','Document','WageMaster','Payroll','User','CompanyLicense','ComplianceFiling'].forEach(e => { %>
+          <option value="<%= e %>" <%= query.entity === e ? 'selected' : '' %>><%= e %></option>
+        <% }) %>
+      </select>
+      <select name="action" class="form-select form-select-sm" style="max-width:130px" onchange="this.form.submit()">
+        <option value="">All Actions</option>
+        <% ['create','update','delete','login','export'].forEach(a => { %>
+          <option value="<%= a %>" <%= query.action === a ? 'selected' : '' %> style="text-transform:capitalize"><%= a.charAt(0).toUpperCase() + a.slice(1) %></option>
+        <% }) %>
+      </select>
+      <input type="date" name="from" class="form-control form-control-sm" style="max-width:145px" value="<%= query.from || '' %>" placeholder="From">
+      <input type="date" name="to"   class="form-control form-control-sm" style="max-width:145px" value="<%= query.to   || '' %>" placeholder="To">
+      <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-funnel me-1"></i>Filter</button>
+      <% if (query.entity || query.action || query.from || query.to) { %>
+        <a href="/reports/audit" class="btn btn-outline-secondary btn-sm">Clear</a>
+      <% } %>
+    </form>
+  </div>
+</div>
+
+<%
+  function actionColor(action) {
+    switch(action) {
+      case 'create': return { bg:'var(--eos-green-50)',  color:'var(--eos-green-600)', border:'#a8d57a' };
+      case 'delete': return { bg:'var(--eos-red-50)',    color:'var(--eos-red-600)',   border:'var(--eos-red-100)' };
+      case 'update': return { bg:'var(--eos-blue-50)',   color:'var(--eos-blue-800)',  border:'var(--eos-blue-100)' };
+      case 'login':  return { bg:'#f0fdf4',              color:'#166534',              border:'#bbf7d0' };
+      default:       return { bg:'var(--em-surface-2)',  color:'var(--em-ink-2)',      border:'var(--em-line)' };
+    }
+  }
+  function entityIcon(entity) {
+    const icons = {
+      Worker: 'bi-person',
+      Site: 'bi-building',
+      Company: 'bi-briefcase',
+      Document: 'bi-file-earmark',
+      WageMaster: 'bi-currency-rupee',
+      Payroll: 'bi-cash-stack',
+      User: 'bi-person-gear',
+      CompanyLicense: 'bi-patch-check',
+      ComplianceFiling: 'bi-receipt-cutoff',
+    };
+    return icons[entity] || 'bi-circle';
+  }
+  function timeAgo(date) {
+    const diff = Date.now() - new Date(date).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return mins + 'm ago';
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    return Math.floor(hrs / 24) + 'd ago';
+  }
+%>
+
+<% if (logs.length === 0) { %>
+<div class="card" style="border-radius:12px">
+  <div class="card-body text-center py-5" style="color:var(--em-ink-3)">
+    <i class="bi bi-journal-text" style="font-size:2rem;display:block;margin-bottom:.5rem;opacity:.4"></i>
+    No audit records found for the selected filters.
+  </div>
+</div>
+<% } else { %>
+
+<!-- Mobile: timeline cards -->
+<div class="d-md-none">
+  <% logs.forEach(l => {
+    const ac = actionColor(l.action);
+  %>
+  <div class="eos-tl-item">
+    <div class="eos-tl-dot" style="background:<%= ac.bg %>;border-color:<%= ac.border %>">
+      <i class="bi <%= entityIcon(l.entity) %>" style="color:<%= ac.color %>;font-size:.65rem"></i>
+    </div>
+    <div style="flex:1;min-width:0">
+      <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+        <span style="font-size:.84rem;font-weight:600;color:var(--em-ink)">
+          <%= l.user ? l.user.name : 'System' %>
+        </span>
+        <span style="font-size:.7rem;color:var(--em-ink-3);white-space:nowrap"><%= timeAgo(l.created_at) %></span>
+      </div>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="badge" style="background:<%= ac.bg %>;color:<%= ac.color %>;border:0.5px solid <%= ac.border %>;font-size:.7rem">
+          <%= l.action %>
+        </span>
+        <span style="font-size:.78rem;color:var(--em-ink-2)"><%= l.entity %> #<%= l.entity_id %></span>
+      </div>
+      <% if (l.ip_address) { %>
+      <div style="font-size:.68rem;color:var(--em-ink-3);margin-top:2px"><i class="bi bi-geo me-1"></i><%= l.ip_address %></div>
+      <% } %>
+    </div>
+  </div>
+  <% }) %>
+</div>
+
+<!-- Desktop: table -->
+<div class="d-none d-md-block">
+  <div class="card" style="border-radius:12px">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th style="padding:10px 16px;width:140px">Timestamp</th>
+              <th style="width:130px">User</th>
+              <th style="width:90px">Action</th>
+              <th>Entity</th>
+              <th style="width:60px">ID</th>
+              <th style="width:110px">IP</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% logs.forEach(l => {
+              const ac = actionColor(l.action);
+            %>
+            <tr>
+              <td style="padding:9px 16px">
+                <div style="font-size:.8rem;color:var(--em-ink-2)"><%= new Date(l.created_at).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) %></div>
+                <div style="font-size:.7rem;color:var(--em-ink-3)"><%= new Date(l.created_at).toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'}) %></div>
+              </td>
+              <td>
+                <div style="font-size:.82rem;font-weight:600;color:var(--em-ink)"><%= l.user ? l.user.name : '—' %></div>
+                <% if (l.user && l.user.role) { %>
+                <div style="font-size:.68rem;color:var(--em-ink-3)"><%= l.user.role %></div>
+                <% } %>
+              </td>
+              <td>
+                <span class="badge" style="background:<%= ac.bg %>;color:<%= ac.color %>;border:0.5px solid <%= ac.border %>;font-size:.72rem">
+                  <%= l.action %>
+                </span>
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-1">
+                  <i class="bi <%= entityIcon(l.entity) %>" style="color:var(--em-accent);font-size:.78rem"></i>
+                  <span style="font-size:.82rem;color:var(--em-ink-2)"><%= l.entity %></span>
+                </div>
+              </td>
+              <td style="font-size:.78rem;color:var(--em-ink-3);font-family:monospace">#<%= l.entity_id %></td>
+              <td style="font-size:.72rem;color:var(--em-ink-3)"><%= l.ip_address || '—' %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/pagination', { pageData, query }) %>
+<% } %>

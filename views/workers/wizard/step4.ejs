@@ -1,0 +1,125 @@
+<%- include('./_progress') %>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white"><h5 class="mb-0 fw-bold"><i class="bi bi-people me-2 text-primary"></i>Step 4 — Family Details</h5></div>
+  <div class="card-body p-4">
+
+    <div class="alert alert-info small">
+      <i class="bi bi-info-circle me-1"></i>
+      Family details are optional. If Aadhaar is entered for any member, it must be a valid 12-digit number.
+    </div>
+
+    <form action="/workers/register/step4?_csrf=<%= encodeURIComponent(csrfToken) %>" method="POST" enctype="multipart/form-data" novalidate
+          x-data="familyForm()">
+
+      <!-- Spouse -->
+      <div class="card mb-4">
+        <div class="card-header small fw-semibold bg-light">Spouse (optional)</div>
+        <div class="card-body row g-3">
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Name</label>
+            <input type="text" name="family_name[]" class="form-control" placeholder="Spouse name"
+              value="<%= (draft._familyMembers && draft._familyMembers[0] && draft._familyMembers[0].relation === 'spouse') ? draft._familyMembers[0].name : '' %>">
+          </div>
+          <div class="col-md-4">
+            <input type="hidden" name="family_relation[]" value="spouse">
+            <label class="form-label small fw-semibold">Aadhaar Number</label>
+            <input type="text" name="family_aadhaar[]" class="form-control"
+              pattern="\d{12}" maxlength="12" placeholder="12-digit (optional)">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Photo (optional)</label>
+            <input type="file" name="family_photo_0" class="form-control"
+              accept=".jpg,.jpeg,.png"
+              data-max-kb="100" data-warn-id="spouse-warn">
+            <div id="spouse-warn" class="file-size-warn" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Children -->
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="mb-0">Children</h6>
+        <button type="button" class="btn btn-outline-primary btn-sm" @click="addChild()">
+          <i class="bi bi-plus me-1"></i>Add Child
+        </button>
+      </div>
+
+      <div id="children-container">
+        <template x-for="(child, idx) in children" :key="idx">
+          <div class="card mb-3">
+            <div class="card-body row g-3">
+              <div class="col-md-1 d-flex align-items-end">
+                <span class="badge bg-secondary" x-text="'C' + (idx + 1)"></span>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small fw-semibold">Name</label>
+                <input type="text" name="family_name[]" class="form-control"
+                  :placeholder="'Child ' + (idx+1) + ' name'" x-model="child.name">
+                <input type="hidden" name="family_relation[]" value="child">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Aadhaar Number</label>
+                <input type="text" name="family_aadhaar[]" class="form-control"
+                  pattern="\d{12}" maxlength="12" placeholder="12-digit (optional)" x-model="child.aadhaar">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small fw-semibold">Photo (optional)</label>
+                <input type="file" :name="'family_photo_' + (idx + 1)"
+                  class="form-control" accept=".jpg,.jpeg,.png"
+                  data-max-kb="100" :data-warn-id="'child-warn-' + idx">
+                <div :id="'child-warn-' + idx" class="file-size-warn" style="display:none"></div>
+              </div>
+              <div class="col-md-1 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-danger btn-sm" @click="children.splice(idx, 1)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
+        <div x-show="children.length === 0" class="text-muted small mb-3">No children added yet.</div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-4 gap-2">
+        <div class="d-flex gap-2">
+          <a href="/workers/register/step3" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back
+          </a>
+          <button type="submit" formaction="/workers/register/save-draft" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-floppy me-1"></i>Save & Exit
+          </button>
+        </div>
+        <button type="submit" class="btn btn-primary">
+          Next: Review & Submit <i class="bi bi-arrow-right ms-1"></i>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function familyForm() {
+  return {
+    children: [],
+    addChild() {
+      this.children.push({ name: '', aadhaar: '' });
+      this.$nextTick(() => {
+        // Re-attach file size listeners for new rows
+        document.querySelectorAll('input[data-max-kb]').forEach(input => {
+          input.onchange = function() {
+            const maxKb = parseInt(this.dataset.maxKb, 10);
+            const warn = document.getElementById(this.dataset.warnId);
+            if (this.files[0] && warn) {
+              const kb = this.files[0].size / 1024;
+              warn.textContent = kb > maxKb ? `Too large (${kb.toFixed(0)} KB). Max ${maxKb} KB.` : '';
+              warn.style.display = kb > maxKb ? 'block' : 'none';
+              if (kb > maxKb) this.value = '';
+            }
+          };
+        });
+      });
+    }
+  };
+}
+</script>

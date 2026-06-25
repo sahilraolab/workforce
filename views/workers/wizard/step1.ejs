@@ -1,0 +1,169 @@
+<%- include('./_progress') %>
+
+<div class="card">
+  <div class="card-header">
+    <span><i class="bi bi-person-fill me-2" style="color:var(--brand)"></i>Step 1 — Personal Details</span>
+    <span class="voice-hint"><i class="bi bi-mic-fill"></i> Tap mic to speak</span>
+  </div>
+  <div class="card-body">
+
+    <% if (errors && errors.length > 0) { %>
+    <div class="alert alert-danger mb-3">
+      <i class="bi bi-exclamation-circle-fill"></i>
+      <ul class="mb-0" style="padding-left:1rem;font-size:.83rem"><% errors.forEach(e => { %><li><%= e.msg %></li><% }) %></ul>
+    </div>
+    <% } %>
+
+    <form action="/workers/register/step1" method="POST" novalidate>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">
+            <i class="bi bi-geo-alt text-muted"></i> Site <span class="req">*</span>
+          </label>
+          <select name="site_id" class="form-select" required <% if (user.role === 'site_supervisor') { %>disabled<% } %>>
+            <option value="">— Select Site —</option>
+            <% sites.forEach(s => { %>
+              <option value="<%= s.id %>" <%= (draft.site_id == s.id || defaultSiteId == s.id) ? 'selected' : '' %>>
+                <%= s.name %>
+              </option>
+            <% }) %>
+          </select>
+          <% if (user.role === 'site_supervisor') { %>
+            <input type="hidden" name="site_id" value="<%= defaultSiteId %>">
+          <% } %>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">
+            <i class="bi bi-person text-muted"></i> Full Name (as per Aadhaar) <span class="req">*</span>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> speak</span>
+          </label>
+          <div class="input-voice-wrap">
+            <input type="text" name="name" class="form-control" value="<%= draft.name || '' %>"
+              required placeholder="Worker's full name">
+            <button class="mic-btn" type="button" title="Speak to fill"><i class="bi bi-mic-fill"></i></button>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">
+            <i class="bi bi-person text-muted"></i> Father's Name <span class="req">*</span>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> speak</span>
+          </label>
+          <div class="input-voice-wrap">
+            <input type="text" name="father_name" class="form-control" value="<%= draft.father_name || '' %>" required>
+            <button class="mic-btn" type="button" title="Speak to fill"><i class="bi bi-mic-fill"></i></button>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">
+            <i class="bi bi-calendar2 text-muted"></i> Date of Birth <span class="req">*</span>
+          </label>
+          <input type="date" name="dob" class="form-control" value="<%= draft.dob || '' %>"
+            required max="<%= new Date(Date.now() - 18*365*24*60*60*1000).toISOString().split('T')[0] %>">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">
+            <i class="bi bi-gender-ambiguous text-muted"></i> Gender <span class="req">*</span>
+          </label>
+          <select name="gender" class="form-select" required>
+            <option value="">— Select —</option>
+            <% ['Male','Female','Other'].forEach(g => { %>
+              <option value="<%= g %>" <%= draft.gender === g ? 'selected' : '' %>><%= g %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">
+            <i class="bi bi-credit-card text-muted"></i> Aadhaar Number <span class="req">*</span>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> speak</span>
+          </label>
+          <div class="input-voice-wrap">
+            <input type="text" name="aadhaar" class="form-control" value="<%= draft.aadhaar || '' %>"
+              pattern="\d{12}" maxlength="12" placeholder="12-digit Aadhaar" required autocomplete="off">
+            <button class="mic-btn" type="button" title="Speak to fill"><i class="bi bi-mic-fill"></i></button>
+          </div>
+          <div class="form-text">12 digits only, no spaces or dashes</div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">
+            <i class="bi bi-telephone text-muted"></i> Mobile Number <span class="req">*</span>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> speak</span>
+          </label>
+          <div class="input-voice-wrap">
+            <input type="tel" name="mobile" class="form-control" value="<%= draft.mobile || '' %>"
+              pattern="\d{10}" maxlength="10" placeholder="10-digit mobile" required>
+            <button class="mic-btn" type="button" title="Speak to fill"><i class="bi bi-mic-fill"></i></button>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">
+            <i class="bi bi-envelope text-muted"></i> Email (optional)
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> speak</span>
+          </label>
+          <div class="input-voice-wrap">
+            <input type="email" name="email" class="form-control" value="<%= draft.email || '' %>">
+            <button class="mic-btn" type="button" title="Speak to fill"><i class="bi bi-mic-fill"></i></button>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">
+            <i class="bi bi-heart text-muted"></i> Marital Status <span class="req">*</span>
+          </label>
+          <select name="marital_status" class="form-select" required>
+            <option value="">— Select —</option>
+            <% ['Single','Married','Widowed','Divorced'].forEach(s => { %>
+              <option value="<%= s %>" <%= draft.marital_status === s ? 'selected' : '' %>><%= s %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">
+            <i class="bi bi-house text-muted"></i> Address (as per Aadhaar) <span class="req">*</span>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> speak</span>
+          </label>
+          <div class="input-voice-wrap">
+            <textarea name="address_aadhaar" class="form-control" rows="2" required
+              style="padding-right:2.6rem"><%= draft.address_aadhaar || '' %></textarea>
+            <button class="mic-btn" type="button" title="Speak to fill" style="top:1rem;transform:none"><i class="bi bi-mic-fill"></i></button>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">
+            <i class="bi bi-house-door text-muted"></i> Present Address (if different)
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> speak</span>
+          </label>
+          <div class="input-voice-wrap">
+            <textarea name="present_address" class="form-control" rows="2"
+              style="padding-right:2.6rem"><%= draft.present_address || '' %></textarea>
+            <button class="mic-btn" type="button" title="Speak to fill" style="top:1rem;transform:none"><i class="bi bi-mic-fill"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-4 gap-2">
+        <div class="d-flex gap-2">
+          <a href="/workers/register/exit" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-x-lg me-1"></i>Exit
+          </a>
+          <button type="submit" formaction="/workers/register/save-draft" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-floppy me-1"></i>Save & Exit
+          </button>
+        </div>
+        <button type="submit" class="btn btn-primary">
+          Next: Employment <i class="bi bi-arrow-right ms-1"></i>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

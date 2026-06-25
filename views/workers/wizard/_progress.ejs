@@ -1,0 +1,20 @@
+<div class="wizard-steps">
+  <%
+    const stepLabels = ['Personal Details','Employment','Documents & Bank','Family Details','Review & Submit'];
+  %>
+  <% stepLabels.forEach((label, i) => {
+    const n = i + 1;
+    const done = step > n;
+    const active = step === n;
+  %>
+    <div class="wizard-step <%= done ? 'completed' : active ? 'active' : '' %>">
+      <div class="wizard-step-num">
+        <% if (done) { %><i class="bi bi-check" style="font-size:0.7rem"></i><% } else { %><%= n %><% } %>
+      </div>
+      <span class="d-none d-md-inline"><%= label %></span>
+    </div>
+    <% if (i < stepLabels.length - 1) { %>
+      <div class="wizard-connector <%= done ? 'completed' : '' %>"></div>
+    <% } %>
+  <% }) %>
+</div>

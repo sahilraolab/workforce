@@ -1,0 +1,199 @@
+<%- include('../partials/settings-tabs', { active: 'licenses', tabTitle: t('licenses_title'), tabIcon: 'bi-patch-check', tabSubtitle: t('licenses_subtitle') }) %>
+
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-header bg-white d-flex align-items-center flex-wrap gap-2">
+    <% if (isSuperAdmin) { %>
+    <form method="GET" class="d-inline">
+      <select name="company_id" class="form-select form-select-sm" style="max-width:240px" onchange="this.form.submit()">
+        <option value=""><%= t('users_all_companies') %></option>
+        <% companies.forEach(c => { %>
+          <option value="<%= c.id %>" <%= String(selectedCompanyId) === String(c.id) ? 'selected' : '' %>><%= c.name %></option>
+        <% }) %>
+      </select>
+    </form>
+    <% } %>
+    <div class="ms-auto d-flex gap-2 align-items-center">
+      <a href="?<%= isSuperAdmin && selectedCompanyId ? 'company_id=' + selectedCompanyId + '&' : '' %>export=csv"
+         class="btn btn-outline-secondary btn-sm" title="Download CSV">
+        <i class="bi bi-filetype-csv me-1"></i><span class="d-none d-sm-inline">Export CSV</span>
+      </a>
+      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()" title="Print / Save PDF">
+        <i class="bi bi-printer me-1"></i><span class="d-none d-sm-inline">Print PDF</span>
+      </button>
+      <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#licenseModal" onclick="openLicenseModal()">
+        <i class="bi bi-plus-lg me-1"></i><%= t('licenses_add_btn') %>
+      </button>
+    </div>
+  </div>
+  <div class="card-body p-0">
+
+    <!-- Mobile: stacked cards -->
+    <div class="d-md-none p-2">
+      <% if (licenses.length === 0) { %>
+      <p class="text-muted small p-2"><%= t('licenses_no_results') %></p>
+      <% } %>
+      <% licenses.forEach(lic => { %>
+      <% const daysLeft = Math.ceil((new Date(lic.expiry_date) - new Date()) / (1000*60*60*24));
+         const badgeClass = daysLeft <= 7 ? 'bg-danger' : daysLeft <= 30 ? 'bg-warning text-dark' : 'bg-success'; %>
+      <div class="worker-card mb-2">
+        <div class="worker-card-top">
+          <span class="worker-card-name"><%= t('license_type_' + lic.license_type) %></span>
+          <span class="badge <%= badgeClass %>"><%= lic.expiry_date %></span>
+        </div>
+        <div class="worker-card-meta">
+          <span><i class="bi bi-hash"></i> <%= lic.license_number %></span>
+        </div>
+        <% if (isSuperAdmin) { %>
+        <div class="worker-card-meta">
+          <span><i class="bi bi-building"></i> <%= lic.company ? lic.company.name : '—' %></span>
+        </div>
+        <% } %>
+        <div class="worker-card-actions">
+          <button type="button" class="btn btn-outline-secondary btn-sm w-100"
+            onclick='openLicenseModal(<%- JSON.stringify({ id: lic.id, license_type: lic.license_type, license_number: lic.license_number, issuing_authority: lic.issuing_authority || "", issue_date: lic.issue_date || "", expiry_date: lic.expiry_date, notes: lic.notes || "" }) %>)'>
+            <i class="bi bi-arrow-repeat"></i> <%= t('licenses_renew_btn') %>
+          </button>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+
+    <!-- Desktop: table -->
+    <div class="d-none d-md-block table-responsive">
+      <table class="table table-sm table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th><%= t('licenses_col_type') %></th>
+            <th><%= t('licenses_col_number') %></th>
+            <% if (isSuperAdmin) { %><th><%= t('users_col_company') %></th><% } %>
+            <th><%= t('licenses_col_expiry') %></th>
+            <th><%= t('common_actions') %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (licenses.length === 0) { %>
+          <tr><td colspan="<%= isSuperAdmin ? 5 : 4 %>" class="text-center text-muted small py-3"><%= t('licenses_no_results') %></td></tr>
+          <% } %>
+          <% licenses.forEach(lic => { %>
+          <% const daysLeft = Math.ceil((new Date(lic.expiry_date) - new Date()) / (1000*60*60*24));
+             const textClass = daysLeft <= 7 ? 'text-danger fw-bold' : daysLeft <= 30 ? 'text-warning' : ''; %>
+          <tr>
+            <td class="fw-semibold small"><%= t('license_type_' + lic.license_type) %></td>
+            <td class="small text-muted"><%= lic.license_number %></td>
+            <% if (isSuperAdmin) { %><td class="small"><%= lic.company ? lic.company.name : '—' %></td><% } %>
+            <td class="small <%= textClass %>"><i class="bi bi-calendar-x"></i> <%= lic.expiry_date %></td>
+            <td class="text-nowrap">
+              <button type="button" class="btn btn-outline-secondary btn-sm"
+                onclick='openLicenseModal(<%- JSON.stringify({ id: lic.id, license_type: lic.license_type, license_number: lic.license_number, issuing_authority: lic.issuing_authority || "", issue_date: lic.issue_date || "", expiry_date: lic.expiry_date, notes: lic.notes || "" }) %>)'>
+                <i class="bi bi-arrow-repeat"></i> <%= t('licenses_renew_btn') %>
+              </button>
+              <form action="/settings/licenses/<%= lic.id %>/delete" method="POST" class="d-inline">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-outline-danger btn-sm" data-confirm="<%= t('licenses_delete_confirm') %>">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Renew License modal — one form handles both create and update by
+     swapping the action URL and pre-filling fields via openLicenseModal(). -->
+<div class="modal fade" id="licenseModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="licenseForm" action="/settings/licenses" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="modal-header">
+          <h5 class="modal-title" id="licenseModalTitle"><i class="bi bi-patch-check me-2 text-primary"></i><%= t('licenses_add_btn') %></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <% if (isSuperAdmin) { %>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold"><%= t('users_col_company') %></label>
+            <select name="company_id" class="form-select form-select-sm" required>
+              <option value=""><%= t('common_none_option') %></option>
+              <% companies.forEach(c => { %><option value="<%= c.id %>"><%= c.name %></option><% }) %>
+            </select>
+          </div>
+          <% } %>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold"><%= t('licenses_col_type') %></label>
+            <select name="license_type" id="lf_type" class="form-select form-select-sm" required>
+              <% licenseTypes.forEach(lt => { %><option value="<%= lt %>"><%= t('license_type_' + lt) %></option><% }) %>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold"><%= t('licenses_col_number') %></label>
+            <input type="text" name="license_number" id="lf_number" class="form-control form-control-sm" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold"><%= t('licenses_issuing_authority') %></label>
+            <input type="text" name="issuing_authority" id="lf_authority" class="form-control form-control-sm">
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="form-label small fw-semibold"><%= t('licenses_issue_date') %></label>
+              <input type="date" name="issue_date" id="lf_issue" class="form-control form-control-sm">
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold"><%= t('licenses_col_expiry') %></label>
+              <input type="date" name="expiry_date" id="lf_expiry" class="form-control form-control-sm" required>
+            </div>
+          </div>
+          <div class="mb-0">
+            <label class="form-label small fw-semibold"><%= t('common_notes') %></label>
+            <textarea name="notes" id="lf_notes" class="form-control form-control-sm" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal"><%= t('common_cancel') %></button>
+          <button type="submit" class="btn btn-primary btn-sm" id="licenseSubmitBtn"><%= t('licenses_add_btn') %></button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+@media print {
+  .em-sidebar, .em-bottomnav, .em-topbar, .card-header, .modal,
+  .worker-card-actions, .btn, form { display: none !important; }
+  .em-content { margin: 0 !important; padding: 0 !important; }
+  .card { border: none !important; box-shadow: none !important; }
+  table { font-size: 11px; }
+  h5, h4 { font-size: 13px; }
+  .d-none.d-md-block { display: block !important; }
+  .d-md-none { display: none !important; }
+}
+</style>
+
+<script>
+  function openLicenseModal(data) {
+    const form = document.getElementById('licenseForm');
+    const title = document.getElementById('licenseModalTitle');
+    const submitBtn = document.getElementById('licenseSubmitBtn');
+    if (data && data.id) {
+      form.action = '/settings/licenses/' + data.id;
+      title.innerHTML = '<i class="bi bi-arrow-repeat me-2 text-primary"></i><%= t("licenses_renew_btn") %>';
+      submitBtn.textContent = '<%= t("licenses_renew_btn") %>';
+      document.getElementById('lf_type').value = data.license_type;
+      document.getElementById('lf_number').value = data.license_number;
+      document.getElementById('lf_authority').value = data.issuing_authority || '';
+      document.getElementById('lf_issue').value = data.issue_date || '';
+      document.getElementById('lf_expiry').value = data.expiry_date || '';
+      document.getElementById('lf_notes').value = data.notes || '';
+    } else {
+      form.action = '/settings/licenses';
+      title.innerHTML = '<i class="bi bi-patch-check me-2 text-primary"></i><%= t("licenses_add_btn") %>';
+      submitBtn.textContent = '<%= t("licenses_add_btn") %>';
+      form.reset();
+    }
+  }
+</script>

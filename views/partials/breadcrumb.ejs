@@ -1,0 +1,16 @@
+<%
+  // items: [{ label, href? }] — last item has no href and renders as the
+  // current page (not a link). "Home" (dashboard) is always prepended.
+  const crumbs = [{ label: t('nav_dashboard'), href: '/dashboard' }, ...(typeof items !== 'undefined' ? items : [])];
+%>
+<nav aria-label="breadcrumb" class="app-breadcrumb mb-3">
+  <ol class="breadcrumb mb-0">
+    <% crumbs.forEach((c, i) => { %>
+      <% if (i === crumbs.length - 1 || !c.href) { %>
+        <li class="breadcrumb-item active" aria-current="page"><%= c.label %></li>
+      <% } else { %>
+        <li class="breadcrumb-item"><a href="<%= c.href %>"><%= c.label %></a></li>
+      <% } %>
+    <% }) %>
+  </ol>
+</nav>

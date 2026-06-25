@@ -1,0 +1,262 @@
+<%
+  // Group rows by period (month/year), then within each period PF + ESIC side by side
+  const periods = [];
+  const seen = new Set();
+  rows.forEach(r => {
+    const key = r.year + '-' + String(r.month).padStart(2,'0');
+    if (!seen.has(key)) { seen.add(key); periods.push({ month: r.month, year: r.year }); }
+  });
+  periods.sort((a,b) => (b.year - a.year) || (b.month - a.month));
+
+  const monthNames = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function getRow(type, month, year) {
+    return rows.find(r => r.type === type && r.month === month && r.year === year);
+  }
+
+  // Totals
+  const totalPF   = rows.filter(r=>r.type==='pf').reduce((s,r)=>s+r.amount,0);
+  const totalESIC = rows.filter(r=>r.type==='esic').reduce((s,r)=>s+r.amount,0);
+  const filedPF   = rows.filter(r=>r.type==='pf' && r.status==='filed').length;
+  const filedESIC = rows.filter(r=>r.type==='esic' && r.status==='filed').length;
+  const pendPF    = rows.filter(r=>r.type==='pf' && r.status==='pending' && r.amount>0).length;
+  const pendESIC  = rows.filter(r=>r.type==='esic' && r.status==='pending' && r.amount>0).length;
+%>
+
+<%- include('../partials/report-nav', { reportNavActive: 'filings' }) %>
+<%- include('../partials/breadcrumb', { items: [{ label: t('reports_filings') }] }) %>
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div>
+    <h4 class="mb-0 fw-bold"><i class="bi bi-receipt-cutoff me-2" style="color:var(--em-accent)"></i><%= t('reports_filings') %></h4>
+    <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:3px">12-month PF &amp; ESIC deposit tracking with challan references</div>
+  </div>
+  <a href="/reports/filings?export=csv" class="btn btn-outline-secondary btn-sm"><i class="bi bi-filetype-csv me-1"></i>Export CSV</a>
+</div>
+
+<!-- Summary stats -->
+<% if (pendPF > 0 || pendESIC > 0) { %>
+<div class="eos-alert mb-3">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <div class="eos-alert-text">
+    <% if (pendPF > 0) { %><strong><%= pendPF %> PF period<%= pendPF>1?'s':'' %></strong> pending deposit.<% } %>
+    <% if (pendESIC > 0) { %> <strong><%= pendESIC %> ESIC period<%= pendESIC>1?'s':'' %></strong> pending deposit.<% } %>
+    Mark as Filed once challans are uploaded.
+  </div>
+</div>
+<% } else { %>
+<div class="eos-alert success mb-3">
+  <i class="bi bi-check-circle-fill"></i>
+  <div class="eos-alert-text">All periods with deductions are filed and challan references recorded.</div>
+</div>
+<% } %>
+
+<!-- Summary KPI cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card text-center" style="border-radius:12px;padding:1rem;background:linear-gradient(135deg,#eef2ff,#e8f0ff);border-color:#c7d3f8">
+      <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#4338ca;margin-bottom:.4rem">PF Total (12 mo)</div>
+      <div style="font-size:1.5rem;font-weight:800;color:#1e1b6b;line-height:1">₹<%= (totalPF/1000).toFixed(1) %>k</div>
+      <div style="font-size:.72rem;color:#4338ca;margin-top:.3rem"><%= filedPF %>/12 periods filed</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center" style="border-radius:12px;padding:1rem;background:linear-gradient(135deg,#ecfdf5,#e0f8ee);border-color:#a7f3d0">
+      <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--eos-green-600);margin-bottom:.4rem">ESIC Total (12 mo)</div>
+      <div style="font-size:1.5rem;font-weight:800;color:#064e3b;line-height:1">₹<%= (totalESIC/1000).toFixed(1) %>k</div>
+      <div style="font-size:.72rem;color:var(--eos-green-600);margin-top:.3rem"><%= filedESIC %>/12 periods filed</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center" style="border-radius:12px;padding:1rem;background:<%= pendPF>0 ? 'linear-gradient(135deg,#fffbeb,#fef3c7)' : 'linear-gradient(135deg,#ecfdf5,#e0f8ee)' %>;border-color:<%= pendPF>0 ? '#fde68a' : '#a7f3d0' %>">
+      <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:<%= pendPF>0 ? '#92400e' : 'var(--eos-green-600)' %>;margin-bottom:.4rem">PF Status</div>
+      <div style="font-size:1.5rem;font-weight:800;color:<%= pendPF>0 ? '#78350f' : '#064e3b' %>;line-height:1"><%= pendPF > 0 ? pendPF + ' Pending' : 'All Filed' %></div>
+      <div style="font-size:.72rem;color:<%= pendPF>0 ? '#92400e' : 'var(--eos-green-600)' %>;margin-top:.3rem"><%= filedPF %> periods challan recorded</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center" style="border-radius:12px;padding:1rem;background:<%= pendESIC>0 ? 'linear-gradient(135deg,#fffbeb,#fef3c7)' : 'linear-gradient(135deg,#ecfdf5,#e0f8ee)' %>;border-color:<%= pendESIC>0 ? '#fde68a' : '#a7f3d0' %>">
+      <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:<%= pendESIC>0 ? '#92400e' : 'var(--eos-green-600)' %>;margin-bottom:.4rem">ESIC Status</div>
+      <div style="font-size:1.5rem;font-weight:800;color:<%= pendESIC>0 ? '#78350f' : '#064e3b' %>;line-height:1"><%= pendESIC > 0 ? pendESIC + ' Pending' : 'All Filed' %></div>
+      <div style="font-size:.72rem;color:<%= pendESIC>0 ? '#92400e' : 'var(--eos-green-600)' %>;margin-top:.3rem"><%= filedESIC %> periods challan recorded</div>
+    </div>
+  </div>
+</div>
+
+<!-- Period-by-period view -->
+<div class="eos-section-label">Period-wise filing status</div>
+
+<!-- Mobile: cards per period -->
+<div class="d-md-none">
+  <% periods.forEach(p => {
+    const pf   = getRow('pf',   p.month, p.year);
+    const esic = getRow('esic', p.month, p.year);
+    const anyPending = (pf && pf.status === 'pending' && pf.amount > 0) || (esic && esic.status === 'pending' && esic.amount > 0);
+  %>
+  <div class="card mb-2" style="border-radius:12px;<%= anyPending ? 'border-color:#fde68a;border-left:3px solid #d97706' : '' %>">
+    <div class="card-body" style="padding:12px 14px">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span style="font-size:.92rem;font-weight:700;color:var(--em-ink)"><%= monthNames[p.month] %> <%= p.year %></span>
+        <% if (anyPending) { %>
+          <span class="badge bg-warning">Action needed</span>
+        <% } else { %>
+          <span class="badge bg-success"><i class="bi bi-check2"></i> Settled</span>
+        <% } %>
+      </div>
+      <div class="row g-2">
+        <!-- PF -->
+        <div class="col-6">
+          <div style="background:linear-gradient(135deg,#eef2ff,#e8f0ff);border-radius:8px;padding:10px;border:0.5px solid #c7d3f8">
+            <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#4338ca;margin-bottom:4px">PF</div>
+            <div style="font-size:1rem;font-weight:800;color:#1e1b6b">₹<%= pf ? pf.amount.toFixed(0) : '0' %></div>
+            <% if (pf && pf.status === 'filed') { %>
+              <div style="font-size:.68rem;color:var(--eos-green-600);margin-top:3px"><i class="bi bi-check-circle-fill"></i> Filed</div>
+              <% if (pf.challan_no) { %><div style="font-size:.68rem;color:var(--em-ink-3)">Challan: <%= pf.challan_no %></div><% } %>
+              <% if (pf.filed_date) { %><div style="font-size:.68rem;color:var(--em-ink-3)"><%= new Date(pf.filed_date).toLocaleDateString('en-IN') %></div><% } %>
+            <% } else if (pf && pf.amount > 0) { %>
+              <div style="font-size:.68rem;color:var(--eos-amber-600);margin-top:3px"><i class="bi bi-clock"></i> Pending</div>
+              <button type="button" class="btn btn-sm mt-1 w-100" style="background:var(--eos-blue-50);color:var(--em-accent);border:0.5px solid var(--eos-blue-100);font-size:.68rem;padding:4px"
+                onclick='openFilingModal(<%- JSON.stringify({ type: "pf", month: p.month, year: p.year }) %>)'>
+                Mark Filed
+              </button>
+            <% } else { %>
+              <div style="font-size:.68rem;color:var(--em-ink-3);margin-top:3px">No deductions</div>
+            <% } %>
+          </div>
+        </div>
+        <!-- ESIC -->
+        <div class="col-6">
+          <div style="background:linear-gradient(135deg,#ecfdf5,#e0f8ee);border-radius:8px;padding:10px;border:0.5px solid #a7f3d0">
+            <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--eos-green-600);margin-bottom:4px">ESIC</div>
+            <div style="font-size:1rem;font-weight:800;color:#064e3b">₹<%= esic ? esic.amount.toFixed(0) : '0' %></div>
+            <% if (esic && esic.status === 'filed') { %>
+              <div style="font-size:.68rem;color:var(--eos-green-600);margin-top:3px"><i class="bi bi-check-circle-fill"></i> Filed</div>
+              <% if (esic.challan_no) { %><div style="font-size:.68rem;color:var(--em-ink-3)">Challan: <%= esic.challan_no %></div><% } %>
+              <% if (esic.filed_date) { %><div style="font-size:.68rem;color:var(--em-ink-3)"><%= new Date(esic.filed_date).toLocaleDateString('en-IN') %></div><% } %>
+            <% } else if (esic && esic.amount > 0) { %>
+              <div style="font-size:.68rem;color:var(--eos-amber-600);margin-top:3px"><i class="bi bi-clock"></i> Pending</div>
+              <button type="button" class="btn btn-sm mt-1 w-100" style="background:var(--eos-green-50);color:var(--eos-green-600);border:0.5px solid #a7f3d0;font-size:.68rem;padding:4px"
+                onclick='openFilingModal(<%- JSON.stringify({ type: "esic", month: p.month, year: p.year }) %>)'>
+                Mark Filed
+              </button>
+            <% } else { %>
+              <div style="font-size:.68rem;color:var(--em-ink-3);margin-top:3px">No deductions</div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <% }) %>
+</div>
+
+<!-- Desktop: full table -->
+<div class="d-none d-md-block">
+  <div class="card" style="border-radius:12px">
+    <div class="card-body p-0">
+      <table class="table mb-0" style="font-size:.84rem">
+        <thead style="background:var(--em-line-2)">
+          <tr>
+            <th style="padding:.65rem 1rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--em-ink-3);font-weight:700;border:none">Period</th>
+            <th style="padding:.65rem 1rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--em-ink-3);font-weight:700;border:none">Type</th>
+            <th style="padding:.65rem 1rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--em-ink-3);font-weight:700;border:none">Amount</th>
+            <th style="padding:.65rem 1rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--em-ink-3);font-weight:700;border:none">Status</th>
+            <th style="padding:.65rem 1rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--em-ink-3);font-weight:700;border:none">Challan No.</th>
+            <th style="padding:.65rem 1rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--em-ink-3);font-weight:700;border:none">Filed On</th>
+            <th style="padding:.65rem 1rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--em-ink-3);font-weight:700;border:none"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% periods.forEach(p => {
+            ['pf','esic'].forEach(type => {
+              const r = getRow(type, p.month, p.year);
+              if (!r) return;
+            %>
+          <tr style="border-color:var(--em-line-2)">
+            <td style="padding:.75rem 1rem;border-color:var(--em-line-2);font-weight:600;color:var(--em-ink)"><%= monthNames[p.month] %> <%= p.year %></td>
+            <td style="padding:.75rem 1rem;border-color:var(--em-line-2)">
+              <span class="badge" style="background:<%= type==='pf' ? '#eef2ff' : '#ecfdf5' %>;color:<%= type==='pf' ? '#4338ca' : 'var(--eos-green-600)' %>;border:0.5px solid <%= type==='pf' ? '#c7d3f8' : '#a7f3d0' %>">
+                <%= type.toUpperCase() %>
+              </span>
+            </td>
+            <td style="padding:.75rem 1rem;border-color:var(--em-line-2);font-weight:700;color:var(--em-ink)">₹<%= r.amount.toFixed(2) %></td>
+            <td style="padding:.75rem 1rem;border-color:var(--em-line-2)">
+              <span class="badge <%= r.status === 'filed' ? 'bg-success' : 'bg-warning' %>">
+                <% if (r.status === 'filed') { %><i class="bi bi-check2 me-1"></i><% } %>
+                <%= t('filings_status_' + r.status) %>
+              </span>
+            </td>
+            <td style="padding:.75rem 1rem;border-color:var(--em-line-2);font-family:monospace;font-size:.82rem;color:var(--em-ink-2)">
+              <%= r.challan_no || '—' %>
+            </td>
+            <td style="padding:.75rem 1rem;border-color:var(--em-line-2);color:var(--em-ink-3);font-size:.8rem">
+              <%= r.filed_date ? new Date(r.filed_date).toLocaleDateString('en-IN') : '—' %>
+            </td>
+            <td style="padding:.75rem 1rem;border-color:var(--em-line-2)">
+              <% if (r.status !== 'filed' && r.amount > 0) { %>
+              <button type="button" class="btn btn-sm btn-primary"
+                onclick='openFilingModal(<%- JSON.stringify({ type: r.type, month: r.month, year: r.year }) %>)'>
+                <i class="bi bi-check2-circle me-1"></i><%= t('filings_mark_filed_btn') %>
+              </button>
+              <% } %>
+            </td>
+          </tr>
+          <% }); }) %>
+        </tbody>
+        <tfoot style="background:var(--em-line-2)">
+          <tr>
+            <td colspan="2" style="padding:.65rem 1rem;font-size:.8rem;font-weight:700;color:var(--em-ink)">Total</td>
+            <td style="padding:.65rem 1rem;font-size:.8rem;font-weight:700;color:var(--em-ink)">₹<%= (totalPF + totalESIC).toFixed(2) %></td>
+            <td colspan="4" style="padding:.65rem 1rem;font-size:.78rem;color:var(--em-ink-3)">
+              PF ₹<%= totalPF.toFixed(2) %> &nbsp;·&nbsp; ESIC ₹<%= totalESIC.toFixed(2) %>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Mark as Filed modal -->
+<div class="modal fade" id="filingModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:14px">
+      <form id="filingForm" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="modal-header" style="border-bottom:0.5px solid var(--em-line)">
+          <h5 class="modal-title" style="font-size:.95rem;font-weight:700">
+            <i class="bi bi-check2-circle me-2" style="color:var(--em-accent)"></i>Mark as Filed
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="filingModalPeriodLabel" class="mb-3 eos-alert info" style="margin-bottom:0">
+            <i class="bi bi-info-circle-fill"></i>
+            <div class="eos-alert-text" id="filingModalPeriodText"></div>
+          </div>
+          <div class="mb-3 mt-3">
+            <label class="form-label" style="font-size:.78rem;font-weight:600;color:var(--em-ink-2)"><%= t('filings_col_challan') %> <span style="color:var(--eos-red-600)">*</span></label>
+            <input type="text" name="challan_no" class="form-control" required placeholder="e.g. EPFO123456">
+          </div>
+          <div>
+            <label class="form-label" style="font-size:.78rem;font-weight:600;color:var(--em-ink-2)"><%= t('filings_filed_date') %> <span style="color:var(--eos-red-600)">*</span></label>
+            <input type="date" name="filed_date" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top:0.5px solid var(--em-line)">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal"><%= t('common_cancel') %></button>
+          <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check2-circle me-1"></i><%= t('filings_mark_filed_btn') %></button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const _monthNames = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function openFilingModal(data) {
+    document.getElementById('filingForm').action = '/reports/filings/' + data.type + '/' + data.month + '/' + data.year;
+    document.getElementById('filingModalPeriodText').textContent =
+      'Recording challan for ' + data.type.toUpperCase() + ' — ' + _monthNames[data.month] + ' ' + data.year;
+    new bootstrap.Modal(document.getElementById('filingModal')).show();
+  }
+</script>

@@ -1,0 +1,98 @@
+<%- include('./_progress') %>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <h5 class="mb-0 fw-bold"><i class="bi bi-clipboard-check me-2 text-primary"></i>Step 5 — Review & Submit</h5>
+    <span class="badge bg-info">Please verify all details before submitting</span>
+  </div>
+  <div class="card-body p-4">
+
+    <!-- Personal Details -->
+    <h6 class="fw-bold text-muted text-uppercase small mb-2">Personal Details</h6>
+    <div class="row mb-4 g-2">
+      <div class="col-md-4"><strong>Name:</strong> <%= draft.name %></div>
+      <div class="col-md-4"><strong>Father's Name:</strong> <%= draft.father_name %></div>
+      <div class="col-md-4"><strong>DOB:</strong> <%= draft.dob %></div>
+      <div class="col-md-4"><strong>Gender:</strong> <%= draft.gender %></div>
+      <div class="col-md-4"><strong>Aadhaar:</strong> ••••••••<%= (draft.aadhaar || '').slice(-4) %></div>
+      <div class="col-md-4"><strong>Mobile:</strong> <%= draft.mobile %></div>
+      <div class="col-md-4"><strong>Marital Status:</strong> <%= draft.marital_status %></div>
+      <div class="col-md-8"><strong>Aadhaar Address:</strong> <%= draft.address_aadhaar %></div>
+    </div>
+
+    <!-- Employment Details -->
+    <h6 class="fw-bold text-muted text-uppercase small mb-2">Employment Details</h6>
+    <div class="row mb-4 g-2">
+      <div class="col-md-3"><strong>Category:</strong> <%= draft.category %></div>
+      <div class="col-md-3"><strong>Zone:</strong> <%= draft.zone %></div>
+      <div class="col-md-3"><strong>Daily Wage:</strong> ₹<%= draft.wage_rate %></div>
+      <div class="col-md-3"><strong>DOJ:</strong> <%= draft.doj %></div>
+      <div class="col-md-3"><strong>UAN:</strong> <%= draft.uan ? '••••••••' + (draft.uan).slice(-4) : 'Not provided' %></div>
+      <div class="col-md-3"><strong>ESIC:</strong> <%= draft.esic_applicable === 'yes' ? 'Yes — ••••' + (draft.esic_number || '').slice(-4) : 'Not applicable' %></div>
+    </div>
+
+    <!-- Documents -->
+    <h6 class="fw-bold text-muted text-uppercase small mb-2">Documents</h6>
+    <div class="row mb-4 g-2">
+      <% const uploads = draft._uploads || {}; %>
+      <% const docLabels = { aadhaar: 'Aadhaar Card', passport_photo: 'Passport Photo', bank_passbook: 'Bank Passbook', uan_card: 'UAN Card', esic_card: 'ESIC Card' }; %>
+      <% Object.entries(docLabels).forEach(([key, label]) => { %>
+      <div class="col-md-4">
+        <% if (uploads[key]) { %>
+          <span class="badge bg-success me-1"><i class="bi bi-check"></i></span>
+        <% } else { %>
+          <span class="badge bg-secondary me-1"><i class="bi bi-dash"></i></span>
+        <% } %>
+        <%= label %>
+      </div>
+      <% }) %>
+    </div>
+
+    <!-- Bank -->
+    <h6 class="fw-bold text-muted text-uppercase small mb-2">Bank Details</h6>
+    <div class="row mb-4 g-2">
+      <div class="col-md-4"><strong>Account:</strong> ••••<%= (draft.bank_account || '').slice(-4) %></div>
+      <div class="col-md-4"><strong>IFSC:</strong> <%= draft.ifsc_code || 'Not provided' %></div>
+    </div>
+
+    <!-- Family Members -->
+    <% if (draft._familyMembers && draft._familyMembers.length > 0) { %>
+    <h6 class="fw-bold text-muted text-uppercase small mb-2">Family Members</h6>
+    <table class="table table-sm table-bordered mb-4">
+      <thead class="table-light"><tr><th>Relation</th><th>Name</th><th>Aadhaar</th><th>Photo</th></tr></thead>
+      <tbody>
+        <% draft._familyMembers.forEach(m => { %>
+        <tr>
+          <td class="text-capitalize"><%= m.relation %></td>
+          <td><%= m.name %></td>
+          <td><%= m.aadhaar ? '••••••••' + (m.aadhaar).slice(-4) : '—' %></td>
+          <td><%= m.photo ? '<span class="badge bg-success">Yes</span>' : '—' %></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% } %>
+
+    <div class="alert alert-warning small">
+      <i class="bi bi-exclamation-triangle me-1"></i>
+      Validation checks will run immediately on submission. Results will appear on the worker profile.
+    </div>
+
+    <form action="/workers/register/submit" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="d-flex justify-content-between align-items-center gap-2">
+        <div class="d-flex gap-2">
+          <a href="/workers/register/step4" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back
+          </a>
+          <a href="/workers/register/exit" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-x-lg me-1"></i>Exit
+          </a>
+        </div>
+        <button type="submit" class="btn btn-success">
+          <i class="bi bi-check-circle me-2"></i>Submit Registration
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

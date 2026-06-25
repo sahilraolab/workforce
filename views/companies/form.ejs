@@ -1,0 +1,148 @@
+<%- include('../partials/breadcrumb', { items: [
+  { label: t('companies_title'), href: '/admin/companies' },
+  { label: title },
+] }) %>
+
+<div class="d-flex align-items-center mb-3">
+  <a href="/admin/companies" class="btn btn-outline-secondary btn-sm me-3"><i class="bi bi-arrow-left"></i></a>
+  <h4 class="mb-0 fw-bold"><%= title %></h4>
+</div>
+
+<div class="card border-0 shadow-sm" style="max-width:700px">
+  <div class="card-body p-3 p-md-4">
+    <% if (errors && errors.length > 0) { %>
+      <div class="alert alert-danger"><ul class="mb-0 ps-3"><% errors.forEach(e => { %><li><%= e.msg %></li><% }) %></ul></div>
+    <% } %>
+
+    <form action="<%= companyId ? '/admin/companies/' + companyId + '?_method=PUT' : '/admin/companies' %>" method="POST" id="companyForm" novalidate>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (companyId) { %><input type="hidden" name="_method" value="PUT"><% } %>
+
+      <h6 class="text-muted text-uppercase small mb-3"><%= t('company_form_details_title') %></h6>
+      <div class="row g-3 mb-4">
+        <div class="col-12 col-md-8">
+          <label class="form-label fw-semibold"><%= t('company_form_name') %> <span class="text-danger">*</span></label>
+          <input type="text" name="name" class="form-control" value="<%= values.name %>" maxlength="255" required>
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label fw-semibold"><%= t('company_form_plan') %> <span class="text-danger">*</span></label>
+          <select name="plan" id="planSelect" class="form-select" required>
+            <% ['starter','growth','enterprise'].forEach(p => { %>
+              <option value="<%= p %>" <%= values.plan === p ? 'selected' : '' %>><%= p.charAt(0).toUpperCase() + p.slice(1) %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label fw-semibold"><%= t('company_form_contact_email') %></label>
+          <input type="email" name="contact_email" class="form-control" value="<%= values.contact_email %>">
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label fw-semibold"><%= t('company_form_contact_phone') %></label>
+          <input type="tel" name="contact_phone" class="form-control" pattern="\d{10}" maxlength="10" placeholder="10-digit number" value="<%= values.contact_phone %>">
+        </div>
+        <div class="col-6 col-md-4">
+          <label class="form-label fw-semibold"><%= t('company_form_worker_limit') %></label>
+          <input type="number" name="worker_limit" id="workerLimitInput" class="form-control"
+            value="<%= values.worker_limit %>" min="1" placeholder="<%= t('company_form_unlimited') %>">
+          <div class="form-text"><%= t('company_form_worker_limit_hint') %></div>
+        </div>
+        <div class="col-6 col-md-4">
+          <label class="form-label fw-semibold"><%= t('company_form_end_date') %> <span class="text-danger">*</span></label>
+          <input type="date" name="end_date" class="form-control" value="<%= values.end_date %>" required>
+        </div>
+        <% if (companyId) { %>
+        <div class="col-12 col-md-4">
+          <label class="form-label fw-semibold"><%= t('company_form_status') %></label>
+          <select name="status" class="form-select">
+            <option value="active" <%= values.status === 'active' ? 'selected' : '' %>>Active</option>
+            <option value="suspended" <%= values.status === 'suspended' ? 'selected' : '' %>>Suspended</option>
+            <option value="trial" <%= values.status === 'trial' ? 'selected' : '' %>>Trial</option>
+          </select>
+        </div>
+        <% } %>
+      </div>
+
+      <% if (!companyId) { %>
+      <hr>
+      <h6 class="text-muted text-uppercase small mb-3"><%= t('company_form_admin_title') %></h6>
+      <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6">
+          <label class="form-label fw-semibold"><%= t('company_form_admin_name') %> <span class="text-danger">*</span></label>
+          <input type="text" name="admin_name" class="form-control" value="<%= values.admin_name || '' %>" required>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label fw-semibold"><%= t('company_form_admin_email') %> <span class="text-danger">*</span></label>
+          <input type="email" name="admin_email" class="form-control" value="<%= values.admin_email || '' %>" required>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label fw-semibold"><%= t('company_form_admin_password') %> <span class="text-danger">*</span></label>
+          <div class="password-wrap">
+            <input type="password" name="admin_password" id="adminPassword" class="form-control" minlength="8" required>
+            <button type="button" class="password-toggle-btn" data-toggle-password data-target="adminPassword"
+              data-show-label="<%= t('common_show_password') %>" data-hide-label="<%= t('common_hide_password') %>"
+              aria-label="<%= t('common_show_password') %>">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label fw-semibold"><%= t('company_form_admin_password_confirm') %> <span class="text-danger">*</span></label>
+          <div class="password-wrap">
+            <input type="password" name="admin_password_confirm" id="adminPasswordConfirm" class="form-control" minlength="8" required>
+            <button type="button" class="password-toggle-btn" data-toggle-password data-target="adminPasswordConfirm"
+              data-show-label="<%= t('common_show_password') %>" data-hide-label="<%= t('common_hide_password') %>"
+              aria-label="<%= t('common_show_password') %>">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+          <div class="form-text text-danger d-none" id="pwMismatchHint"><%= t('val_password_mismatch') %></div>
+        </div>
+      </div>
+      <% } %>
+
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-primary"><%= companyId ? t('company_form_update_btn') : t('company_form_create_btn') %></button>
+        <a href="/admin/companies" class="btn btn-outline-secondary"><%= t('common_cancel') %></a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Worker limit auto-fills from the selected plan, but stays editable for
+  // a custom override — only auto-fills when the field is empty or still
+  // matches the last plan-driven value (so it won't clobber an intentional edit).
+  const PLAN_LIMITS = <%- JSON.stringify(planLimits) %>;
+  const planSelect = document.getElementById('planSelect');
+  const workerLimitInput = document.getElementById('workerLimitInput');
+  let lastAutoValue = workerLimitInput.value;
+
+  function applyPlanDefault() {
+    const limit = PLAN_LIMITS[planSelect.value];
+    const display = limit === null || limit === undefined ? '' : limit;
+    if (workerLimitInput.value === '' || workerLimitInput.value === String(lastAutoValue)) {
+      workerLimitInput.value = display;
+      lastAutoValue = display;
+    }
+  }
+  planSelect.addEventListener('change', applyPlanDefault);
+  // Only auto-fill on initial page load when the field is genuinely empty —
+  // not when re-displaying a form after a validation error, which would
+  // otherwise silently discard whatever the user had typed.
+  <% if (!companyId && !values.worker_limit) { %>applyPlanDefault();<% } %>
+
+  // Password confirmation match check (client-side hint only — server
+  // re-validates regardless).
+  const pw = document.getElementById('adminPassword');
+  const pwConfirm = document.getElementById('adminPasswordConfirm');
+  if (pw && pwConfirm) {
+    const hint = document.getElementById('pwMismatchHint');
+    function checkMatch() {
+      const mismatch = pwConfirm.value.length > 0 && pw.value !== pwConfirm.value;
+      hint.classList.toggle('d-none', !mismatch);
+      pwConfirm.setCustomValidity(mismatch ? 'mismatch' : '');
+    }
+    pw.addEventListener('input', checkMatch);
+    pwConfirm.addEventListener('input', checkMatch);
+  }
+</script>

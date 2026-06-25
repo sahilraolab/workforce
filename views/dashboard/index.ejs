@@ -1,0 +1,204 @@
+<%
+  const dateLocaleMap = { en: 'en-IN', hi: 'hi-IN', gu: 'gu-IN', mr: 'mr-IN', te: 'te-IN' };
+  const dateLocale = dateLocaleMap[currentLang] || 'en-IN';
+
+  function activityIcon(action, entity) {
+    if (action === 'create' && entity === 'Worker') return { cls: 'green', icon: 'bi-person-plus' };
+    if (action === 'delete') return { cls: 'red', icon: 'bi-trash3' };
+    if (entity === 'Document') return { cls: 'blue', icon: 'bi-file-earmark-check' };
+    if (entity === 'Attendance') return { cls: 'green', icon: 'bi-calendar-check' };
+    if (entity === 'Payroll') return { cls: 'amber', icon: 'bi-cash-stack' };
+    if (action === 'update') return { cls: 'blue', icon: 'bi-pencil' };
+    return { cls: 'blue', icon: 'bi-activity' };
+  }
+  function timeAgo(date) {
+    if (!date) return '';
+    const diff = Date.now() - new Date(date).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return m + 'm ago';
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + 'h ago';
+    return Math.floor(h / 24) + 'd ago';
+  }
+%>
+<div class="em-page">
+
+  <!-- Page head -->
+  <div class="em-page-head">
+    <h1><%= t('dashboard_title') %></h1>
+    <p><%= t('welcome_back') %> <strong><%= user.name %></strong> &mdash; <%= new Date().toLocaleDateString(dateLocale,{weekday:'long',day:'numeric',month:'long'}) %></p>
+  </div>
+
+  <!-- Subscription expiry warning -->
+  <% if (subscription && subscription.end_date) {
+    const daysLeft = Math.ceil((new Date(subscription.end_date) - new Date()) / (1000*60*60*24));
+    if (daysLeft <= 7 && daysLeft >= 0) { %>
+  <div class="eos-alert mb-3">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <div class="eos-alert-text"><%= t('subscription_expiring') %> <strong><%= daysLeft %></strong> <%= t('days_contact_support') %></div>
+  </div>
+  <% } } %>
+
+  <!-- Pending docs warning banner -->
+  <% if (stats.pendingDocs > 0) { %>
+  <div class="eos-alert mb-3">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <div class="eos-alert-text">
+      <strong><%= stats.pendingDocs %></strong> <%= t('pending_docs_banner_suffix') %>
+      &nbsp;<a href="/reports/compliance?show_missing=1"><%= t('review_now') %> &rarr;</a>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- KPI stat cards — 4 columns desktop, 2×2 on mobile -->
+  <div class="eos-section-label"><%= t('kpi_overview') %></div>
+  <div class="em-stat-row">
+    <a href="/workers" class="em-stat c-violet">
+      <i class="bi bi-chevron-right em-stat-arrow"></i>
+      <div class="label"><i class="bi bi-people"></i> <%= t('kpi_total_workers') %></div>
+      <div class="value"><%= stats.totalWorkers || 0 %></div>
+      <div class="meta"><%= stats.activeWorkers || 0 %> <%= t('kpi_active') %></div>
+    </a>
+    <a href="/attendance" class="em-stat c-teal">
+      <i class="bi bi-chevron-right em-stat-arrow"></i>
+      <div class="label"><i class="bi bi-calendar-check"></i> <%= t('kpi_present_today') %></div>
+      <div class="value"><%= stats.todayPresent || 0 %></div>
+      <div class="meta"><%= t('kpi_of_active') %> <%= stats.activeWorkers || 0 %></div>
+    </a>
+    <a href="/reports/compliance?show_missing=1" class="em-stat c-amber">
+      <i class="bi bi-chevron-right em-stat-arrow"></i>
+      <div class="label"><i class="bi bi-file-earmark-x"></i> <%= t('kpi_pending_docs') %></div>
+      <div class="value"><%= stats.pendingDocs || 0 %></div>
+      <div class="meta"><%= t('kpi_need_review') %></div>
+    </a>
+    <a href="/reports/compliance" class="em-stat c-red">
+      <i class="bi bi-chevron-right em-stat-arrow"></i>
+      <div class="label"><i class="bi bi-exclamation-triangle"></i> <%= t('kpi_issues') %></div>
+      <div class="value"><%= stats.failedValidations || 0 %></div>
+      <div class="meta"><%= t('kpi_need_attention') %></div>
+    </a>
+  </div>
+
+  <!-- Compliance by Site — at the top so issues are immediately visible -->
+  <% if (siteCompliance && siteCompliance.length > 0) { %>
+  <div class="eos-section-label"><%= t('compliance_by_site') %></div>
+  <div class="card mb-3" style="border-radius:12px">
+    <div class="card-body" style="padding:1rem 1.25rem">
+      <div class="row g-3">
+        <% siteCompliance.forEach((site, i) => {
+          const scoreClass = site.score >= 90 ? 'score-high' : site.score >= 70 ? 'score-medium' : 'score-low';
+          const fillClass  = site.score >= 90 ? '' : site.score >= 70 ? 'amber' : 'red';
+          const dotColor   = site.score >= 90 ? '#3B6D11' : site.score >= 70 ? '#854F0B' : '#A32D2D';
+        %>
+        <div class="col-12 col-md-6">
+          <div class="em-progress-row" style="margin-bottom:0;padding:.75rem;background:var(--em-surface);border-radius:8px;border:0.5px solid var(--em-line-2)">
+            <div class="em-progress-top">
+              <span class="em-progress-name">
+                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:<%= dotColor %>;margin-right:6px"></span>
+                <a href="/sites" style="color:var(--em-ink);text-decoration:none"><%= site.name %></a>
+              </span>
+              <span class="em-progress-pct <%= scoreClass %>"><%= site.score %>%
+                <span style="font-weight:400;color:var(--em-ink-3);font-size:.68rem"> &middot; <%= site.workers %> workers</span>
+              </span>
+            </div>
+            <div class="em-progress-track">
+              <div class="eos-progress-fill <%= fillClass %>" style="width:<%= site.score %>%"></div>
+            </div>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+      <div class="mt-2 pt-2" style="border-top:0.5px solid var(--em-line-2)">
+        <a href="/reports/compliance" class="btn btn-sm btn-outline-secondary" style="font-size:.77rem">
+          <i class="bi bi-bar-chart-line me-1"></i>Full compliance report &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Two-column: Quick Actions + Recent Activity -->
+  <div class="em-grid">
+
+    <!-- Quick Actions -->
+    <div>
+      <div class="eos-section-label"><%= t('quick_actions') %></div>
+      <div class="em-action-grid">
+        <a href="/workers/register" class="em-action-card">
+          <span class="icon-dot c-violet"><i class="bi bi-person-plus"></i></span>
+          <span class="text"><strong><%= t('add_worker') %></strong><span><%= t('add_worker_sub') %></span></span>
+          <i class="bi bi-chevron-right em-action-card-arrow"></i>
+        </a>
+        <a href="/attendance" class="em-action-card">
+          <span class="icon-dot c-teal"><i class="bi bi-calendar-check"></i></span>
+          <span class="text"><strong><%= t('mark_attendance') %></strong><span><%= t('mark_attendance_sub') %></span></span>
+          <i class="bi bi-chevron-right em-action-card-arrow"></i>
+        </a>
+        <a href="/reports/compliance" class="em-action-card">
+          <span class="icon-dot c-violet"><i class="bi bi-bar-chart"></i></span>
+          <span class="text"><strong><%= t('compliance') %></strong><span><%= t('compliance_sub') %></span></span>
+          <i class="bi bi-chevron-right em-action-card-arrow"></i>
+        </a>
+        <% if (['company_admin','hr_payroll'].includes(user.role)) { %>
+        <a href="/payroll" class="em-action-card">
+          <span class="icon-dot c-amber"><i class="bi bi-cash-stack"></i></span>
+          <span class="text"><strong><%= t('payroll_action') %></strong><span><%= t('payroll_action_sub') %></span></span>
+          <i class="bi bi-chevron-right em-action-card-arrow"></i>
+        </a>
+        <% } %>
+        <% if (['company_admin','super_admin'].includes(user.role)) { %>
+        <a href="/settings/licenses" class="em-action-card">
+          <span class="icon-dot c-teal"><i class="bi bi-patch-check"></i></span>
+          <span class="text"><strong><%= t('nav_licenses') %></strong><span>Statutory licences &amp; renewals</span></span>
+          <i class="bi bi-chevron-right em-action-card-arrow"></i>
+        </a>
+        <a href="/reports/filings" class="em-action-card">
+          <span class="icon-dot c-amber"><i class="bi bi-send-check"></i></span>
+          <span class="text"><strong><%= t('filings_title') %></strong><span>PF / ESIC filing status</span></span>
+          <i class="bi bi-chevron-right em-action-card-arrow"></i>
+        </a>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div>
+      <div class="eos-section-label"><%= t('recent_activity') %></div>
+      <div class="card" style="border-radius:12px">
+        <div class="card-body" style="padding:1rem">
+          <% if (recentActivity && recentActivity.length > 0) { %>
+          <div class="eos-timeline">
+            <% recentActivity.forEach(log => {
+              const ic = activityIcon(log.action, log.entity);
+            %>
+            <div class="eos-tl-item">
+              <div class="eos-tl-dot <%= ic.cls %>"><i class="bi <%= ic.icon %>"></i></div>
+              <div>
+                <div class="eos-tl-title">
+                  <%= log.action.charAt(0).toUpperCase() + log.action.slice(1) %> <%= log.entity %>
+                  <% if (log.entity_id) { %><span style="color:var(--em-ink-3);font-weight:400"> #<%= log.entity_id %></span><% } %>
+                </div>
+                <div class="eos-tl-time">
+                  <%= timeAgo(log.created_at) %><% if (log.user && log.user.name) { %> &middot; <%= log.user.name %><% } %>
+                </div>
+              </div>
+            </div>
+            <% }) %>
+          </div>
+          <% } else { %>
+          <div class="text-center py-3" style="color:var(--em-ink-3);font-size:.84rem">
+            <i class="bi bi-activity" style="font-size:1.5rem;display:block;margin-bottom:.5rem;opacity:.3"></i>
+            No recent activity
+          </div>
+          <% } %>
+          <a href="/reports/audit" class="btn btn-sm btn-outline-secondary w-100 mt-3" style="font-size:.78rem">
+            <i class="bi bi-clock-history me-1"></i><%= t('view_all') %>
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

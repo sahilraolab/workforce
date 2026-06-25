@@ -1,0 +1,156 @@
+<%- include('./_progress') %>
+
+<div class="card">
+  <div class="card-header">
+    <span><i class="bi bi-briefcase-fill me-2" style="color:var(--amber)"></i>Step 2 — Employment Details</span>
+    <span class="voice-hint"><i class="bi bi-mic-fill"></i> Tap mic to speak</span>
+  </div>
+  <div class="card-body">
+
+    <% if (errors && errors.length > 0) { %>
+    <div class="alert alert-danger mb-3">
+      <i class="bi bi-exclamation-circle-fill"></i>
+      <ul class="mb-0" style="padding-left:1rem;font-size:.83rem"><% errors.forEach(e => { %><li><%= e.msg %></li><% }) %></ul>
+    </div>
+    <% } %>
+
+    <script>
+      const WAGE_MAP = {};
+      <% wageMasters.forEach(wm => { %>
+      WAGE_MAP['<%= wm.category %>|<%= wm.zone %>'] = '<%= wm.wage_rate %>';
+      <% }) %>
+    </script>
+
+    <form action="/workers/register/step2" method="POST" novalidate x-data="employmentForm()">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">
+            <i class="bi bi-layers text-muted"></i> Category <span class="req">*</span>
+          </label>
+          <select name="category" class="form-select" x-model="category" @change="lookupWage()" required>
+            <option value="">— Select Category —</option>
+            <% ['Unskilled','Semi-Skilled','Skilled','Executive','Manager'].forEach(c => { %>
+              <option value="<%= c %>" <%= draft.category === c ? 'selected' : '' %>><%= c %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">
+            <i class="bi bi-pin-map text-muted"></i> Zone <span class="req">*</span>
+          </label>
+          <select name="zone" class="form-select" x-model="zone" @change="lookupWage()" required>
+            <option value="">— Select Zone —</option>
+            <% ['Zone 1','Zone 2'].forEach(z => { %>
+              <option value="<%= z %>" <%= draft.zone === z ? 'selected' : '' %>><%= z %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">
+            <i class="bi bi-currency-rupee text-muted"></i> Daily Wage Rate (₹) <span class="req">*</span>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> speak</span>
+          </label>
+          <div class="input-voice-wrap">
+            <div class="input-group">
+              <span class="input-group-text">₹</span>
+              <input type="number" name="wage_rate" class="form-control" x-model="wageRate"
+                step="0.01" min="0" required value="<%= draft.wage_rate || '' %>"
+                style="padding-right:2.6rem">
+            </div>
+            <button class="mic-btn" type="button" title="Speak to fill"><i class="bi bi-mic-fill"></i></button>
+          </div>
+          <div class="form-text" x-show="wageSource" x-text="wageSource"></div>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">
+            <i class="bi bi-calendar2-check text-muted"></i> Date of Joining <span class="req">*</span>
+          </label>
+          <input type="date" name="doj" class="form-control" value="<%= draft.doj || '' %>" required>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">
+            <i class="bi bi-person-badge text-muted"></i> UAN Number (optional)
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> speak</span>
+          </label>
+          <div class="input-voice-wrap">
+            <input type="text" name="uan" class="form-control" value="<%= draft.uan || '' %>"
+              pattern="\d{12}" maxlength="12" placeholder="12-digit UAN">
+            <button class="mic-btn" type="button" title="Speak to fill"><i class="bi bi-mic-fill"></i></button>
+          </div>
+          <div class="form-text">Leave blank if not yet enrolled in PF.</div>
+        </div>
+
+        <div class="col-md-4" x-data="{ esic: '<%= draft.esic_applicable || 'no' %>' }">
+          <label class="form-label">
+            <i class="bi bi-hospital text-muted"></i> ESIC Applicable? <span class="req">*</span>
+          </label>
+          <div class="d-flex gap-3 mt-1">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="esic_applicable" value="yes"
+                x-model="esic" id="esicYes" <%= draft.esic_applicable === 'yes' ? 'checked' : '' %>>
+              <label class="form-check-label" for="esicYes">Yes</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="esic_applicable" value="no"
+                x-model="esic" id="esicNo" <%= draft.esic_applicable !== 'yes' ? 'checked' : '' %>>
+              <label class="form-check-label" for="esicNo">No</label>
+            </div>
+          </div>
+          <div class="mt-2" x-show="esic === 'yes'" x-cloak>
+            <label class="form-label" style="font-size:.8rem">
+              ESIC Number <span class="req">*</span>
+              <span class="voice-hint"><i class="bi bi-mic-fill"></i> speak</span>
+            </label>
+            <div class="input-voice-wrap">
+              <input type="text" name="esic_number" class="form-control form-control-sm"
+                value="<%= draft.esic_number || '' %>"
+                pattern="\d{17}" maxlength="17" placeholder="17-digit ESIC number"
+                :required="esic === 'yes'">
+              <button class="mic-btn" type="button" title="Speak to fill"><i class="bi bi-mic-fill"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-4 gap-2">
+        <div class="d-flex gap-2">
+          <a href="/workers/register" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back
+          </a>
+          <button type="submit" formaction="/workers/register/save-draft" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-floppy me-1"></i>Save & Exit
+          </button>
+        </div>
+        <button type="submit" class="btn btn-primary">
+          Next: Documents <i class="bi bi-arrow-right ms-1"></i>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function employmentForm() {
+  return {
+    category: '<%= draft.category || '' %>',
+    zone: '<%= draft.zone || '' %>',
+    wageRate: '<%= draft.wage_rate || '' %>',
+    wageSource: '',
+    lookupWage() {
+      const key = `${this.category}|${this.zone}`;
+      if (WAGE_MAP[key]) {
+        this.wageRate = WAGE_MAP[key];
+        this.wageSource = `Auto-filled from wage master: ₹${WAGE_MAP[key]}/day`;
+      } else if (this.category && this.zone) {
+        this.wageSource = 'No standard rate for this combination — enter manually.';
+      }
+    }
+  };
+}
+</script>

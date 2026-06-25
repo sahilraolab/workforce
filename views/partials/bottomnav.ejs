@@ -1,0 +1,68 @@
+<%
+  const role = user ? user.role : '';
+  const p    = currentPath || '';
+  function tab(href, icon, label, match) {
+    const active = (match ? p.startsWith(match) : p === href) ? 'active' : '';
+    return `<a href="${href}" class="bn-tab ${active}">
+      <i class="bi ${icon}"></i><span>${label}</span>
+    </a>`;
+  }
+  function sheetItem(href, icon, label, match) {
+    const active = (match ? p.startsWith(match) : p === href) ? 'active' : '';
+    return `<a href="${href}" class="sb-link ${active}">
+      <i class="bi ${icon}"></i><span>${label}</span>
+    </a>`;
+  }
+  // Everything NOT already pinned in the bottom tab bar — full parity with the desktop sidebar.
+  const moreActive = ['/payroll','/sites','/settings','/admin'].some(seg => p.startsWith(seg));
+%>
+<nav id="bottom-nav">
+  <%- tab('/dashboard', 'bi-speedometer2', t('nav_home')) %>
+  <%- tab('/workers', 'bi-people', t('nav_workers'), '/workers') %>
+  <% if (role !== 'auditor') { %>
+    <%- tab('/attendance', 'bi-calendar-check', t('nav_attendance'), '/attendance') %>
+  <% } %>
+  <%- tab('/reports', 'bi-bar-chart-line', t('nav_reports'), '/reports') %>
+  <button type="button" class="bn-tab <%= moreActive ? 'active' : '' %>" id="bn-more-btn">
+    <i class="bi bi-grid-3x3-gap"></i><span><%= t('nav_more') %></span>
+  </button>
+</nav>
+
+<div id="more-overlay"></div>
+<div id="more-sheet">
+  <div class="more-sheet-handle"></div>
+  <div class="more-sheet-title"><%= t('nav_all_sections') %></div>
+  <div class="more-sheet-list">
+    <%- sheetItem('/dashboard', 'bi-speedometer2', t('nav_dashboard')) %>
+    <%- sheetItem('/workers', 'bi-people', t('nav_workers'), '/workers') %>
+    <% if (role !== 'auditor') { %>
+      <%- sheetItem('/attendance', 'bi-calendar-check', t('nav_attendance'), '/attendance') %>
+    <% } %>
+    <% if (['hr_payroll','company_admin','super_admin','auditor'].includes(role)) { %>
+      <%- sheetItem('/payroll', 'bi-cash-stack', t('nav_payroll'), '/payroll') %>
+    <% } %>
+    <%- sheetItem('/reports', 'bi-bar-chart-line', t('nav_reports'), '/reports') %>
+    <% if (['company_admin','super_admin'].includes(role)) { %>
+      <div class="sb-group-label"><%= t('group_management') %></div>
+      <%- sheetItem('/sites', 'bi-geo-alt', t('nav_sites'), '/sites') %>
+      <%- sheetItem('/settings/licenses', 'bi-patch-check', t('nav_licenses') || 'Licenses', '/settings/licenses') %>
+      <%- sheetItem('/settings/users', 'bi-person-gear', t('nav_users'), '/settings/users') %>
+      <%- sheetItem('/settings/wage-master', 'bi-currency-rupee', t('nav_wage_master'), '/settings/wage-master') %>
+      <%- sheetItem('/settings/profile', 'bi-gear', t('nav_settings'),
+        p.startsWith('/settings') && !p.startsWith('/settings/users') && !p.startsWith('/settings/wage-master') && !p.startsWith('/settings/licenses') ? '/settings' : null) %>
+    <% } else { %>
+      <div class="sb-group-label"><%= t('group_account') %></div>
+      <%- sheetItem('/settings/profile', 'bi-gear', t('nav_settings'), '/settings') %>
+    <% } %>
+    <% if (role === 'super_admin') { %>
+      <div class="sb-group-label"><%= t('group_super_admin') %></div>
+      <%- sheetItem('/admin/companies', 'bi-building', t('nav_companies'), '/admin/companies') %>
+    <% } %>
+    <form action="/auth/logout" method="POST" style="margin:.5rem 0 0">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="sb-link" style="width:100%;border:none;background:none;text-align:left;color:#b3475f">
+        <i class="bi bi-box-arrow-right" style="color:#b3475f"></i><span><%= t('sign_out') %></span>
+      </button>
+    </form>
+  </div>
+</div>

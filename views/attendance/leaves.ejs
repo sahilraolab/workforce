@@ -1,0 +1,197 @@
+<%- include('../partials/breadcrumb', { items: [{ label: t('attendance_title'), href: '/attendance' }, { label: 'Leave Records' }] }) %>
+
+<%
+  const pending  = (leaves || []).filter(l => l.status === 'pending');
+  const approved = (leaves || []).filter(l => l.status === 'approved');
+  const rejected = (leaves || []).filter(l => l.status === 'rejected');
+  const totalDays = (leaves || []).reduce((s, l) => s + (parseInt(l.days) || 0), 0);
+  const canAction = ['company_admin','site_supervisor','hr_payroll','super_admin'].includes(user.role);
+
+  const leaveTypeLabel = { annual: 'Annual', casual: 'Casual', sick: 'Sick', unpaid: 'Unpaid', other: 'Other' };
+  const leaveTypeColor = { annual: 'var(--eos-blue-800)', casual: 'var(--eos-green-600)', sick: 'var(--eos-amber-600)', unpaid: 'var(--eos-red-600)', other: 'var(--em-ink-2)' };
+  const leaveTypeBg   = { annual: 'var(--eos-blue-50)', casual: 'var(--eos-green-50)', sick: '#fffbeb', unpaid: 'var(--eos-red-50)', other: 'var(--em-surface-2)' };
+%>
+
+<!-- Page header -->
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div>
+    <h4 class="mb-0 fw-bold"><i class="bi bi-calendar-x me-2" style="color:var(--em-accent)"></i>Leave Records</h4>
+    <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:3px">Worker leave requests and approval status</div>
+  </div>
+  <a href="/attendance" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Back to Attendance
+  </a>
+</div>
+
+<!-- Pending approvals banner -->
+<% if (pending.length > 0 && canAction) { %>
+<div class="eos-alert mb-3">
+  <i class="bi bi-hourglass-split" style="font-size:1.1rem;flex-shrink:0;margin-top:1px"></i>
+  <div class="eos-alert-text">
+    <strong><%= pending.length %> leave request<%= pending.length > 1 ? 's' : '' %> pending your approval.</strong>
+    Review and take action below.
+  </div>
+</div>
+<% } %>
+
+<!-- KPI summary -->
+<div class="em-stat-row mb-4">
+  <div class="em-stat c-amber">
+    <div class="em-stat-label"><i class="bi bi-hourglass me-1"></i>Pending</div>
+    <div class="em-stat-value" style="color:var(--eos-amber-600)"><%= pending.length %></div>
+    <div class="em-stat-sub">awaiting approval</div>
+  </div>
+  <div class="em-stat c-teal">
+    <div class="em-stat-label"><i class="bi bi-check-circle me-1"></i>Approved</div>
+    <div class="em-stat-value" style="color:var(--eos-green-600)"><%= approved.length %></div>
+    <div class="em-stat-sub">this period</div>
+  </div>
+  <div class="em-stat c-red">
+    <div class="em-stat-label"><i class="bi bi-x-circle me-1"></i>Rejected</div>
+    <div class="em-stat-value" style="color:var(--eos-red-600)"><%= rejected.length %></div>
+    <div class="em-stat-sub">this period</div>
+  </div>
+  <div class="em-stat c-violet">
+    <div class="em-stat-label"><i class="bi bi-calendar2-range me-1"></i>Total Days</div>
+    <div class="em-stat-value"><%= totalDays %></div>
+    <div class="em-stat-sub">approved leave days</div>
+  </div>
+</div>
+
+<% if (!leaves || leaves.length === 0) { %>
+<div class="card" style="border-radius:12px">
+  <div class="card-body text-center py-5" style="color:var(--em-ink-3)">
+    <i class="bi bi-calendar-check" style="font-size:2rem;display:block;margin-bottom:.5rem;opacity:.4"></i>
+    No leave records found.
+  </div>
+</div>
+<% } else { %>
+
+<!-- Mobile: stacked leave cards -->
+<div class="d-md-none">
+  <% (leaves || []).forEach(l => {
+    const statusBg    = l.status === 'approved' ? 'var(--eos-green-50)'  : l.status === 'rejected' ? 'var(--eos-red-50)'  : '#fffbeb';
+    const statusColor = l.status === 'approved' ? 'var(--eos-green-600)' : l.status === 'rejected' ? 'var(--eos-red-600)' : 'var(--eos-amber-600)';
+    const statusBdr   = l.status === 'approved' ? '#a8d57a'              : l.status === 'rejected' ? 'var(--eos-red-100)' : '#fde68a';
+    const statusIcon  = l.status === 'approved' ? 'bi-check-circle-fill' : l.status === 'rejected' ? 'bi-x-circle-fill'  : 'bi-hourglass-split';
+    const lt = l.leave_type || 'other';
+  %>
+  <div class="card mb-2" style="border-radius:12px;border-left:3px solid <%= statusColor %>">
+    <div class="card-body" style="padding:.85rem 1rem">
+      <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+        <div>
+          <a href="/workers/<%= l.worker_id %>" class="fw-semibold text-decoration-none" style="color:var(--em-ink);font-size:.9rem">
+            <%= l.worker ? l.worker.name : '—' %>
+          </a>
+          <div style="font-size:.72rem;color:var(--em-ink-3)">
+            <%= l.from_date %> → <%= l.to_date %> &middot; <strong><%= l.days %> day<%= l.days > 1 ? 's' : '' %></strong>
+          </div>
+        </div>
+        <span class="badge" style="background:<%= statusBg %>;color:<%= statusColor %>;border:0.5px solid <%= statusBdr %>;font-size:.72rem;flex-shrink:0">
+          <i class="bi <%= statusIcon %> me-1"></i><%= l.status %>
+        </span>
+      </div>
+      <div class="mb-2">
+        <span class="badge" style="background:<%= leaveTypeBg[lt] || 'var(--em-surface-2)' %>;color:<%= leaveTypeColor[lt] || 'var(--em-ink-2)' %>;border:0.5px solid currentColor;font-size:.72rem">
+          <%= leaveTypeLabel[lt] || lt %> Leave
+        </span>
+      </div>
+      <% if (l.status === 'pending' && canAction) { %>
+      <div class="d-flex gap-2">
+        <form action="/attendance/leaves/<%= l.id %>/action" method="POST" style="flex:1">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="action" value="approve">
+          <button class="btn btn-sm w-100" style="background:var(--eos-green-50);color:var(--eos-green-600);border:1px solid #a8d57a;font-size:.78rem">
+            <i class="bi bi-check-lg me-1"></i>Approve
+          </button>
+        </form>
+        <form action="/attendance/leaves/<%= l.id %>/action" method="POST" style="flex:1">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="action" value="reject">
+          <button class="btn btn-sm w-100" style="background:var(--eos-red-50);color:var(--eos-red-600);border:1px solid var(--eos-red-100);font-size:.78rem">
+            <i class="bi bi-x-lg me-1"></i>Reject
+          </button>
+        </form>
+      </div>
+      <% } %>
+    </div>
+  </div>
+  <% }) %>
+</div>
+
+<!-- Desktop: enhanced table -->
+<div class="d-none d-md-block">
+  <div class="card" style="border-radius:12px">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th style="padding:10px 16px">Worker</th>
+              <th>Leave Type</th>
+              <th>Period</th>
+              <th class="text-center">Days</th>
+              <th>Status</th>
+              <% if (canAction) { %><th style="width:130px">Actions</th><% } %>
+            </tr>
+          </thead>
+          <tbody>
+            <% (leaves || []).forEach(l => {
+              const statusBg    = l.status === 'approved' ? 'var(--eos-green-50)'  : l.status === 'rejected' ? 'var(--eos-red-50)'  : '#fffbeb';
+              const statusColor = l.status === 'approved' ? 'var(--eos-green-600)' : l.status === 'rejected' ? 'var(--eos-red-600)' : 'var(--eos-amber-600)';
+              const statusBdr   = l.status === 'approved' ? '#a8d57a'              : l.status === 'rejected' ? 'var(--eos-red-100)' : '#fde68a';
+              const statusIcon  = l.status === 'approved' ? 'bi-check-circle-fill' : l.status === 'rejected' ? 'bi-x-circle-fill'  : 'bi-hourglass-split';
+              const lt = l.leave_type || 'other';
+            %>
+            <tr>
+              <td style="padding:9px 16px">
+                <a href="/workers/<%= l.worker_id %>" class="fw-semibold text-decoration-none" style="color:var(--em-ink)">
+                  <%= l.worker ? l.worker.name : '—' %>
+                </a>
+              </td>
+              <td>
+                <span class="badge" style="background:<%= leaveTypeBg[lt] || 'var(--em-surface-2)' %>;color:<%= leaveTypeColor[lt] || 'var(--em-ink-2)' %>;border:0.5px solid currentColor;font-size:.72rem">
+                  <%= leaveTypeLabel[lt] || lt %>
+                </span>
+              </td>
+              <td class="small text-muted">
+                <%= l.from_date %><% if (l.from_date !== l.to_date) { %> → <%= l.to_date %><% } %>
+              </td>
+              <td class="text-center fw-semibold"><%= l.days %></td>
+              <td>
+                <span class="badge" style="background:<%= statusBg %>;color:<%= statusColor %>;border:0.5px solid <%= statusBdr %>;font-size:.72rem">
+                  <i class="bi <%= statusIcon %> me-1"></i><%= l.status %>
+                </span>
+              </td>
+              <% if (canAction) { %>
+              <td class="text-nowrap">
+                <% if (l.status === 'pending') { %>
+                <form action="/attendance/leaves/<%= l.id %>/action" method="POST" class="d-inline">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="action" value="approve">
+                  <button class="btn btn-sm me-1" style="background:var(--eos-green-50);color:var(--eos-green-600);border:1px solid #a8d57a;font-size:.72rem;padding:3px 8px">
+                    <i class="bi bi-check-lg"></i> Approve
+                  </button>
+                </form>
+                <form action="/attendance/leaves/<%= l.id %>/action" method="POST" class="d-inline">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="action" value="reject">
+                  <button class="btn btn-sm" style="background:var(--eos-red-50);color:var(--eos-red-600);border:1px solid var(--eos-red-100);font-size:.72rem;padding:3px 8px">
+                    <i class="bi bi-x-lg"></i> Reject
+                  </button>
+                </form>
+                <% } else { %>
+                <span style="font-size:.72rem;color:var(--em-ink-3)">—</span>
+                <% } %>
+              </td>
+              <% } %>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% } %>

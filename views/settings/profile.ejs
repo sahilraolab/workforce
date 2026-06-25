@@ -1,0 +1,96 @@
+<%- include('../partials/settings-tabs', { active: 'profile', tabTitle: t('settings_title'), tabIcon: 'bi-gear', tabSubtitle: t('profile_subtitle') }) %>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-6">
+    <div class="profile-card mb-3">
+      <div class="profile-card-header">
+        <div class="profile-avatar"><%= user.name ? user.name.charAt(0).toUpperCase() : 'U' %></div>
+        <div>
+          <div class="profile-name"><%= user.name %></div>
+          <div class="profile-email"><%= user.email %></div>
+          <span class="badge bg-secondary profile-role-badge"><%= user.role.replace(/_/g,' ') %></span>
+        </div>
+      </div>
+
+      <% if (errors && errors.length > 0) { %>
+      <div class="eos-alert m-3 mb-0" style="background:var(--eos-red-50);border-color:var(--eos-red-100);border-left-color:var(--eos-red-600)">
+        <i class="bi bi-exclamation-circle-fill" style="color:var(--eos-red-600);flex-shrink:0;margin-top:1px"></i>
+        <div class="eos-alert-text">
+          <ul class="mb-0 ps-3">
+            <% errors.forEach(e => { %><li style="font-size:.82rem"><%= e.msg %></li><% }) %>
+          </ul>
+        </div>
+      </div>
+      <% } %>
+
+      <div class="settings-section-title"><i class="bi bi-person-vcard"></i><%= t('profile_info_title') %></div>
+      <form action="/settings/profile" method="POST" class="px-3 pb-3">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="mb-3">
+          <label class="form-label fw-semibold"><%= t('settings_full_name') %></label>
+          <input type="text" name="name" class="form-control" value="<%= user.name %>" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold"><%= t('common_email') %></label>
+          <input type="email" class="form-control" value="<%= user.email %>" disabled>
+        </div>
+        <button class="btn btn-primary"><%= t('settings_save_changes') %></button>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="profile-card mb-3">
+      <div class="settings-section-title"><i class="bi bi-shield-lock"></i><%= t('change_password_title') %></div>
+      <p class="px-3 small text-muted mt-n2 mb-3"><%= t('change_password_subtitle') %></p>
+      <form action="/settings/profile" method="POST" class="px-3 pb-3">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="mb-3">
+          <label class="form-label fw-semibold"><%= t('settings_current_password') %></label>
+          <div class="password-wrap">
+            <input type="password" name="current_password" id="curPw" class="form-control" autocomplete="current-password">
+            <button type="button" class="password-toggle-btn" data-toggle-password data-target="curPw"
+              data-show-label="<%= t('common_show_password') %>" data-hide-label="<%= t('common_hide_password') %>" aria-label="<%= t('common_show_password') %>">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold"><%= t('settings_new_password') %></label>
+          <div class="password-wrap">
+            <input type="password" name="new_password" id="newPw" class="form-control" minlength="8" autocomplete="new-password">
+            <button type="button" class="password-toggle-btn" data-toggle-password data-target="newPw"
+              data-show-label="<%= t('common_show_password') %>" data-hide-label="<%= t('common_hide_password') %>" aria-label="<%= t('common_show_password') %>">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold"><%= t('settings_new_password_confirm') %></label>
+          <div class="password-wrap">
+            <input type="password" name="new_password_confirm" id="newPwConfirm" class="form-control" minlength="8" autocomplete="new-password">
+            <button type="button" class="password-toggle-btn" data-toggle-password data-target="newPwConfirm"
+              data-show-label="<%= t('common_show_password') %>" data-hide-label="<%= t('common_hide_password') %>" aria-label="<%= t('common_show_password') %>">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+          <div class="form-text text-danger d-none" id="pwMismatchHint"><%= t('val_password_mismatch') %></div>
+        </div>
+        <button class="btn btn-outline-primary"><%= t('change_password_btn') %></button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const newPw = document.getElementById('newPw');
+  const newPwConfirm = document.getElementById('newPwConfirm');
+  const hint = document.getElementById('pwMismatchHint');
+  function checkPwMatch() {
+    const mismatch = newPwConfirm.value.length > 0 && newPw.value !== newPwConfirm.value;
+    hint.classList.toggle('d-none', !mismatch);
+    newPwConfirm.setCustomValidity(mismatch ? 'mismatch' : '');
+  }
+  newPw.addEventListener('input', checkPwMatch);
+  newPwConfirm.addEventListener('input', checkPwMatch);
+</script>

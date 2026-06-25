@@ -1,0 +1,86 @@
+<%- include('../partials/breadcrumb', { items: [{ label: t('sites_title'), href: '/sites' }, { label: title }] }) %>
+
+<!-- Page header -->
+<div class="d-flex align-items-center gap-3 mb-4">
+  <a href="/sites" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+  <div>
+    <h4 class="mb-0 fw-bold">
+      <i class="bi bi-<%= site ? 'pencil-square' : 'geo-alt-fill' %> me-2" style="color:var(--em-accent)"></i><%= title %>
+    </h4>
+    <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:2px">
+      <%= site ? 'Update site details or change status' : 'Add a new work site or project location' %>
+    </div>
+  </div>
+</div>
+
+<!-- Error alert -->
+<% if (errors && errors.length > 0) { %>
+<div class="eos-alert mb-3" style="border-left-color:var(--eos-red-600);background:var(--eos-red-50);border-color:var(--eos-red-100)">
+  <i class="bi bi-exclamation-circle-fill" style="color:var(--eos-red-600);flex-shrink:0;margin-top:1px"></i>
+  <div class="eos-alert-text">
+    <strong>Please fix the following:</strong>
+    <ul class="mb-0 mt-1 ps-3">
+      <% errors.forEach(e => { %><li style="font-size:.82rem"><%= e.msg %></li><% }) %>
+    </ul>
+  </div>
+</div>
+<% } %>
+
+<div class="card" style="border-radius:12px;max-width:600px">
+  <div class="card-body" style="padding:1.5rem">
+    <form action="<%= site ? '/sites/' + site.id + '?_method=PUT' : '/sites' %>" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (site) { %><input type="hidden" name="_method" value="PUT"><% } %>
+
+      <!-- Site Name -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold" style="font-size:.84rem">
+          <%= t('sites_col_name') %> <span class="text-danger">*</span>
+        </label>
+        <input type="text" name="name" class="form-control form-control-sm"
+               value="<%= site ? site.name : '' %>" required
+               placeholder="e.g. Main Construction Site, Andheri Office">
+      </div>
+
+      <!-- Location -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold" style="font-size:.84rem"><%= t('sites_col_location') %></label>
+        <textarea name="location" class="form-control form-control-sm" rows="2"
+                  placeholder="Full address or landmark"><%= site ? site.location : '' %></textarea>
+      </div>
+
+      <!-- Supervisor -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold" style="font-size:.84rem"><%= t('sites_col_supervisor') %></label>
+        <select name="supervisor_user_id" class="form-select form-select-sm">
+          <option value="">— <%= t('common_unassigned') %> —</option>
+          <% users.forEach(u => { %>
+            <option value="<%= u.id %>" <%= site && site.supervisor_user_id == u.id ? 'selected' : '' %>>
+              <%= u.name %> (<%= u.email %>)
+            </option>
+          <% }) %>
+        </select>
+        <div class="form-text" style="font-size:.72rem">The supervisor can mark attendance and review workers for this site.</div>
+      </div>
+
+      <!-- Status (edit only) -->
+      <% if (site) { %>
+      <div class="mb-4">
+        <label class="form-label fw-semibold" style="font-size:.84rem"><%= t('common_status') %></label>
+        <select name="status" class="form-select form-select-sm">
+          <option value="active"   <%= site.status === 'active'   ? 'selected' : '' %>><%= t('common_active') %></option>
+          <option value="inactive" <%= site.status === 'inactive' ? 'selected' : '' %>><%= t('common_inactive') %></option>
+        </select>
+        <div class="form-text" style="font-size:.72rem">Inactive sites are hidden from attendance and new worker registration.</div>
+      </div>
+      <% } %>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary btn-sm">
+          <i class="bi bi-check-lg me-1"></i><%= site ? t('common_save_changes') || 'Save Changes' : t('sites_new_btn') %>
+        </button>
+        <a href="/sites" class="btn btn-outline-secondary btn-sm"><%= t('common_cancel') %></a>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,245 @@
+<%- include('../partials/breadcrumb', { items: [{ label: t('workers_title') }] }) %>
+
+<% if (pendingDraft && pendingDraft.name) { %>
+<div class="eos-alert info mb-3">
+  <i class="bi bi-pencil-square" style="color:var(--eos-blue-800);font-size:1.1rem;flex-shrink:0;margin-top:1px"></i>
+  <div class="eos-alert-text" style="flex:1">
+    <strong>Unfinished registration</strong> — you have a saved draft for <strong><%= pendingDraft.name %></strong>.
+    <div class="d-flex gap-2 mt-1 flex-wrap">
+      <a href="/workers/register" class="btn btn-sm" style="background:var(--eos-blue-50);color:var(--eos-blue-800);border:1px solid var(--eos-blue-100);font-size:.76rem">
+        <i class="bi bi-arrow-right-circle me-1"></i>Continue Registration
+      </a>
+      <a href="/workers/register/exit" class="btn btn-sm btn-outline-secondary" style="font-size:.76rem">
+        <i class="bi bi-x me-1"></i>Discard Draft
+      </a>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0 fw-bold"><i class="bi bi-people me-2 text-primary"></i><%= t('workers_title') %></h4>
+  <div class="d-flex gap-2">
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-arrow-down-up me-1"></i><span class="d-none d-sm-inline"><%= t('workers_import_btn') %> / <%= t('workers_export_btn') %></span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="?<%= new URLSearchParams({...query, export: 'csv'}).toString() %>"><i class="bi bi-download me-2"></i><%= t('workers_export_btn') %> CSV</a></li>
+        <li><a class="dropdown-item" href="/workers/import-template"><i class="bi bi-file-earmark-spreadsheet me-2"></i><%= t('workers_download_template') %></a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#importModal"><i class="bi bi-upload me-2"></i><%= t('workers_import_btn') %> CSV</button></li>
+      </ul>
+    </div>
+    <a href="/workers/register" class="btn btn-primary btn-sm">
+      <i class="bi bi-person-plus me-1"></i><%= t('workers_register_btn') %>
+    </a>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    <!-- Mobile search bar — syncs to the hidden form input via JS -->
+    <div class="d-md-none eos-search mb-3">
+      <i class="bi bi-search"></i>
+      <input type="text" id="mobile-search-input" autocomplete="off"
+        placeholder="<%= t('workers_search_placeholder') %>" value="<%= query.search || '' %>">
+    </div>
+
+    <form id="filter-form" class="d-flex align-items-center gap-2 flex-wrap mb-3" method="GET">
+      <!-- Single canonical search input; visible on desktop, hidden on mobile (mobile bar syncs to this) -->
+      <input type="text" name="search" id="desktop-search-input" autocomplete="off"
+        class="form-control form-control-sm d-none d-md-block" data-autosearch
+        placeholder="<%= t('workers_search_placeholder') %>" value="<%= query.search || '' %>"
+        style="max-width:220px">
+      <select name="site_id" class="form-select form-select-sm" style="max-width:150px" onchange="this.form.submit()">
+        <option value=""><%= t('common_all_sites') %></option>
+        <% sites.forEach(s => { %>
+          <option value="<%= s.id %>" <%= query.site_id == s.id ? 'selected' : '' %>><%= s.name %></option>
+        <% }) %>
+      </select>
+      <select name="status" class="form-select form-select-sm" style="max-width:130px" onchange="this.form.submit()">
+        <option value=""><%= t('common_all_statuses') %></option>
+        <option value="active"   <%= query.status === 'active'   ? 'selected' : '' %>><%= t('common_active') %></option>
+        <option value="inactive" <%= query.status === 'inactive' ? 'selected' : '' %>><%= t('common_inactive') %></option>
+        <option value="draft"    <%= query.status === 'draft'    ? 'selected' : '' %>><%= t('common_draft') %></option>
+      </select>
+      <a href="/workers" class="btn btn-outline-secondary btn-sm"><%= t('common_clear') %></a>
+    </form>
+
+    <% if (workers.length === 0) { %>
+      <div class="text-center text-muted py-4"><%= t('workers_no_results') %></div>
+    <% } else { %>
+
+    <!-- Mobile: EmployeOS-style employee cards (below md) -->
+    <div class="d-md-none worker-card-list">
+      <% workers.forEach(w => {
+        const initials = w.name ? w.name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0,2) : '?';
+        const avClass = w.status === 'inactive' ? 'av-red' : w.status === 'draft' ? 'av-amber' : '';
+        const badgeClass = w.status === 'active' ? 'bg-success' : w.status === 'draft' ? 'bg-warning' : 'bg-secondary';
+      %>
+      <div class="worker-card">
+        <!-- Header: avatar + name/role + status -->
+        <div class="worker-card-head">
+          <div class="worker-card-avatar <%= avClass %>"><%= initials %></div>
+          <div style="flex:1;min-width:0">
+            <a href="/workers/<%= w.id %>" class="worker-card-name"><%= w.name %></a>
+            <div class="worker-card-role">
+              <%= w.employment ? w.employment.category : '—' %>
+              <% if (w.employment) { %> · <%= w.employment.zone %><% } %>
+            </div>
+          </div>
+          <span class="badge <%= badgeClass %>">
+            <% if (w.status === 'active') { %><i class="bi bi-circle-fill" style="font-size:5px"></i><% } %>
+            <%= w.status %>
+          </span>
+        </div>
+        <!-- Meta grid: 4 key facts -->
+        <div class="worker-card-meta-grid">
+          <div class="worker-card-meta-item">
+            <span><%= t('common_site') %></span>
+            <span><%= w.site ? w.site.name : '—' %></span>
+          </div>
+          <div class="worker-card-meta-item">
+            <span><%= t('workers_col_doj') %></span>
+            <span><%= w.employment ? w.employment.doj : '—' %></span>
+          </div>
+          <div class="worker-card-meta-item">
+            <span><%= t('common_mobile') %></span>
+            <span><%= w.mobile %></span>
+          </div>
+          <div class="worker-card-meta-item">
+            <span><%= t('workers_aadhaar_prefix') %></span>
+            <span>••••<%= w.aadhaar_last4 %></span>
+          </div>
+        </div>
+        <!-- Actions -->
+        <div class="worker-card-actions">
+          <a href="/workers/<%= w.id %>" class="btn btn-outline-secondary btn-sm flex-fill">
+            <i class="bi bi-person-lines-fill me-1"></i><%= t('common_view') %>
+          </a>
+          <% if (['company_admin','super_admin'].includes(user.role)) { %>
+          <form action="/workers/<%= w.id %>?_method=DELETE" method="POST" class="d-inline">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="_method" value="DELETE">
+            <button type="submit" class="btn btn-outline-danger btn-sm"
+              data-confirm="<%= t('workers_deactivate_confirm_prefix') %> <%= w.name %><%= t('workers_deactivate_confirm_suffix') %>">
+              <i class="bi bi-person-x"></i>
+            </button>
+          </form>
+          <% } %>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+
+    <!-- Desktop: table (md and up) -->
+    <div class="d-none d-md-block table-responsive">
+      <table class="table table-hover table-sm align-middle">
+        <thead class="table-light">
+          <tr>
+            <th><%= t('common_name') %></th>
+            <th><%= t('common_site') %></th>
+            <th><%= t('workers_col_category_zone') %></th>
+            <th><%= t('common_mobile') %></th>
+            <th><%= t('workers_col_doj') %></th>
+            <th><%= t('common_status') %></th>
+            <th><%= t('common_actions') %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% workers.forEach(w => { %>
+          <tr>
+            <td>
+              <a href="/workers/<%= w.id %>" class="fw-semibold text-decoration-none"><%= w.name %></a>
+              <div class="small text-muted"><%= t('workers_aadhaar_prefix') %> ••••<%= w.aadhaar_last4 %></div>
+            </td>
+            <td class="small"><%= w.site ? w.site.name : '—' %></td>
+            <td class="small">
+              <% if (w.employment) { %>
+                <%= w.employment.category %><br>
+                <span class="text-muted"><%= w.employment.zone %> — ₹<%= w.employment.wage_rate %>/day</span>
+              <% } else { %><span class="text-muted">—</span><% } %>
+            </td>
+            <td class="small"><%= w.mobile %></td>
+            <td class="small"><%= w.employment ? w.employment.doj : '—' %></td>
+            <td>
+              <span class="badge <%=
+                w.status === 'active' ? 'bg-success' :
+                w.status === 'draft'  ? 'bg-warning text-dark' : 'bg-secondary'
+              %>"><%= w.status %></span>
+            </td>
+            <td>
+              <a href="/workers/<%= w.id %>" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-eye"></i>
+              </a>
+              <% if (['company_admin','super_admin'].includes(user.role)) { %>
+              <form action="/workers/<%= w.id %>?_method=DELETE" method="POST" class="d-inline" autocomplete="off">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" autocomplete="off">
+                <input type="hidden" name="_method" value="DELETE" autocomplete="off">
+                <button type="submit" class="btn btn-outline-danger btn-sm"
+                  data-confirm="<%= t('workers_deactivate_confirm_prefix') %> <%= w.name %><%= t('workers_deactivate_confirm_suffix') %>">
+                  <i class="bi bi-person-x"></i>
+                </button>
+              </form>
+              <% } %>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+
+    <div class="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
+      <div class="small text-muted"><%= t('workers_showing_prefix') %> <%= workers.length %> <%= t('workers_showing_of') %> <%= pageData.total %> <%= t('workers_showing_suffix') %></div>
+      <%- include('../partials/pagination', { pageData, query }) %>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const mobileInput  = document.getElementById('mobile-search-input');
+  const desktopInput = document.getElementById('desktop-search-input');
+  if (!mobileInput || !desktopInput) return;
+  let timer;
+  mobileInput.addEventListener('input', () => {
+    desktopInput.value = mobileInput.value;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      const form = document.getElementById('filter-form');
+      if (form.requestSubmit) form.requestSubmit();
+      else form.submit();
+    }, 450);
+  });
+})();
+</script>
+
+<!-- Import modal -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/workers/import?_csrf=<%= encodeURIComponent(csrfToken) %>" method="POST" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title"><%= t('workers_import_title') %></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="small text-muted"><%= t('workers_import_instructions') %></p>
+          <a href="/workers/import-template" class="btn btn-outline-secondary btn-sm mb-3">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i><%= t('workers_download_template') %>
+          </a>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold"><%= t('workers_import_choose_file') %></label>
+            <input type="file" name="file" accept=".csv,text/csv" class="form-control form-control-sm" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal"><%= t('common_clear') %></button>
+          <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-upload me-1"></i><%= t('workers_import_submit') %></button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

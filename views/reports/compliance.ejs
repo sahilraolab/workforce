@@ -1,0 +1,283 @@
+<%
+  const breakdownLabels = {
+    documents_verified: 'Documents Verified',
+    wage_compliant:     'Wage Compliant',
+    age_compliant:      'Age Compliant',
+    uan_present:        'UAN / PF Enrolled',
+    esic_compliant:     'ESIC Compliant',
+  };
+  const breakdownIcons = {
+    documents_verified: 'bi-file-earmark-check',
+    wage_compliant:     'bi-currency-rupee',
+    age_compliant:      'bi-person-check',
+    uan_present:        'bi-building-fill-check',
+    esic_compliant:     'bi-heart-pulse',
+  };
+  const breakdownDesc = {
+    documents_verified: 'Workers with all mandatory KYC docs uploaded and verified',
+    wage_compliant:     'Workers paid at or above minimum wage for their skill/zone',
+    age_compliant:      'Workers confirmed ≥18 years at date of joining',
+    uan_present:        'Active workers enrolled in PF with a valid UAN',
+    esic_compliant:     'Workers earning ≤₹21,000/month enrolled in ESIC',
+  };
+%>
+
+<%- include('../partials/report-nav', { reportNavActive: 'compliance' }) %>
+<%- include('../partials/breadcrumb', { items: [{ label: t('reports_compliance_title') }] }) %>
+<div class="mb-3">
+  <h4 class="mb-0 fw-bold"><i class="bi bi-bar-chart-line me-2" style="color:var(--em-accent)"></i><%= t('reports_compliance_title') %></h4>
+  <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:3px">Labour law &amp; statutory compliance snapshot</div>
+</div>
+
+<!-- Filter bar -->
+<div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+  <form class="d-flex align-items-center gap-2" method="GET">
+    <select name="site_id" class="form-select form-select-sm" onchange="this.form.submit()" style="max-width:170px">
+      <option value=""><%= t('common_all_sites') %></option>
+      <% sites.forEach(s => { %>
+        <option value="<%= s.id %>" <%= selectedSite == s.id ? 'selected' : '' %>><%= s.name %></option>
+      <% }) %>
+    </select>
+    <% if (selectedSite) { %>
+    <a href="/reports/compliance" class="btn btn-outline-secondary btn-sm">Clear</a>
+    <% } %>
+  </form>
+  <% if (score < 80) { %>
+  <div class="eos-alert mb-0 flex-1" style="margin-bottom:0;padding:7px 12px">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <div class="eos-alert-text">Compliance score is below 80% — review failing checks below.</div>
+  </div>
+  <% } else { %>
+  <div class="eos-alert success mb-0" style="margin-bottom:0;padding:7px 12px">
+    <i class="bi bi-check-circle-fill"></i>
+    <div class="eos-alert-text">Good compliance standing. Keep documents updated.</div>
+  </div>
+  <% } %>
+</div>
+
+<!-- Hero score + breakdown bars -->
+<div class="row g-3 mb-4">
+  <!-- Score ring -->
+  <div class="col-6 col-md-2">
+    <div class="card h-100 text-center" style="border-radius:12px;padding:1.25rem .75rem">
+      <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--em-ink-3);margin-bottom:.75rem">Overall Score</div>
+      <div style="position:relative;width:90px;height:90px;margin:0 auto">
+        <svg viewBox="0 0 36 36" style="transform:rotate(-90deg);width:90px;height:90px">
+          <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--em-line-2)" stroke-width="3"/>
+          <circle cx="18" cy="18" r="15.9" fill="none"
+            stroke="<%= score >= 80 ? '#3B6D11' : score >= 60 ? '#854F0B' : '#A32D2D' %>"
+            stroke-width="3" stroke-linecap="round"
+            stroke-dasharray="<%= (score / 100 * 100).toFixed(1) %> 100"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column">
+          <span class="score-ring <%= score >= 80 ? 'score-high' : score >= 60 ? 'score-medium' : 'score-low' %>" style="font-size:1.4rem"><%= score %>%</span>
+        </div>
+      </div>
+      <div style="font-size:.72rem;color:var(--em-ink-3);margin-top:.6rem"><%= total %> workers</div>
+    </div>
+  </div>
+
+  <!-- Breakdown bars -->
+  <div class="col-12 col-md-10">
+    <div class="card h-100" style="border-radius:12px">
+      <div class="card-header" style="background:transparent;border-bottom:0.5px solid var(--em-line);padding:.85rem 1.1rem">
+        <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--em-ink-3)">
+          <i class="bi bi-list-check me-1" style="color:var(--em-accent)"></i>Compliance Breakdown
+        </span>
+      </div>
+      <div class="card-body" style="padding:1rem 1.25rem">
+        <% if (!breakdown || Object.keys(breakdown).length === 0) { %>
+        <div class="d-flex align-items-center gap-2 py-2" style="color:var(--em-ink-3);font-size:.84rem">
+          <i class="bi bi-info-circle" style="font-size:1.1rem"></i>
+          No active workers found for this scope. Add workers or change the site filter to see compliance data.
+        </div>
+        <% } else { %>
+        <div class="row g-3">
+          <% Object.entries(breakdown).forEach(([key, val]) => {
+            const pct      = Math.round(val * 100);
+            const fillCls  = pct >= 80 ? 'green' : pct >= 60 ? 'amber' : 'red';
+            const scoreClr = pct >= 80 ? '#3B6D11' : pct >= 60 ? '#854F0B' : '#A32D2D';
+            const icon     = breakdownIcons[key] || 'bi-check';
+            const desc     = breakdownDesc[key] || '';
+            const count    = Math.round(val * total);
+          %>
+          <div class="col-12 col-md-6">
+            <div style="padding:.65rem .85rem;background:var(--em-surface);border-radius:8px;border:0.5px solid var(--em-line-2)">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span style="font-size:.82rem;font-weight:600;color:var(--em-ink);display:flex;align-items:center;gap:6px">
+                  <i class="bi <%= icon %>" style="color:var(--em-accent);font-size:.85rem"></i>
+                  <%= breakdownLabels[key] || key %>
+                </span>
+                <span style="font-size:.88rem;font-weight:700;color:<%= scoreClr %>"><%= pct %>%
+                  <span style="font-weight:400;color:var(--em-ink-3);font-size:.68rem"> (<%= count %>/<%= total %>)</span>
+                </span>
+              </div>
+              <div class="eos-progress-bar" style="height:6px;border-radius:4px">
+                <div class="eos-progress-fill <%= fillCls %>" style="width:<%= pct %>%;border-radius:4px"></div>
+              </div>
+              <div style="font-size:.68rem;color:var(--em-ink-3);margin-top:.3rem"><%= desc %></div>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Workers by category + Missing docs + Wage issues -->
+<div class="row g-3 mb-4">
+
+  <!-- Category breakdown -->
+  <div class="col-md-4">
+    <div class="card h-100" style="border-radius:12px">
+      <div class="card-header" style="background:transparent;border-bottom:0.5px solid var(--em-line);padding:.85rem 1.1rem">
+        <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--em-ink-3)">
+          <i class="bi bi-diagram-3 me-1" style="color:var(--em-accent)"></i><%= t('reports_by_category') %>
+        </span>
+      </div>
+      <div class="card-body p-0">
+        <div class="eos-doc-list px-3">
+          <% categoryBreakdown.forEach(row => {
+            const cat   = row.employment ? row.employment.category : 'Unknown';
+            const count = row.dataValues ? row.dataValues.count : 0;
+            const pct   = total > 0 ? Math.round((count / total) * 100) : 0;
+          %>
+          <div class="eos-doc-row" style="align-items:center">
+            <div style="flex:1">
+              <div style="font-size:.84rem;font-weight:600;color:var(--em-ink)"><%= cat %></div>
+              <div class="eos-progress-bar mt-1" style="height:3px">
+                <div class="eos-progress-fill" style="width:<%= pct %>%"></div>
+              </div>
+            </div>
+            <div style="flex-shrink:0;text-align:right;margin-left:10px">
+              <span style="font-size:.9rem;font-weight:700;color:var(--em-ink)"><%= count %></span>
+              <span style="font-size:.7rem;color:var(--em-ink-3)"> (<%= pct %>%)</span>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Missing documents -->
+  <div class="col-md-4">
+    <div class="card h-100" style="border-radius:12px">
+      <div class="card-header d-flex justify-content-between align-items-center" style="background:transparent;border-bottom:0.5px solid var(--em-line);padding:.85rem 1.1rem">
+        <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--em-ink-3)">
+          <i class="bi bi-file-earmark-x me-1" style="color:var(--eos-red-600)"></i><%= t('reports_missing_docs_title') %>
+        </span>
+        <% if (pageData.total > 0) { %>
+          <span class="badge" style="background:var(--eos-red-50);color:var(--eos-red-600);border:0.5px solid var(--eos-red-100);font-size:.7rem">
+            <%= pageData.total %> workers
+          </span>
+        <% } %>
+      </div>
+      <div class="card-body p-0">
+        <!-- Mandatory doc checklist legend -->
+        <div class="px-3 pt-2 pb-1" style="border-bottom:0.5px solid var(--em-line-2)">
+          <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--em-ink-3);margin-bottom:4px">Mandatory documents</div>
+          <% [
+            { key:'aadhaar',        label:'Aadhaar Card', icon:'bi-credit-card-2-front' },
+            { key:'passport_photo', label:'Passport Photo', icon:'bi-person-bounding-box' },
+            { key:'bank_passbook',  label:'Bank Passbook / Cancelled Cheque', icon:'bi-bank' },
+          ].forEach(doc => { %>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            <i class="bi <%= doc.icon %>" style="color:var(--em-accent);font-size:.8rem;width:14px;text-align:center"></i>
+            <span style="font-size:.76rem;color:var(--em-ink-2)""><%= doc.label %></span>
+          </div>
+          <% }) %>
+        </div>
+        <% if (missingDocWorkers.length === 0) { %>
+        <div class="p-3 d-flex align-items-center gap-2" style="color:var(--eos-green-600);font-size:.84rem">
+          <i class="bi bi-check-circle-fill"></i><%= t('reports_all_verified') %>
+        </div>
+        <% } else { %>
+        <div class="eos-doc-list px-3">
+          <% missingDocWorkers.slice(0, 6).forEach(w => { %>
+          <div class="eos-doc-row">
+            <div class="eos-doc-icon amber"><i class="bi bi-person-exclamation"></i></div>
+            <div style="flex:1;min-width:0">
+              <a href="/workers/<%= w.id %>" class="eos-doc-name text-decoration-none"><%= w.name %></a>
+              <div class="eos-doc-meta"><%= w.documents.length %> pending doc<%= w.documents.length > 1 ? 's' : '' %></div>
+            </div>
+            <a href="/workers/<%= w.id %>" class="btn btn-sm" style="font-size:.7rem;padding:3px 8px;background:var(--eos-amber-50);color:var(--eos-amber-600);border:0.5px solid #e8c07a">View</a>
+          </div>
+          <% }) %>
+        </div>
+        <% if (pageData.total > 6) { %>
+        <div class="px-3 py-2" style="border-top:0.5px solid var(--em-line-2)">
+          <a href="/reports/compliance?show_missing=1" style="font-size:.78rem;color:var(--em-accent);font-weight:600">
+            View all <%= pageData.total %> workers &rarr;
+          </a>
+        </div>
+        <% } %>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wage compliance issues -->
+  <div class="col-md-4">
+    <div class="card h-100" style="border-radius:12px">
+      <div class="card-header" style="background:transparent;border-bottom:0.5px solid var(--em-line);padding:.85rem 1.1rem">
+        <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--em-ink-3)">
+          <i class="bi bi-currency-rupee me-1" style="color:var(--eos-amber-600)"></i>Wage Issues
+        </span>
+      </div>
+      <div class="card-body p-0">
+        <%
+          const wageIssues = (missingDocWorkers || []).filter(w => w._wageIssue);
+        %>
+        <% if (!breakdown.wage_compliant || Math.round(breakdown.wage_compliant * 100) === 100) { %>
+        <div class="p-3 d-flex align-items-center gap-2" style="color:var(--eos-green-600);font-size:.84rem">
+          <i class="bi bi-check-circle-fill"></i>All workers meet minimum wage
+        </div>
+        <% } else { %>
+        <div class="p-3" style="font-size:.84rem;color:var(--em-ink-2)">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="badge bg-warning" style="font-size:.72rem"><%= Math.round((1 - breakdown.wage_compliant) * total) %> workers below min.</span>
+          </div>
+          <p style="font-size:.78rem;color:var(--em-ink-3);margin-bottom:.75rem">
+            Workers earning below the minimum wage for their skill category and zone. Requires HR review and correction.
+          </p>
+          <a href="/workers?status=active" class="btn btn-sm btn-outline-secondary" style="font-size:.76rem">
+            <i class="bi bi-people me-1"></i>Review worker wages
+          </a>
+        </div>
+        <% } %>
+        <!-- PF/ESIC filing shortcut -->
+        <div class="px-3 pb-3 mt-1">
+          <a href="/reports/filings" class="btn btn-sm w-100" style="background:var(--eos-blue-50);border:0.5px solid var(--eos-blue-100);color:var(--eos-blue-800);font-size:.78rem">
+            <i class="bi bi-receipt-cutoff me-1"></i>Check PF / ESIC filing status
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Full missing-workers table when show_missing=1 -->
+<% if (query.show_missing === '1' && missingDocWorkers.length > 0) { %>
+<div class="eos-section-label">All workers with pending documents</div>
+<div class="card" style="border-radius:12px">
+  <div class="card-body p-0">
+    <div class="eos-doc-list px-3">
+      <% missingDocWorkers.forEach(w => { %>
+      <div class="eos-doc-row">
+        <div class="eos-doc-icon amber"><i class="bi bi-person-exclamation"></i></div>
+        <div style="flex:1">
+          <a href="/workers/<%= w.id %>" class="eos-doc-name text-decoration-none"><%= w.name %></a>
+          <div class="eos-doc-meta"><%= w.documents.length %> doc<%= w.documents.length>1?'s':'' %> pending &middot; <%= w.site ? w.site.name : '—' %></div>
+        </div>
+        <a href="/workers/<%= w.id %>" class="btn btn-sm btn-outline-secondary" style="font-size:.76rem">View &rarr;</a>
+      </div>
+      <% }) %>
+    </div>
+    <%- include('../partials/pagination', { pageData, query }) %>
+  </div>
+</div>
+<% } %>

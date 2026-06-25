@@ -1,0 +1,58 @@
+<%
+  const _active = locals.reportNavActive || '';
+  const _links = [
+    { key:'compliance', href:'/reports/compliance', icon:'bi-bar-chart-line',     label:'Compliance' },
+    { key:'wage',       href:'/reports/wage',       icon:'bi-cash-stack',          label:'Wages'      },
+    { key:'pf',         href:'/reports/pf',         icon:'bi-building-fill-check', label:'PF'         },
+    { key:'filings',    href:'/reports/filings',    icon:'bi-receipt-cutoff',      label:'Filings'    },
+    { key:'audit',      href:'/reports/audit',      icon:'bi-clock-history',       label:'Audit Log'  },
+  ];
+%>
+<nav class="rpt-subnav">
+  <% _links.forEach(l => { %>
+  <a href="<%= l.href %>" class="rpt-tab <%= _active === l.key ? 'rpt-tab-active' : '' %>">
+    <i class="bi <%= l.icon %>"></i>
+    <span><%= l.label %></span>
+  </a>
+  <% }) %>
+</nav>
+<style>
+.rpt-subnav {
+  position: sticky;
+  top: var(--nav-h, 64px);
+  z-index: 20;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: #fff;
+  border-bottom: 1px solid var(--em-line, #e5e7eb);
+  margin: 0 -1rem 1rem;
+  padding: 0 1rem;
+}
+.rpt-subnav::-webkit-scrollbar { display: none; }
+.rpt-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: .55rem .9rem;
+  color: var(--em-ink-3, #9ca3af);
+  text-decoration: none;
+  font-size: .62rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color .12s;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+.rpt-tab i { font-size: 1.05rem; margin-bottom: 1px; }
+.rpt-tab:hover { color: var(--em-ink, #111); }
+.rpt-tab-active {
+  color: var(--em-accent, #2563eb) !important;
+  border-bottom-color: var(--em-accent, #2563eb);
+}
+</style>

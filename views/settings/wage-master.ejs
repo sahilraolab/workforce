@@ -1,0 +1,105 @@
+<%- include('../partials/settings-tabs', { active: 'wage-master', tabTitle: t('wage_master_title'), tabIcon: 'bi-currency-rupee', tabSubtitle: t('wage_master_subtitle') }) %>
+
+<div class="row g-3">
+  <div class="col-12 col-md-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-0">
+
+        <!-- Mobile: stacked cards -->
+        <div class="d-md-none p-2">
+          <% if (wages.length === 0) { %>
+            <div class="text-center py-4" style="color:var(--em-ink-3);font-size:.84rem"><%= t('wage_master_no_rates') %></div>
+          <% } %>
+          <% wages.forEach(w => { %>
+          <div class="worker-card mb-2">
+            <div class="worker-card-head">
+              <div class="worker-card-avatar av-amber" style="font-size:.75rem">₹</div>
+              <div style="flex:1;min-width:0">
+                <div class="worker-card-name"><%= w.category %></div>
+                <div class="worker-card-sub"><%= w.zone %> zone</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <div style="font-size:1.1rem;font-weight:700;color:var(--em-ink)">₹<%= parseFloat(w.wage_rate).toFixed(2) %></div>
+                <div style="font-size:.68rem;color:var(--em-ink-3)">/day</div>
+              </div>
+            </div>
+            <div style="font-size:.72rem;color:var(--em-ink-3);margin-top:6px">
+              <i class="bi bi-calendar3 me-1"></i>Effective from <%= w.effective_from %>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+
+        <!-- Desktop: table -->
+        <div class="d-none d-md-block table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="padding:10px 16px"><%= t('common_category') %></th>
+                <th><%= t('common_zone') %></th>
+                <th class="text-end"><%= t('wage_master_col_daily_rate') %></th>
+                <th><%= t('wage_master_col_effective_from') %></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (wages.length === 0) { %>
+                <tr><td colspan="4" class="text-center text-muted py-4"><%= t('wage_master_no_rates') %></td></tr>
+              <% } %>
+              <% wages.forEach(w => { %>
+              <tr>
+                <td style="padding:9px 16px">
+                  <span class="fw-semibold" style="font-size:.84rem;color:var(--em-ink)"><%= w.category %></span>
+                </td>
+                <td>
+                  <span class="badge" style="background:var(--eos-blue-50);color:var(--eos-blue-800);border:0.5px solid var(--eos-blue-100);font-size:.72rem">
+                    <%= w.zone %>
+                  </span>
+                </td>
+                <td class="text-end">
+                  <span style="font-size:.95rem;font-weight:700;color:var(--em-ink)">₹<%= parseFloat(w.wage_rate).toFixed(2) %></span>
+                  <span style="font-size:.7rem;color:var(--em-ink-3)">/day</span>
+                </td>
+                <td class="small text-muted"><i class="bi bi-calendar3 me-1"></i><%= w.effective_from %></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold small"><i class="bi bi-plus-circle me-1 text-primary"></i><%= t('wage_master_add_new') %></div>
+      <div class="card-body">
+        <form action="/settings/wage-master" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="mb-2">
+            <label class="form-label small fw-semibold"><%= t('common_category') %></label>
+            <select name="category" class="form-select form-select-sm" required>
+              <% categories.forEach(c => { %><option value="<%= c %>"><%= c %></option><% }) %>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold"><%= t('common_zone') %></label>
+            <input type="text" name="zone" list="zone-datalist" class="form-control form-control-sm"
+                   placeholder="e.g. Zone 1, North, Mumbai" autocomplete="off" required>
+            <datalist id="zone-datalist">
+              <% zones.forEach(z => { %><option value="<%= z %>"><% }) %>
+            </datalist>
+            <div class="form-text" style="font-size:.68rem">Type a new zone or select an existing one. Zone names must be unique per category.</div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold"><%= t('wage_master_daily_wage_rate') %></label>
+            <input type="number" name="wage_rate" class="form-control form-control-sm" min="0" step="0.01" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold"><%= t('wage_master_col_effective_from') %></label>
+            <input type="date" name="effective_from" class="form-control form-control-sm" required>
+          </div>
+          <button class="btn btn-primary btn-sm w-100"><%= t('wage_master_add_btn') %></button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

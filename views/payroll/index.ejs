@@ -1,0 +1,95 @@
+<%- include('../partials/breadcrumb', { items: [{ label: t('payroll_title_prefix') }] }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0 fw-bold"><i class="bi bi-cash-stack me-2 text-primary"></i><%= t('payroll_title_prefix') %> — <%= month %>/<%= year %></h4>
+  <div class="d-flex gap-2">
+    <% if (generated) { %>
+    <a href="?month=<%= month %>&year=<%= year %>&export=csv" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-download me-1"></i><%= t('payroll_export_csv') %>
+    </a>
+    <% } %>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-body py-2">
+    <div class="row g-2 align-items-center">
+      <div class="col-auto">
+        <form class="d-flex gap-2" method="GET">
+          <select name="month" class="form-select form-select-sm" style="width:130px">
+            <% for (let m = 1; m <= 12; m++) { %>
+              <option value="<%= m %>" <%= m === month ? 'selected' : '' %>><%= new Date(2000,m-1).toLocaleString('default',{month:'long'}) %></option>
+            <% } %>
+          </select>
+          <input type="number" name="year" class="form-control form-control-sm" value="<%= year %>" style="width:80px">
+          <select name="site_id" class="form-select form-select-sm">
+            <option value=""><%= t('common_all_sites') %></option>
+            <% sites.forEach(s => { %>
+              <option value="<%= s.id %>" <%= selectedSite == s.id ? 'selected' : '' %>><%= s.name %></option>
+            <% }) %>
+          </select>
+          <button class="btn btn-sm btn-outline-secondary" type="submit"><%= t('payroll_view_btn') %></button>
+        </form>
+      </div>
+      <div class="col-auto ms-auto">
+        <% if (['company_admin','hr_payroll','super_admin'].includes(user.role)) { %>
+        <form action="/payroll/generate" method="POST" class="d-inline">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="month" value="<%= month %>">
+          <input type="hidden" name="year" value="<%= year %>">
+          <input type="hidden" name="site_id" value="<%= selectedSite || '' %>">
+          <button class="btn btn-primary btn-sm"
+            data-confirm="<%= t('payroll_generate_confirm_prefix') %> <%= month %>/<%= year %><%= t('payroll_generate_confirm_suffix') %>">
+            <i class="bi bi-calculator me-1"></i><%= t('payroll_generate_btn') %>
+          </button>
+        </form>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% if (!generated) { %>
+  <div class="alert alert-info"><%= t('payroll_no_data') %></div>
+<% } else { %>
+
+<!-- Totals -->
+<div class="row g-3 mb-3">
+  <div class="col-md-3"><div class="card border-0 bg-primary text-white text-center p-3"><div class="small"><%= t('payroll_total_gross') %></div><div class="fs-5 fw-bold">₹<%= totals.gross.toFixed(2) %></div></div></div>
+  <div class="col-md-3"><div class="card border-0 bg-secondary text-white text-center p-3"><div class="small"><%= t('payroll_pf_deductions') %></div><div class="fs-5 fw-bold">₹<%= totals.pf.toFixed(2) %></div></div></div>
+  <div class="col-md-3"><div class="card border-0 bg-secondary text-white text-center p-3"><div class="small"><%= t('payroll_esic_deductions') %></div><div class="fs-5 fw-bold">₹<%= totals.esic.toFixed(2) %></div></div></div>
+  <div class="col-md-3"><div class="card border-0 bg-success text-white text-center p-3"><div class="small"><%= t('payroll_net_payable') %></div><div class="fs-5 fw-bold">₹<%= totals.net.toFixed(2) %></div></div></div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th><%= t('attendance_col_worker') %></th><th><%= t('common_site') %></th><th><%= t('common_category') %></th>
+            <th class="text-end"><%= t('payroll_col_days') %></th><th class="text-end"><%= t('payroll_col_ot_hrs') %></th>
+            <th class="text-end"><%= t('payroll_col_gross') %></th><th class="text-end"><%= t('payroll_col_pf') %></th>
+            <th class="text-end"><%= t('payroll_col_esic') %></th><th class="text-end fw-bold"><%= t('payroll_col_net_pay') %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% payrolls.forEach(p => { %>
+          <tr>
+            <td class="small fw-semibold"><a href="/workers/<%= p.worker_id %>" class="text-decoration-none"><%= p.worker.name %></a></td>
+            <td class="small text-muted"><%= p.worker.site ? p.worker.site.name : '—' %></td>
+            <td class="small"><%= p.worker.employment ? p.worker.employment.category : '—' %></td>
+            <td class="text-end small"><%= p.days_present %></td>
+            <td class="text-end small"><%= p.ot_hours %></td>
+            <td class="text-end small">₹<%= parseFloat(p.gross).toFixed(2) %></td>
+            <td class="text-end small text-danger">₹<%= parseFloat(p.pf_deduction).toFixed(2) %></td>
+            <td class="text-end small text-danger">₹<%= parseFloat(p.esic_deduction).toFixed(2) %></td>
+            <td class="text-end fw-bold text-success">₹<%= parseFloat(p.net_pay).toFixed(2) %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<% } %>

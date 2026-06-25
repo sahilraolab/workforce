@@ -1,0 +1,216 @@
+<%- include('../partials/settings-tabs', { active: 'users', tabTitle: t('users_manage_title'), tabIcon: 'bi-person-gear', tabSubtitle: t('users_subtitle') }) %>
+
+<% if (generatedPassword) { %>
+<div class="eos-alert info mb-3" style="align-items:flex-start">
+  <i class="bi bi-key-fill" style="font-size:1.2rem;flex-shrink:0;color:var(--eos-blue-800);margin-top:2px"></i>
+  <div style="flex:1;min-width:0">
+    <div style="font-weight:700;color:var(--eos-blue-800);margin-bottom:2px">
+      <%= t('generated_password_title') %> <%= t('generated_password_for') %> "<%= generatedPasswordFor %>"
+    </div>
+    <div style="font-size:.78rem;color:var(--em-ink-3);margin-bottom:.6rem"><%= t('generated_password_hint') %></div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <input type="text" id="genPwField" class="form-control form-control-sm fw-bold text-center"
+             style="max-width:200px;font-family:monospace;letter-spacing:.1em;font-size:.9rem"
+             value="<%= generatedPassword %>" readonly>
+      <button type="button" class="btn btn-sm" data-copy-target="genPwField"
+              style="background:var(--eos-blue-50);color:var(--eos-blue-800);border:1px solid var(--eos-blue-100)">
+        <i class="bi bi-clipboard me-1"></i><%= t('common_copy') %>
+      </button>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-header bg-white d-flex align-items-center flex-wrap gap-2">
+    <% if (isSuperAdmin) { %>
+    <form method="GET" class="d-inline">
+      <select name="company_id" class="form-select form-select-sm" style="max-width:240px" onchange="this.form.submit()">
+        <option value=""><%= t('users_all_companies') %></option>
+        <% companies.forEach(c => { %>
+          <option value="<%= c.id %>" <%= String(selectedCompanyId) === String(c.id) ? 'selected' : '' %>><%= c.name %></option>
+        <% }) %>
+      </select>
+    </form>
+    <% } %>
+    <button type="button" class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#createUserModal">
+      <i class="bi bi-person-plus me-1"></i><%= t('users_add_user') %>
+    </button>
+  </div>
+  <div class="card-body p-0">
+
+    <!-- Mobile: stacked cards -->
+    <div class="d-md-none p-2">
+      <% users.forEach(u => {
+        const isActive = u.status === 'active';
+        const initials = (u.name || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+      %>
+      <div class="worker-card mb-2">
+        <div class="worker-card-head">
+          <div class="worker-card-avatar <%= isActive ? 'av-green' : '' %>" style="<%= !isActive ? 'background:var(--em-surface-2);color:var(--em-ink-3)' : '' %>">
+            <%= initials %>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div class="worker-card-name"><%= u.name %></div>
+            <div class="worker-card-sub"><%= u.email %></div>
+          </div>
+          <span class="badge" style="background:<%= isActive ? 'var(--eos-green-50)' : 'var(--em-surface-2)' %>;color:<%= isActive ? 'var(--eos-green-600)' : 'var(--em-ink-3)' %>;border:0.5px solid <%= isActive ? '#a8d57a' : 'var(--em-line)' %>;font-size:.7rem;flex-shrink:0">
+            <%= u.status %>
+          </span>
+        </div>
+        <div class="worker-card-meta-grid mt-2">
+          <div class="worker-card-meta-item">
+            <div class="worker-card-meta-label">Role</div>
+            <div class="worker-card-meta-val"><%= u.role.replace(/_/g,' ') %></div>
+          </div>
+          <div class="worker-card-meta-item">
+            <div class="worker-card-meta-label">Site</div>
+            <div class="worker-card-meta-val"><%= u.site ? u.site.name : '—' %></div>
+          </div>
+          <% if (isSuperAdmin) { %>
+          <div class="worker-card-meta-item" style="grid-column:1/-1">
+            <div class="worker-card-meta-label">Company</div>
+            <div class="worker-card-meta-val"><%= u.company ? u.company.name : '—' %></div>
+          </div>
+          <% } %>
+        </div>
+        <% if (u.id !== user.id) { %>
+        <div class="worker-card-actions">
+          <form action="/settings/users/<%= u.id %>/reset-password" method="POST" class="flex-fill">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-outline-secondary btn-sm w-100"
+              data-confirm="<%= t('users_reset_password_confirm_prefix') %> <%= u.name %><%= t('users_reset_password_confirm_suffix') %>">
+              <i class="bi bi-key"></i> <%= t('users_reset_password') %>
+            </button>
+          </form>
+          <form action="/settings/users/<%= u.id %>/toggle-status" method="POST" class="flex-fill">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-sm w-100"
+              style="background:<%= isActive ? 'var(--eos-red-50)' : 'var(--eos-green-50)' %>;color:<%= isActive ? 'var(--eos-red-600)' : 'var(--eos-green-600)' %>;border:1px solid <%= isActive ? 'var(--eos-red-100)' : '#a8d57a' %>"
+              data-confirm="<%= isActive ? t('users_deactivate_confirm') : t('users_activate_confirm') %> <%= u.name %>?">
+              <i class="bi <%= isActive ? 'bi-person-x' : 'bi-person-check' %>"></i>
+              <%= isActive ? t('users_deactivate') : t('users_activate') %>
+            </button>
+          </form>
+        </div>
+        <% } %>
+      </div>
+      <% }) %>
+    </div>
+
+    <!-- Desktop: table -->
+    <div class="d-none d-md-block table-responsive">
+      <table class="table table-sm table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="padding:10px 16px"><%= t('common_name') %></th>
+            <th><%= t('common_role') %></th>
+            <% if (isSuperAdmin) { %><th><%= t('users_col_company') %></th><% } %>
+            <th><%= t('common_site') %></th>
+            <th><%= t('common_status') %></th>
+            <th><%= t('common_actions') %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% users.forEach(u => { %>
+          <tr>
+            <td style="padding:9px 16px">
+              <div class="fw-semibold" style="font-size:.84rem;color:var(--em-ink)"><%= u.name %></div>
+              <div style="font-size:.72rem;color:var(--em-ink-3)"><%= u.email %></div>
+            </td>
+            <td>
+              <span class="badge" style="background:var(--eos-blue-50);color:var(--eos-blue-800);border:0.5px solid var(--eos-blue-100);font-size:.72rem">
+                <%= u.role.replace(/_/g,' ') %>
+              </span>
+            </td>
+            <% if (isSuperAdmin) { %><td class="small text-muted"><%= u.company ? u.company.name : '—' %></td><% } %>
+            <td class="small text-muted"><%= u.site ? u.site.name : '—' %></td>
+            <td>
+              <% const isActive = u.status === 'active'; %>
+              <span class="badge" style="background:<%= isActive ? 'var(--eos-green-50)' : 'var(--em-surface-2)' %>;color:<%= isActive ? 'var(--eos-green-600)' : 'var(--em-ink-3)' %>;border:0.5px solid <%= isActive ? '#a8d57a' : 'var(--em-line)' %>;font-size:.72rem">
+                <%= u.status %>
+              </span>
+            </td>
+            <td class="text-nowrap">
+              <% if (u.id !== user.id) { %>
+              <form action="/settings/users/<%= u.id %>/reset-password" method="POST" class="d-inline">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-outline-secondary btn-sm"
+                  data-confirm="<%= t('users_reset_password_confirm_prefix') %> <%= u.name %><%= t('users_reset_password_confirm_suffix') %>">
+                  <i class="bi bi-key"></i>
+                </button>
+              </form>
+              <form action="/settings/users/<%= u.id %>/toggle-status" method="POST" class="d-inline">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-sm <%= u.status === 'active' ? 'btn-outline-danger' : 'btn-outline-success' %>"
+                  data-confirm="<%= u.status === 'active' ? t('users_deactivate_confirm') : t('users_activate_confirm') %> <%= u.name %>?"
+                  title="<%= u.status === 'active' ? t('users_deactivate') : t('users_activate') %>">
+                  <i class="bi <%= u.status === 'active' ? 'bi-person-x' : 'bi-person-check' %>"></i>
+                </button>
+              </form>
+              <% } else { %>
+              <span class="text-muted small fst-italic"><%= t('users_thats_you') %></span>
+              <% } %>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Create User modal -->
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/settings/users" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person-plus me-2 text-primary"></i><%= t('users_add_user') %></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <% if (isSuperAdmin) { %>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold"><%= t('users_col_company') %></label>
+            <select name="company_id" class="form-select form-select-sm" required>
+              <option value=""><%= t('common_none_option') %></option>
+              <% companies.forEach(c => { %><option value="<%= c.id %>"><%= c.name %></option><% }) %>
+            </select>
+          </div>
+          <% } %>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold"><%= t('common_name') %></label>
+            <input type="text" name="name" class="form-control form-control-sm" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold"><%= t('common_email') %></label>
+            <input type="email" name="email" class="form-control form-control-sm" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold"><%= t('common_role') %></label>
+            <select name="role" class="form-select form-select-sm" required>
+              <option value="site_supervisor"><%= t('users_role_site_supervisor') %></option>
+              <option value="hr_payroll"><%= t('users_role_hr_payroll') %></option>
+              <option value="auditor"><%= t('users_role_auditor') %></option>
+              <option value="company_admin"><%= t('users_role_company_admin') %></option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold"><%= t('users_site_for_supervisors') %></label>
+            <select name="site_id" class="form-select form-select-sm">
+              <option value=""><%= t('common_none_option') %></option>
+              <% sites.forEach(s => { %><option value="<%= s.id %>"><%= s.name %></option><% }) %>
+            </select>
+          </div>
+          <p class="small text-muted mb-0"><i class="bi bi-info-circle me-1"></i><%= t('users_password_autogen_note') %></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal"><%= t('common_cancel') %></button>
+          <button type="submit" class="btn btn-primary btn-sm"><%= t('users_create_btn') %></button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

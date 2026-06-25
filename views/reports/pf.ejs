@@ -1,0 +1,186 @@
+<%- include('../partials/report-nav', { reportNavActive: 'pf' }) %>
+<%- include('../partials/breadcrumb', { items: [{ label: 'PF Compliance Report' }] }) %>
+<div class="mb-3">
+  <h4 class="mb-0 fw-bold"><i class="bi bi-building-fill-check me-2" style="color:var(--em-accent)"></i>PF Compliance Report</h4>
+  <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:3px">Provident Fund enrollment status for active workers</div>
+</div>
+
+<%
+  const missing = total - withUan;
+  const missingPct = total > 0 ? Math.round((missing / total) * 100) : 0;
+%>
+
+<!-- Status banner -->
+<% if (percentage >= 80) { %>
+<div class="eos-alert success mb-3">
+  <i class="bi bi-check-circle-fill" style="color:var(--eos-green-600);font-size:1.1rem;flex-shrink:0;margin-top:1px"></i>
+  <div class="eos-alert-text">
+    <strong>Good PF compliance — <%= percentage %>%</strong> of workers have a valid UAN enrolled.
+    <%= missing > 0 ? missing + ' worker' + (missing > 1 ? 's' : '') + ' still need UAN registration.' : 'All workers are enrolled.' %>
+  </div>
+</div>
+<% } else { %>
+<div class="eos-alert mb-3">
+  <i class="bi bi-exclamation-triangle-fill" style="font-size:1.1rem;flex-shrink:0;margin-top:1px"></i>
+  <div class="eos-alert-text">
+    <strong><%= missing %> worker<%= missing > 1 ? 's' : '' %> missing UAN</strong> — PF enrollment is below 80%. Register these workers on the EPFO portal and update their UAN in the system.
+  </div>
+</div>
+<% } %>
+
+<!-- KPI cards -->
+<div class="em-stat-row mb-4">
+  <div class="em-stat c-violet">
+    <div class="em-stat-label"><i class="bi bi-people me-1"></i>Total Workers</div>
+    <div class="em-stat-value"><%= total %></div>
+    <div class="em-stat-sub">active on payroll</div>
+  </div>
+  <div class="em-stat c-teal">
+    <div class="em-stat-label"><i class="bi bi-patch-check me-1"></i>UAN Enrolled</div>
+    <div class="em-stat-value" style="color:var(--eos-green-600)"><%= withUan %></div>
+    <div class="em-stat-sub"><%= percentage %>% compliance</div>
+  </div>
+  <div class="em-stat <%= missing > 0 ? 'c-red' : 'c-teal' %>">
+    <div class="em-stat-label"><i class="bi bi-person-x me-1"></i>Missing UAN</div>
+    <div class="em-stat-value" style="color:<%= missing > 0 ? 'var(--eos-red-600)' : 'var(--eos-green-600)' %>"><%= missing %></div>
+    <div class="em-stat-sub"><%= missingPct %>% of workforce</div>
+  </div>
+  <div class="em-stat c-<%= percentage >= 80 ? 'teal' : percentage >= 60 ? 'amber' : 'red' %>">
+    <div class="em-stat-label"><i class="bi bi-bar-chart me-1"></i>Compliance Score</div>
+    <div class="em-stat-value" style="color:<%= percentage >= 80 ? 'var(--eos-green-600)' : percentage >= 60 ? 'var(--eos-amber-600)' : 'var(--eos-red-600)' %>"><%= percentage %>%</div>
+    <div class="em-stat-sub"><%= percentage >= 80 ? 'Good standing' : percentage >= 60 ? 'Needs attention' : 'Critical' %></div>
+  </div>
+</div>
+
+<!-- Progress bar visualization -->
+<div class="card mb-4" style="border-radius:12px">
+  <div class="card-body" style="padding:1rem 1.25rem">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <span style="font-size:.78rem;font-weight:600;color:var(--em-ink-2)">PF Enrollment Coverage</span>
+      <span style="font-size:.78rem;font-weight:700;color:<%= percentage >= 80 ? 'var(--eos-green-600)' : 'var(--eos-amber-600)' %>"><%= withUan %> / <%= total %> workers</span>
+    </div>
+    <div class="eos-progress-bar" style="height:10px;border-radius:6px">
+      <div class="eos-progress-fill <%= percentage < 60 ? 'red' : percentage < 80 ? 'amber' : '' %>"
+           style="width:<%= percentage %>%;border-radius:6px"></div>
+    </div>
+    <div class="d-flex justify-content-between mt-1">
+      <span style="font-size:.68rem;color:var(--eos-green-600)"><%= withUan %> enrolled</span>
+      <span style="font-size:.68rem;color:<%= missing > 0 ? 'var(--eos-red-600)' : 'var(--em-ink-3)' %>"><%= missing %> not enrolled</span>
+    </div>
+  </div>
+</div>
+
+<!-- Worker list (tabs: missing UAN first, then all) -->
+<%
+  const noUan = workers.filter(w => !(w.employment && w.employment.uan_last4));
+  const hasUan = workers.filter(w => w.employment && w.employment.uan_last4);
+%>
+
+<% if (noUan.length > 0) { %>
+<div class="eos-section-label">
+  <i class="bi bi-person-exclamation me-1" style="color:var(--eos-red-600)"></i>Workers Missing UAN (<%= noUan.length %>)
+</div>
+<div class="card mb-3" style="border-radius:12px">
+  <!-- Mobile cards -->
+  <div class="d-md-none p-2">
+    <% noUan.forEach(w => { %>
+    <div class="worker-card mb-2">
+      <div class="worker-card-head">
+        <div class="worker-card-avatar av-red"><%= w.name.charAt(0).toUpperCase() %></div>
+        <div style="flex:1;min-width:0">
+          <a href="/workers/<%= w.id %>" class="worker-card-name text-decoration-none"><%= w.name %></a>
+          <div class="worker-card-sub"><%= w.site ? w.site.name : '—' %> &middot; <%= w.employment ? w.employment.category : '—' %></div>
+        </div>
+        <span class="badge" style="background:var(--eos-red-50);color:var(--eos-red-600);border:1px solid var(--eos-red-100)">No UAN</span>
+      </div>
+    </div>
+    <% }) %>
+  </div>
+  <!-- Desktop table -->
+  <div class="d-none d-md-block table-responsive">
+    <table class="table table-sm table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th style="padding:10px 16px">Worker</th>
+          <th>Site</th>
+          <th>Category</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% noUan.forEach(w => { %>
+        <tr>
+          <td style="padding:9px 16px">
+            <a href="/workers/<%= w.id %>" class="fw-semibold text-decoration-none" style="color:var(--em-ink)"><%= w.name %></a>
+          </td>
+          <td class="small text-muted"><%= w.site ? w.site.name : '—' %></td>
+          <td class="small"><%= w.employment ? w.employment.category : '—' %></td>
+          <td>
+            <a href="/workers/<%= w.id %>" class="btn btn-sm"
+               style="font-size:.7rem;padding:3px 10px;background:var(--eos-amber-50);color:var(--eos-amber-600);border:0.5px solid #e8c07a">
+              Add UAN &rarr;
+            </a>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<% } %>
+
+<% if (hasUan.length > 0) { %>
+<div class="eos-section-label">
+  <i class="bi bi-patch-check me-1" style="color:var(--eos-green-600)"></i>Enrolled Workers (<%= hasUan.length %>)
+</div>
+<div class="card" style="border-radius:12px">
+  <!-- Mobile cards -->
+  <div class="d-md-none p-2">
+    <% hasUan.forEach(w => { %>
+    <div class="worker-card mb-2">
+      <div class="worker-card-head">
+        <div class="worker-card-avatar av-green"><%= w.name.charAt(0).toUpperCase() %></div>
+        <div style="flex:1;min-width:0">
+          <a href="/workers/<%= w.id %>" class="worker-card-name text-decoration-none"><%= w.name %></a>
+          <div class="worker-card-sub"><%= w.site ? w.site.name : '—' %> &middot; <%= w.employment ? w.employment.category : '—' %></div>
+        </div>
+        <span class="badge" style="background:var(--eos-green-50);color:var(--eos-green-600);border:1px solid #a8d57a;font-family:monospace">
+          ••••<%= w.employment.uan_last4 %>
+        </span>
+      </div>
+    </div>
+    <% }) %>
+  </div>
+  <!-- Desktop table -->
+  <div class="d-none d-md-block table-responsive">
+    <table class="table table-sm table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th style="padding:10px 16px">Worker</th>
+          <th>Site</th>
+          <th>Category</th>
+          <th>UAN</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% hasUan.forEach(w => { %>
+        <tr>
+          <td style="padding:9px 16px">
+            <a href="/workers/<%= w.id %>" class="fw-semibold text-decoration-none" style="color:var(--em-ink)"><%= w.name %></a>
+          </td>
+          <td class="small text-muted"><%= w.site ? w.site.name : '—' %></td>
+          <td class="small"><%= w.employment ? w.employment.category : '—' %></td>
+          <td>
+            <span class="badge" style="background:var(--eos-green-50);color:var(--eos-green-600);border:1px solid #a8d57a;font-family:monospace;font-size:.78rem">
+              <i class="bi bi-check-circle-fill me-1"></i>••••<%= w.employment.uan_last4 %>
+            </span>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<% } %>
+
+<%- include('../partials/pagination', { pageData, query }) %>

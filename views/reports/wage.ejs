@@ -1,0 +1,138 @@
+<%- include('../partials/report-nav', { reportNavActive: 'wage' }) %>
+<%- include('../partials/breadcrumb', { items: [{ label: 'Wage Compliance Report' }] }) %>
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div>
+    <h4 class="mb-0 fw-bold"><i class="bi bi-currency-rupee me-2" style="color:var(--em-accent)"></i>Wage Compliance Report</h4>
+    <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:3px">Workers paid below statutory minimum wage by skill category and zone</div>
+  </div>
+  <a href="?export=csv" class="btn btn-outline-secondary btn-sm"><i class="bi bi-filetype-csv me-1"></i>Export CSV</a>
+</div>
+
+<%
+  const totalShortfall = belowMinimum.reduce((s, r) =>
+    s + (parseFloat(r.minimum) - parseFloat(r.emp.wage_rate)), 0);
+%>
+
+<% if (belowMinimum.length === 0) { %>
+<!-- All good banner -->
+<div class="eos-alert success mb-3">
+  <i class="bi bi-check-circle-fill" style="color:var(--eos-green-600);font-size:1.1rem;flex-shrink:0;margin-top:1px"></i>
+  <div class="eos-alert-text">
+    <strong>All workers meet minimum wage</strong> — No shortfalls detected across all sites and categories.
+  </div>
+</div>
+
+<% } else { %>
+
+<!-- Warning banner + KPI chips -->
+<div class="eos-alert mb-3">
+  <i class="bi bi-exclamation-triangle-fill" style="font-size:1.1rem;flex-shrink:0;margin-top:1px"></i>
+  <div class="eos-alert-text">
+    <strong><%= pageData.total %> worker<%= pageData.total > 1 ? 's are' : ' is' %> paid below minimum wage.</strong>
+    Total monthly shortfall: <strong>₹<%= totalShortfall.toLocaleString('en-IN', {maximumFractionDigits:2}) %></strong>.
+    Update their wage rates in the worker profile before the next payroll cycle.
+  </div>
+</div>
+
+<!-- KPI summary row -->
+<div class="em-stat-row mb-3">
+  <div class="em-stat c-red">
+    <div class="em-stat-label"><i class="bi bi-people me-1"></i>Below Min. Wage</div>
+    <div class="em-stat-value" style="color:var(--eos-red-600)"><%= pageData.total %></div>
+    <div class="em-stat-sub">workers affected</div>
+  </div>
+  <div class="em-stat c-amber">
+    <div class="em-stat-label"><i class="bi bi-currency-rupee me-1"></i>Total Shortfall</div>
+    <div class="em-stat-value" style="color:var(--eos-amber-600)">₹<%= Math.round(totalShortfall).toLocaleString('en-IN') %></div>
+    <div class="em-stat-sub">per month (estimated)</div>
+  </div>
+  <div class="em-stat c-violet">
+    <div class="em-stat-label"><i class="bi bi-arrow-up-circle me-1"></i>Avg. Shortfall</div>
+    <div class="em-stat-value" style="color:#6366f1">₹<%= belowMinimum.length ? Math.round(totalShortfall / belowMinimum.length).toLocaleString('en-IN') : '—' %></div>
+    <div class="em-stat-sub">per worker / month</div>
+  </div>
+</div>
+
+<!-- Mobile: stacked worker cards -->
+<div class="d-md-none">
+  <% belowMinimum.forEach(r => {
+    const shortfall = (parseFloat(r.minimum) - parseFloat(r.emp.wage_rate)).toFixed(2);
+  %>
+  <div class="worker-card mb-2">
+    <div class="worker-card-head">
+      <div class="worker-card-avatar av-red"><%= r.worker.name.charAt(0).toUpperCase() %></div>
+      <div style="flex:1;min-width:0">
+        <a href="/workers/<%= r.worker.id %>" class="worker-card-name text-decoration-none"><%= r.worker.name %></a>
+        <div class="worker-card-sub"><%= r.worker.site ? r.worker.site.name : '—' %> &middot; <%= r.emp.category %></div>
+      </div>
+      <span class="badge" style="background:var(--eos-red-50);color:var(--eos-red-600);border:1px solid var(--eos-red-100);font-size:.72rem">-₹<%= shortfall %>/mo</span>
+    </div>
+    <div class="worker-card-meta-grid mt-2">
+      <div class="worker-card-meta-item">
+        <div class="worker-card-meta-label">Zone</div>
+        <div class="worker-card-meta-val"><%= r.emp.zone %></div>
+      </div>
+      <div class="worker-card-meta-item">
+        <div class="worker-card-meta-label">Current Wage</div>
+        <div class="worker-card-meta-val">₹<%= parseFloat(r.emp.wage_rate).toFixed(2) %></div>
+      </div>
+      <div class="worker-card-meta-item">
+        <div class="worker-card-meta-label">Min. Required</div>
+        <div class="worker-card-meta-val" style="color:var(--eos-red-600);font-weight:600">₹<%= parseFloat(r.minimum).toFixed(2) %></div>
+      </div>
+      <div class="worker-card-meta-item">
+        <div class="worker-card-meta-label">Shortfall</div>
+        <div class="worker-card-meta-val" style="color:var(--eos-red-600);font-weight:700">₹<%= shortfall %></div>
+      </div>
+    </div>
+  </div>
+  <% }) %>
+</div>
+
+<!-- Desktop: table -->
+<div class="d-none d-md-block">
+  <div class="card" style="border-radius:12px">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th style="padding:10px 16px">Worker</th>
+              <th>Site</th>
+              <th>Category / Zone</th>
+              <th class="text-end">Current (₹/mo)</th>
+              <th class="text-end">Minimum (₹/mo)</th>
+              <th class="text-end" style="color:var(--eos-red-600)">Shortfall</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% belowMinimum.forEach(r => {
+              const shortfall = (parseFloat(r.minimum) - parseFloat(r.emp.wage_rate)).toFixed(2);
+            %>
+            <tr>
+              <td style="padding:9px 16px">
+                <a href="/workers/<%= r.worker.id %>" class="fw-semibold text-decoration-none" style="color:var(--em-ink)"><%= r.worker.name %></a>
+              </td>
+              <td class="small text-muted"><%= r.worker.site ? r.worker.site.name : '—' %></td>
+              <td class="small"><%= r.emp.category %> <span class="text-muted">/ <%= r.emp.zone %></span></td>
+              <td class="text-end small">₹<%= parseFloat(r.emp.wage_rate).toFixed(2) %></td>
+              <td class="text-end small">₹<%= parseFloat(r.minimum).toFixed(2) %></td>
+              <td class="text-end fw-bold" style="color:var(--eos-red-600)">₹<%= shortfall %></td>
+            </tr>
+            <% }) %>
+            <!-- Footer totals row -->
+            <tr style="background:var(--eos-red-50);font-weight:700">
+              <td colspan="5" style="padding:9px 16px;color:var(--em-ink-2)">Total monthly shortfall</td>
+              <td class="text-end" style="color:var(--eos-red-600);padding:9px 16px">
+                ₹<%= totalShortfall.toLocaleString('en-IN', {maximumFractionDigits:2}) %>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/pagination', { pageData, query }) %>
+<% } %>

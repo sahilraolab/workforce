@@ -1,0 +1,34 @@
+<%
+  // active: 'profile' | 'users' | 'wage-master'
+  // icon/subtitle: per-page header content, passed in by the including view.
+  const canManage = user && (user.role === 'company_admin' || user.role === 'super_admin');
+%>
+<%- include('./breadcrumb', { items: [
+  { label: t('settings_title'), href: '/settings/profile' },
+  { label: tabTitle },
+] }) %>
+
+<div class="settings-header">
+  <div class="settings-header-icon"><i class="bi <%= tabIcon %>"></i></div>
+  <div>
+    <h4 class="fw-bold"><%= tabTitle %></h4>
+    <% if (typeof tabSubtitle !== 'undefined' && tabSubtitle) { %><div class="sub"><%= tabSubtitle %></div><% } %>
+  </div>
+</div>
+
+<nav class="settings-tabs">
+  <a href="/settings/profile" class="settings-tab <%= active === 'profile' ? 'active' : '' %>">
+    <i class="bi bi-person"></i><%= t('my_profile') %>
+  </a>
+  <% if (canManage) { %>
+  <a href="/settings/users" class="settings-tab <%= active === 'users' ? 'active' : '' %>">
+    <i class="bi bi-person-gear"></i><%= t('nav_users') %>
+  </a>
+  <a href="/settings/wage-master" class="settings-tab <%= active === 'wage-master' ? 'active' : '' %>">
+    <i class="bi bi-currency-rupee"></i><%= t('nav_wage_master') %>
+  </a>
+  <a href="/settings/licenses" class="settings-tab <%= active === 'licenses' ? 'active' : '' %>">
+    <i class="bi bi-patch-check"></i><%= t('nav_licenses') %>
+  </a>
+  <% } %>
+</nav>

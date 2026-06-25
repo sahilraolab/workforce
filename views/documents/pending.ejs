@@ -1,0 +1,95 @@
+<%- include('../partials/breadcrumb', { items: [{ label: t('documents_pending_title') }] }) %>
+
+<h4 class="fw-bold mb-3"><i class="bi bi-file-earmark-text me-2 text-primary"></i><%= t('documents_pending_title') %></h4>
+
+<% if (docs.length === 0) { %>
+  <div class="alert alert-success"><i class="bi bi-check-circle me-2"></i><%= t('documents_none_pending') %></div>
+<% } else { %>
+
+<!-- Mobile: stacked cards -->
+<div class="d-md-none">
+  <% docs.forEach(doc => { %>
+  <div class="worker-card mb-2">
+    <div class="worker-card-top">
+      <a href="/workers/<%= doc.worker_id %>" class="worker-card-name"><%= doc.worker ? doc.worker.name : '—' %></a>
+      <span class="badge bg-secondary text-capitalize"><%= doc.doc_type.replace('_', ' ') %></span>
+    </div>
+    <div class="worker-card-meta">
+      <span><i class="bi bi-calendar"></i> <%= t('documents_uploaded') %>: <%= new Date(doc.created_at).toLocaleDateString() %></span>
+    </div>
+    <div class="worker-card-actions">
+      <a href="/documents/<%= doc.id %>" target="_blank" class="btn btn-outline-secondary btn-sm flex-fill">
+        <i class="bi bi-eye me-1"></i><%= t('documents_view') %>
+      </a>
+      <form action="/documents/<%= doc.id %>/verify" method="POST" class="flex-fill">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn btn-success btn-sm w-100"><i class="bi bi-check me-1"></i><%= t('documents_verify') %></button>
+      </form>
+      <button type="button" class="btn btn-danger btn-sm flex-fill" data-bs-toggle="modal" data-bs-target="#rejectModal"
+        data-action="/documents/<%= doc.id %>/reject">
+        <i class="bi bi-x me-1"></i><%= t('documents_reject') %>
+      </button>
+    </div>
+  </div>
+  <% }) %>
+</div>
+
+<!-- Desktop: table -->
+<div class="d-none d-md-block table-responsive">
+  <table class="table table-sm table-hover">
+    <thead class="table-light">
+      <tr><th><%= t('attendance_col_worker') %></th><th><%= t('documents_col_type') %></th><th><%= t('documents_uploaded') %></th><th><%= t('common_actions') %></th></tr>
+    </thead>
+    <tbody>
+      <% docs.forEach(doc => { %>
+      <tr>
+        <td><a href="/workers/<%= doc.worker_id %>" class="text-decoration-none"><%= doc.worker ? doc.worker.name : '—' %></a></td>
+        <td class="text-capitalize small"><%= doc.doc_type.replace('_', ' ') %></td>
+        <td class="small text-muted"><%= new Date(doc.created_at).toLocaleDateString() %></td>
+        <td class="text-nowrap">
+          <a href="/documents/<%= doc.id %>" target="_blank" class="btn btn-outline-secondary btn-sm" title="<%= t('documents_view') %>"><i class="bi bi-eye"></i></a>
+          <form action="/documents/<%= doc.id %>/verify" method="POST" class="d-inline">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="btn btn-success btn-sm" title="<%= t('documents_verify') %>"><i class="bi bi-check"></i></button>
+          </form>
+          <button type="button" class="btn btn-danger btn-sm" title="<%= t('documents_reject') %>" data-bs-toggle="modal" data-bs-target="#rejectModal"
+            data-action="/documents/<%= doc.id %>/reject">
+            <i class="bi bi-x"></i>
+          </button>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+
+<!-- Shared reject-reason modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="rejectForm" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="modal-header">
+          <h5 class="modal-title"><%= t('documents_reject') %></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label small fw-semibold"><%= t('documents_reject_reason_label') %></label>
+          <textarea name="reason" class="form-control form-control-sm" rows="2" placeholder="<%= t('documents_reject_reason_placeholder') %>" required></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal"><%= t('common_clear') %></button>
+          <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-x-circle me-1"></i><%= t('documents_reject') %></button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('rejectModal').addEventListener('show.bs.modal', (e) => {
+    const action = e.relatedTarget.getAttribute('data-action');
+    document.getElementById('rejectForm').setAttribute('action', action);
+  });
+</script>

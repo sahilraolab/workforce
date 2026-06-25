@@ -1,0 +1,70 @@
+<header id="top-navbar">
+  <a href="/dashboard" id="navbar-brand">
+    <div class="brand-mark"><i class="bi bi-building-fill-gear"></i></div>
+    <span>
+      <%= APP_NAME %>
+      <span class="navbar-subtitle d-none d-md-block"><%= user.company_name || t('group_super_admin') %></span>
+    </span>
+  </a>
+
+  <!-- Language Selector — only shown at the same breakpoint the sidebar
+       appears (992px). Below that, the navbar doesn't have room for 5 chips
+       alongside the brand + user pill, so it lives in the user dropdown instead. -->
+  <div class="lang-selector ms-2 d-none d-lg-flex">
+    <a href="/lang/en" class="lang-btn <%= currentLang === 'en' ? 'active' : '' %>">EN</a>
+    <a href="/lang/hi" class="lang-btn <%= currentLang === 'hi' ? 'active' : '' %>">हिंदी</a>
+    <a href="/lang/gu" class="lang-btn <%= currentLang === 'gu' ? 'active' : '' %>">ગુજરાતી</a>
+    <a href="/lang/mr" class="lang-btn <%= currentLang === 'mr' ? 'active' : '' %>">मराठी</a>
+    <a href="/lang/te" class="lang-btn <%= currentLang === 'te' ? 'active' : '' %>">తెలుగు</a>
+  </div>
+
+  <div class="nav-right">
+    <div class="company-pill d-none d-lg-flex">
+      <i class="bi bi-building"></i>
+      <%= user.company_name || 'Super Admin' %>
+    </div>
+
+    <div class="dropdown">
+      <button class="user-pill" data-bs-toggle="dropdown" aria-expanded="false">
+        <div class="u-avatar"><%= user.name ? user.name.charAt(0).toUpperCase() : 'U' %></div>
+        <span class="d-none d-sm-inline"><%= user.name %></span>
+        <i class="bi bi-chevron-down user-pill-caret"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end" style="min-width:220px">
+        <li>
+          <div class="dropdown-item-text" style="padding:.75rem 1rem">
+            <div style="font-weight:700;font-size:.85rem;color:var(--em-ink)"><%= user.name %></div>
+            <div style="font-size:.73rem;color:var(--em-ink-3);margin-top:.1rem"><%= user.email %></div>
+            <span class="badge bg-secondary mt-2 d-inline-block"><%= user.role.replace(/_/g,' ') %></span>
+          </div>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="/settings/profile"><i class="bi bi-person"></i><%= t('my_profile') %></a></li>
+        <% if (user.role === 'company_admin' || user.role === 'super_admin') { %>
+        <li><a class="dropdown-item" href="/settings/users"><i class="bi bi-people"></i><%= t('manage_users') %></a></li>
+        <% } %>
+        <li class="d-lg-none"><a class="dropdown-item" href="/payroll"><i class="bi bi-cash-stack"></i><%= t('nav_payroll') %></a></li>
+        <li class="d-lg-none"><a class="dropdown-item" href="/sites"><i class="bi bi-geo-alt"></i><%= t('nav_sites') %></a></li>
+        <li class="d-lg-none">
+          <div class="dropdown-item-text" style="padding:.4rem 1rem .2rem;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--em-ink-3)">Language</div>
+          <div style="padding:0 .75rem .5rem;display:flex;flex-wrap:wrap;gap:.3rem">
+            <a href="/lang/en" class="lang-btn <%= currentLang === 'en' ? 'active' : '' %>">EN</a>
+            <a href="/lang/hi" class="lang-btn <%= currentLang === 'hi' ? 'active' : '' %>">हिंदी</a>
+            <a href="/lang/gu" class="lang-btn <%= currentLang === 'gu' ? 'active' : '' %>">ગુજરાતી</a>
+            <a href="/lang/mr" class="lang-btn <%= currentLang === 'mr' ? 'active' : '' %>">मराठी</a>
+            <a href="/lang/te" class="lang-btn <%= currentLang === 'te' ? 'active' : '' %>">తెలుగు</a>
+          </div>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <form action="/auth/logout" method="POST" style="margin:0">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="dropdown-item" style="color:#b3475f;width:100%">
+              <i class="bi bi-box-arrow-right"></i><%= t('sign_out') %>
+            </button>
+          </form>
+        </li>
+      </ul>
+    </div>
+  </div>
+</header>
