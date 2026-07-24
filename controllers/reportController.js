@@ -1,4 +1,5 @@
-const { Op, fn, col } = require('sequelize');
+const { Op, fn, col, QueryTypes } = require('sequelize');
+const { sequelize } = require('../models');
 const { Worker, EmploymentDetail, Document, ValidationResult, Site, AuditLog, WageMaster, Payroll, ComplianceFiling } = require('../models');
 const { scopeWhere } = require('../middlewares/tenantScope');
 const { getComplianceScore, getSiteRiskIndicator } = require('../services/reportService');
@@ -41,13 +42,15 @@ exports.compliance = async (req, res) => {
     });
 
     // Skill category breakdown
-    const categoryBreakdown = await Worker.findAll({
-      where: workerScope,
-      include: [{ model: EmploymentDetail, as: 'employment', attributes: ['category'] }],
-      attributes: [[fn('COUNT', col('Worker.id')), 'count']],
-      group: ['employment.category'],
-      raw: false,
-    });
+    const categoryBreakdown = await sequelize.query(
+      `SELECT ed.category, COUNT(w.id) AS count
+       FROM workers w
+       LEFT JOIN employment_details ed ON w.id = ed.worker_id
+       WHERE w.company_id = :companyId
+       ${ siteId ? 'AND w.site_id = :siteId' : '' }
+       GROUP BY ed.category`,
+      { replacements: { companyId, siteId }, type: QueryTypes.SELECT }
+    );
 
     const sites = await Site.findAll({ where: scopeWhere(req, {}, { allowSiteFilter: false }), attributes: ['id', 'name'] });
 
