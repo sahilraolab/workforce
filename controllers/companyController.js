@@ -56,18 +56,21 @@ exports.list = async (req, res) => {
 // from object shape, which previously caused the form to render
 // action="/admin/companies/undefined?_method=PUT" on a failed create.
 function emptyFormValues() {
-  return { name: '', plan: 'starter', contact_email: '', contact_phone: '', worker_limit: '', end_date: '', status: 'active' };
+  return { name: '', address: '', plan: 'starter', contact_email: '', contact_phone: '', worker_limit: '', end_date: '', status: 'active', regulatory_regime: 'code_on_wages_2019', jurisdiction: 'central' };
 }
 
 function formValuesFromCompany(company) {
   return {
     name: company.name,
+    address: company.address || '',
     plan: company.plan,
     contact_email: company.contact_email || '',
     contact_phone: company.contact_phone || '',
     worker_limit: company.subscription ? (company.subscription.worker_limit ?? '') : '',
     end_date: company.subscription ? company.subscription.end_date : '',
     status: company.status,
+    regulatory_regime: company.regulatory_regime || 'code_on_wages_2019',
+    jurisdiction: company.jurisdiction || 'central',
   };
 }
 
@@ -86,7 +89,7 @@ exports.create = async (req, res) => {
     });
   }
 
-  const { name, address, contact_email, contact_phone, plan, worker_limit, end_date, admin_name, admin_email, admin_password } = req.body;
+  const { name, address, contact_email, contact_phone, plan, worker_limit, end_date, admin_name, admin_email, admin_password, regulatory_regime, jurisdiction } = req.body;
 
   const dbT = await require('../config/db').transaction();
   try {
@@ -94,6 +97,8 @@ exports.create = async (req, res) => {
       name, address, contact_email, contact_phone,
       plan: plan || 'starter',
       status: 'active',
+      regulatory_regime: regulatory_regime || 'code_on_wages_2019',
+      jurisdiction: jurisdiction || 'central',
       created_by: req.session.user.id,
     }, { transaction: dbT });
 
@@ -172,9 +177,9 @@ exports.update = async (req, res) => {
     }
 
     const before = company.toJSON();
-    const { name, address, contact_email, contact_phone, status, plan, worker_limit, end_date } = req.body;
+    const { name, address, contact_email, contact_phone, status, plan, worker_limit, end_date, regulatory_regime, jurisdiction } = req.body;
 
-    await company.update({ name, address, contact_email, contact_phone, status, plan, updated_by: req.session.user.id });
+    await company.update({ name, address, contact_email, contact_phone, status, plan, regulatory_regime: regulatory_regime || company.regulatory_regime, jurisdiction: jurisdiction || company.jurisdiction, updated_by: req.session.user.id });
 
     if (company.subscription) {
       const effectiveLimit = worker_limit ? parseInt(worker_limit, 10) : PLAN_WORKER_LIMITS[plan];

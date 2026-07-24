@@ -173,7 +173,7 @@ exports.importCsv = async (req, res) => {
     if (!/^\d{10}$/.test(row.mobile || '')) errs.push(t('val_mobile_format'));
     if (!row.marital_status) errs.push(t('val_marital_status_required'));
     if (!WORKER_CATEGORIES.includes(row.category)) errs.push(t('val_category_required'));
-    if (!ZONES.includes(row.zone)) errs.push(t('val_zone_required'));
+    if (!row.zone || !row.zone.trim()) errs.push(t('val_zone_required'));
     if (!row.wage_rate || isNaN(parseFloat(row.wage_rate)) || parseFloat(row.wage_rate) < 0) errs.push(t('val_wage_rate_required'));
     if (!row.doj || isNaN(Date.parse(row.doj))) errs.push(t('val_doj_required'));
     if (row.uan && !/^\d{12}$/.test(row.uan)) errs.push(t('val_uan_format'));
@@ -612,6 +612,34 @@ exports.show = async (req, res) => {
     console.error(err);
     req.flash('error', res.locals.t('err_load_worker_profile'));
     res.redirect('/workers');
+  }
+};
+
+exports.acknowledgeCheck = async (req, res) => {
+  try {
+    const worker = await Worker.findByPk(req.params.id);
+    if (!worker) { req.flash('error', res.locals.t('err_worker_not_found')); return res.redirect('/workers'); }
+    assertTenantOwnership(worker, req);
+
+    const { check_name, override_note } = req.body;
+    const vr = await ValidationResult.findOne({ where: { worker_id: worker.id, check_name } });
+    if (!vr) { req.flash('error', 'Validation check not found.'); return res.redirect(`/workers/${worker.id}`); }
+
+    await vr.update({
+      overridden: true,
+      override_note: (override_note || '').trim() || 'Acknowledged by HR/Admin.',
+      override_by: req.session.user.id,
+      override_at: new Date(),
+    });
+
+    await logAudit(req, { action: 'update', entity: 'ValidationResult', entity_id: vr.id, after_value: { check_name, overridden: true, note: override_note } });
+    req.flash('success', `Check "${check_name.replace(/_/g, ' ')}" acknowledged.`);
+    res.redirect(`/workers/${worker.id}`);
+  } catch (err) {
+    if (err.status === 403) { req.flash('error', res.locals.t('err_access_denied')); return res.redirect('/workers'); }
+    console.error(err);
+    req.flash('error', 'Failed to acknowledge check.');
+    res.redirect(`/workers/${req.params.id}`);
   }
 };
 

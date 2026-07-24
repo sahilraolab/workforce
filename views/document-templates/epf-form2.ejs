@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EPF Form 2 — <%= worker.name %></title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Times New Roman',Times,serif; font-size:10pt; color:#000; background:#f0f0f0; line-height:1.4; }
+.print-bar { background:#1e40af; padding:8px 16px; display:flex; align-items:center; gap:12px; }
+.print-bar span { color:#fff; font-family:system-ui,sans-serif; font-size:13px; flex:1; }
+.print-bar a { color:#bfdbfe; font-family:system-ui,sans-serif; font-size:12px; text-decoration:underline; }
+.print-bar button { background:#fff; color:#1e40af; border:none; border-radius:6px; padding:6px 18px; font-size:13px; font-weight:700; cursor:pointer; }
+.page { width:210mm; min-height:297mm; background:#fff; margin:12px auto; padding:12mm 14mm 10mm; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.form-header { text-align:center; margin-bottom:10px; }
+.form-header .form-num { font-size:13pt; font-weight:bold; }
+.form-header .form-rule { font-size:9pt; font-style:italic; }
+.form-header .form-title { font-size:11pt; font-weight:bold; margin-top:4px; }
+.form-header .form-sub { font-size:9pt; }
+.field-table { width:100%; border-collapse:collapse; margin-bottom:8px; font-size:9.5pt; }
+.field-table td { padding:4px 6px; vertical-align:top; }
+.field-table .lbl { font-weight:bold; width:42%; border-bottom:0.5px solid #ccc; }
+.field-table .val { border-bottom:0.5px solid #999; }
+.section-title { font-size:10pt; font-weight:bold; background:#eee; padding:4px 8px; margin:10px 0 6px; border:0.6px solid #bbb; }
+table.nominee { width:100%; border-collapse:collapse; font-size:9pt; margin-bottom:8px; }
+table.nominee th, table.nominee td { border:0.7px solid #555; padding:4px 6px; text-align:center; vertical-align:middle; }
+table.nominee .lft { text-align:left; }
+table.nominee thead th { background:#eee; font-weight:bold; }
+.declaration-box { border:1px solid #999; padding:8px 10px; margin:10px 0; font-size:9pt; text-align:justify; }
+.sig-block { display:flex; justify-content:space-between; margin-top:16px; font-size:9.5pt; }
+.sig-box { text-align:center; }
+.sig-line { border-top:0.8px solid #555; padding-top:4px; margin-top:24px; width:150px; }
+@media print {
+  body { background:#fff; }
+  .print-bar { display:none !important; }
+  .page { margin:0; box-shadow:none; padding:10mm 12mm 8mm; }
+  @page { size:A4 portrait; margin:0; }
+}
+</style>
+</head>
+<body>
+<div class="print-bar">
+  <span>EPF Form 2 (Nomination) — <%= worker.name %></span>
+  <a href="/workers/<%= worker.id %>">← Back to profile</a>
+  <button onclick="window.print()">⬇ Print / Save PDF</button>
+</div>
+<div class="page">
+  <div class="form-header">
+    <div class="form-num">FORM 2</div>
+    <div class="form-rule">[See rules 5(1) and 10 of the Employees' Provident Funds Scheme, 1952 and rule 6 of the Employees' Pension Scheme, 1995]</div>
+    <div class="form-title">NOMINATION AND DECLARATION FORM</div>
+    <div class="form-sub">(For unexempted / exempted establishments)</div>
+  </div>
+
+  <div style="font-size:9pt;margin-bottom:8px">
+    <strong>Name of Establishment:</strong> <%= company.name %> &nbsp;&nbsp;
+    <strong>Code No.:</strong> ___________________ &nbsp;&nbsp;
+    <strong>Date:</strong> <%= issueDate %>
+  </div>
+
+  <div class="section-title">Part A — Employees' Provident Fund — Nomination</div>
+  <table class="field-table">
+    <tr><td class="lbl">1. Name of Member (in full)</td><td class="val"><%= worker.name %></td></tr>
+    <tr><td class="lbl">2. Father's / Husband's Name</td><td class="val"><%= worker.fatherName || '—' %></td></tr>
+    <tr><td class="lbl">3. Date of Birth</td><td class="val"><%= worker.dob %></td></tr>
+    <tr><td class="lbl">4. Sex</td><td class="val"><%= worker.gender %></td></tr>
+    <tr><td class="lbl">5. Marital Status</td><td class="val">____________</td></tr>
+    <tr><td class="lbl">6. Designation / Nature of Work</td><td class="val"><%= worker.designation %></td></tr>
+    <tr><td class="lbl">7. Date of Joining</td><td class="val"><%= worker.doj %></td></tr>
+    <tr><td class="lbl">8. UAN</td><td class="val"><%= worker.uan %></td></tr>
+    <tr><td class="lbl">9. Aadhaar Number (masked)</td><td class="val"><%= worker.aadhaar %></td></tr>
+    <tr><td class="lbl">10. Permanent Address</td><td class="val"><%= worker.address || '—' %></td></tr>
+  </table>
+
+  <div style="font-size:9.5pt;margin-bottom:6px">
+    <strong>Nominee(s) for EPF amount:</strong>
+  </div>
+  <% if (nominees.length === 0) { %>
+  <div style="font-size:9pt;color:#777;margin-bottom:8px;padding:6px;border:0.5px dashed #bbb">
+    No nominees recorded. Please add family members in the worker profile to populate this section.
+  </div>
+  <% } else { %>
+  <table class="nominee">
+    <thead>
+      <tr>
+        <th style="width:30px">S.No</th>
+        <th class="lft">Name of Nominee</th>
+        <th>Relation</th>
+        <th>Aadhaar (masked)</th>
+        <th>Share (%)</th>
+        <th>Guardian (if minor)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% nominees.forEach(n => { %>
+      <tr>
+        <td><%= n.sno %></td>
+        <td class="lft"><%= n.name %></td>
+        <td><%= n.relation %></td>
+        <td><%= n.aadhaar %></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+
+  <div class="section-title">Part B — Employees' Pension Scheme — Nomination</div>
+  <div style="font-size:9pt;margin-bottom:6px">Nominee(s) for EPS amount (family members only — same as Part A if applicable):</div>
+  <% if (nominees.length === 0) { %>
+  <div style="font-size:9pt;color:#777;padding:6px;border:0.5px dashed #bbb">No nominees recorded.</div>
+  <% } else { %>
+  <table class="nominee">
+    <thead>
+      <tr><th style="width:30px">S.No</th><th class="lft">Name</th><th>Relation</th><th>Aadhaar (masked)</th><th>Guardian (if minor)</th></tr>
+    </thead>
+    <tbody>
+      <% nominees.forEach(n => { %>
+      <tr><td><%= n.sno %></td><td class="lft"><%= n.name %></td><td><%= n.relation %></td><td><%= n.aadhaar %></td><td></td></tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+
+  <div class="declaration-box">
+    I hereby declare that the information furnished above is true and correct to the best of my knowledge and belief. I understand that any false information provided may result in cancellation of membership.
+  </div>
+
+  <div class="sig-block">
+    <div class="sig-box"><div class="sig-line">Signature / Thumb Impression of Employee<br>(<%= worker.name %>)</div></div>
+    <div class="sig-box"><div class="sig-line">Signature of Employer<br>(<%= company.name %>)</div></div>
+  </div>
+</div>
+</body>
+</html>

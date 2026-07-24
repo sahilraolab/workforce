@@ -5,9 +5,18 @@ const Document = sequelize.define('Document', {
   id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
   worker_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
   doc_type: {
-    type: DataTypes.ENUM('aadhaar', 'passport_photo', 'bank_passbook', 'uan_card', 'esic_card'),
+    type: DataTypes.ENUM(
+      'aadhaar', 'passport_photo', 'bank_passbook', 'uan_card', 'esic_card',
+      'salary_slip', 'muster_roll', 'wage_register', 'offer_letter', 'service_certificate'
+    ),
     allowNull: false,
   },
+  source: {
+    type: DataTypes.ENUM('upload', 'generated'),
+    defaultValue: 'upload',
+  },
+  period_month: { type: DataTypes.TINYINT.UNSIGNED },
+  period_year: { type: DataTypes.SMALLINT.UNSIGNED },
   file_path: { type: DataTypes.STRING(500), allowNull: false },
   file_size: { type: DataTypes.INTEGER.UNSIGNED },
   mime_type: { type: DataTypes.STRING(100) },

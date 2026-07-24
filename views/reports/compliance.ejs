@@ -1,10 +1,10 @@
 <%
   const breakdownLabels = {
-    documents_verified: 'Documents Verified',
-    wage_compliant:     'Wage Compliant',
-    age_compliant:      'Age Compliant',
-    uan_present:        'UAN / PF Enrolled',
-    esic_compliant:     'ESIC Compliant',
+    documents_verified: t('compliance_check_docs_verified') || 'Documents Verified',
+    wage_compliant:     t('compliance_check_wage_compliant') || 'Wage Compliant',
+    age_compliant:      t('compliance_check_age_compliant') || 'Age Compliant',
+    uan_present:        t('compliance_check_uan_present') || 'UAN / PF Enrolled',
+    esic_compliant:     t('compliance_check_esic_compliant') || 'ESIC Compliant',
   };
   const breakdownIcons = {
     documents_verified: 'bi-file-earmark-check',
@@ -14,11 +14,11 @@
     esic_compliant:     'bi-heart-pulse',
   };
   const breakdownDesc = {
-    documents_verified: 'Workers with all mandatory KYC docs uploaded and verified',
-    wage_compliant:     'Workers paid at or above minimum wage for their skill/zone',
-    age_compliant:      'Workers confirmed ≥18 years at date of joining',
-    uan_present:        'Active workers enrolled in PF with a valid UAN',
-    esic_compliant:     'Workers earning ≤₹21,000/month enrolled in ESIC',
+    documents_verified: t('compliance_desc_docs_verified') || 'Workers with all mandatory KYC docs uploaded and verified',
+    wage_compliant:     t('compliance_desc_wage_compliant') || 'Workers paid at or above minimum wage for their skill/zone',
+    age_compliant:      t('compliance_desc_age_compliant') || 'Workers confirmed ≥18 years at date of joining',
+    uan_present:        t('compliance_desc_uan_present') || 'Active workers enrolled in PF with a valid UAN',
+    esic_compliant:     t('compliance_desc_esic_compliant') || 'Workers earning ≤₹21,000/month enrolled in ESIC',
   };
 %>
 
@@ -26,7 +26,7 @@
 <%- include('../partials/breadcrumb', { items: [{ label: t('reports_compliance_title') }] }) %>
 <div class="mb-3">
   <h4 class="mb-0 fw-bold"><i class="bi bi-bar-chart-line me-2" style="color:var(--em-accent)"></i><%= t('reports_compliance_title') %></h4>
-  <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:3px">Labour law &amp; statutory compliance snapshot</div>
+  <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:3px"><%= t('report_compliance_subtitle') %></div>
 </div>
 
 <!-- Filter bar -->
@@ -39,18 +39,18 @@
       <% }) %>
     </select>
     <% if (selectedSite) { %>
-    <a href="/reports/compliance" class="btn btn-outline-secondary btn-sm">Clear</a>
+    <a href="/reports/compliance" class="btn btn-outline-secondary btn-sm"><%= t('report_compliance_clear') %></a>
     <% } %>
   </form>
   <% if (score < 80) { %>
   <div class="eos-alert mb-0 flex-1" style="margin-bottom:0;padding:7px 12px">
     <i class="bi bi-exclamation-triangle-fill"></i>
-    <div class="eos-alert-text">Compliance score is below 80% — review failing checks below.</div>
+    <div class="eos-alert-text"><%= t('report_compliance_low_score') %></div>
   </div>
   <% } else { %>
   <div class="eos-alert success mb-0" style="margin-bottom:0;padding:7px 12px">
     <i class="bi bi-check-circle-fill"></i>
-    <div class="eos-alert-text">Good compliance standing. Keep documents updated.</div>
+    <div class="eos-alert-text"><%= t('report_compliance_good') %></div>
   </div>
   <% } %>
 </div>
@@ -186,7 +186,7 @@
           ].forEach(doc => { %>
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
             <i class="bi <%= doc.icon %>" style="color:var(--em-accent);font-size:.8rem;width:14px;text-align:center"></i>
-            <span style="font-size:.76rem;color:var(--em-ink-2)""><%= doc.label %></span>
+            <span style="font-size:.76rem;color:var(--em-ink-2)"><%= doc.label %></span>
           </div>
           <% }) %>
         </div>
@@ -228,9 +228,6 @@
         </span>
       </div>
       <div class="card-body p-0">
-        <%
-          const wageIssues = (missingDocWorkers || []).filter(w => w._wageIssue);
-        %>
         <% if (!breakdown.wage_compliant || Math.round(breakdown.wage_compliant * 100) === 100) { %>
         <div class="p-3 d-flex align-items-center gap-2" style="color:var(--eos-green-600);font-size:.84rem">
           <i class="bi bi-check-circle-fill"></i>All workers meet minimum wage

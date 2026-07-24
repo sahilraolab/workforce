@@ -100,7 +100,6 @@ exports.createUser = async (req, res) => {
       created_by: req.session.user.id,
     });
     await logAudit(req, { action: 'create', entity: 'User', entity_id: user.id, after_value: { name, email, role } });
-    req.flash('success', res.locals.t('ok_user_created', { name }));
     req.flash('generatedPasswordFor', name);
     req.flash('generatedPassword', tempPassword);
     res.redirect('/settings/users');
@@ -133,7 +132,6 @@ exports.resetUserPassword = async (req, res) => {
     await user.update({ password_hash: hash, updated_by: req.session.user.id });
 
     await logAudit(req, { action: 'update', entity: 'User', entity_id: user.id, after_value: { password_reset: true } });
-    req.flash('success', res.locals.t('ok_password_reset', { name: user.name }));
     req.flash('generatedPasswordFor', user.name);
     req.flash('generatedPassword', tempPassword);
     res.redirect('/settings/users');
@@ -215,5 +213,44 @@ exports.createWage = async (req, res) => {
       req.flash('error', res.locals.t('err_save_wage'));
     }
     res.redirect('/settings/wage-master');
+  }
+};
+
+exports.companySettings = async (req, res) => {
+  try {
+    const company = await Company.findByPk(req.tenantScope.company_id);
+    if (!company) { req.flash('error', 'Company not found.'); return res.redirect('/settings/profile'); }
+    res.render('settings/company-settings', {
+      title: 'Company Settings',
+      company,
+    });
+  } catch (err) {
+    console.error(err);
+    req.flash('error', res.locals.t('err_server'));
+    res.redirect('/settings/profile');
+  }
+};
+
+exports.updateCompanySettings = async (req, res) => {
+  try {
+    const company = await Company.findByPk(req.tenantScope.company_id);
+    if (!company) { req.flash('error', 'Company not found.'); return res.redirect('/settings/company'); }
+    const before = { regulatory_regime: company.regulatory_regime, jurisdiction: company.jurisdiction, address: company.address };
+    const { regulatory_regime, jurisdiction, address, contact_email, contact_phone } = req.body;
+    await company.update({
+      regulatory_regime: regulatory_regime || company.regulatory_regime,
+      jurisdiction: jurisdiction || company.jurisdiction,
+      address: address || company.address,
+      contact_email: contact_email || company.contact_email,
+      contact_phone: contact_phone || company.contact_phone,
+      updated_by: req.session.user.id,
+    });
+    await logAudit(req, { action: 'update', entity: 'Company', entity_id: company.id, before_value: before, after_value: { regulatory_regime, jurisdiction, address } });
+    req.flash('success', 'Company settings saved.');
+    res.redirect('/settings/company');
+  } catch (err) {
+    console.error(err);
+    req.flash('error', res.locals.t('err_server'));
+    res.redirect('/settings/company');
   }
 };

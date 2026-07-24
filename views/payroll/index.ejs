@@ -51,7 +51,7 @@
 
 <% if (!generated) { %>
   <div class="alert alert-info"><%= t('payroll_no_data') %></div>
-<% } else { %>
+<% } else { /* generated block */ %>
 
 <!-- Totals -->
 <div class="row g-3 mb-3">
@@ -70,7 +70,10 @@
             <th><%= t('attendance_col_worker') %></th><th><%= t('common_site') %></th><th><%= t('common_category') %></th>
             <th class="text-end"><%= t('payroll_col_days') %></th><th class="text-end"><%= t('payroll_col_ot_hrs') %></th>
             <th class="text-end"><%= t('payroll_col_gross') %></th><th class="text-end"><%= t('payroll_col_pf') %></th>
-            <th class="text-end"><%= t('payroll_col_esic') %></th><th class="text-end fw-bold"><%= t('payroll_col_net_pay') %></th>
+            <th class="text-end"><%= t('payroll_col_esic') %></th>
+            <th class="text-end">Other Ded.</th>
+            <th class="text-end fw-bold"><%= t('payroll_col_net_pay') %></th>
+            <% if (['company_admin','hr_payroll','super_admin'].includes(user.role)) { %><th></th><% } %>
           </tr>
         </thead>
         <tbody>
@@ -84,7 +87,19 @@
             <td class="text-end small">₹<%= parseFloat(p.gross).toFixed(2) %></td>
             <td class="text-end small text-danger">₹<%= parseFloat(p.pf_deduction).toFixed(2) %></td>
             <td class="text-end small text-danger">₹<%= parseFloat(p.esic_deduction).toFixed(2) %></td>
+            <td class="text-end small text-danger">₹<%= parseFloat(p.other_deductions||0).toFixed(2) %></td>
             <td class="text-end fw-bold text-success">₹<%= parseFloat(p.net_pay).toFixed(2) %></td>
+            <% if (['company_admin','hr_payroll','super_admin'].includes(user.role)) { %>
+            <td class="text-center">
+              <button class="btn btn-outline-secondary btn-sm adj-btn" style="padding:.15rem .45rem;font-size:.72rem"
+                data-id="<%= p.id %>"
+                data-name="<%- encodeURIComponent(p.worker.name) %>"
+                data-ded="<%= parseFloat(p.other_deductions||0) %>"
+                data-notes="<%- encodeURIComponent(p.notes||'') %>">
+                <i class="bi bi-pencil"></i>
+              </button>
+            </td>
+            <% } %>
           </tr>
           <% }) %>
         </tbody>
@@ -92,4 +107,53 @@
     </div>
   </div>
 </div>
-<% } %>
+<% } /* end generated block */ %>
+
+<!-- Payroll Adjust Modal -->
+<div class="modal fade" id="adjustModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title fw-bold">Adjust Deductions</h6>
+        <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="adjustForm" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="modal-body">
+          <p class="small text-muted mb-2" id="adjustWorkerName"></p>
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Other Deductions (₹)</label>
+            <input type="number" name="other_deductions" id="adjustOtherDed" class="form-control form-control-sm"
+                   min="0" step="0.01" value="0">
+            <div class="form-text">Net pay = Gross − PF − ESIC − Other Deductions</div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold small">Notes / Reason</label>
+            <textarea name="notes" id="adjustNotes" class="form-control form-control-sm" rows="2"
+                      placeholder="e.g. Advance recovery, fine, loan instalment"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer py-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm">Save Adjustment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.adj-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const id = btn.dataset.id;
+    const name = decodeURIComponent(btn.dataset.name);
+    const ded = btn.dataset.ded;
+    const notes = decodeURIComponent(btn.dataset.notes);
+    document.getElementById('adjustWorkerName').textContent = 'Worker: ' + name;
+    document.getElementById('adjustOtherDed').value = ded;
+    document.getElementById('adjustNotes').value = notes;
+    document.getElementById('adjustForm').action = '/payroll/' + id + '/adjust';
+    new bootstrap.Modal(document.getElementById('adjustModal')).show();
+  });
+});
+</script>

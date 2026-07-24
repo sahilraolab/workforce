@@ -9,6 +9,14 @@ const Company = sequelize.define('Company', {
   address: { type: DataTypes.TEXT },
   contact_email: { type: DataTypes.STRING(255) },
   contact_phone: { type: DataTypes.STRING(20) },
+  regulatory_regime: {
+    type: DataTypes.ENUM('code_on_wages_2019', 'osh_code_2020'),
+    defaultValue: 'code_on_wages_2019',
+  },
+  jurisdiction: {
+    type: DataTypes.ENUM('central', 'gujarat'),
+    defaultValue: 'central',
+  },
   created_by: { type: DataTypes.INTEGER.UNSIGNED },
 }, { tableName: 'companies' });
 

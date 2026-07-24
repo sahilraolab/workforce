@@ -2,10 +2,10 @@
 <%- include('../partials/breadcrumb', { items: [{ label: 'Wage Compliance Report' }] }) %>
 <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
   <div>
-    <h4 class="mb-0 fw-bold"><i class="bi bi-currency-rupee me-2" style="color:var(--em-accent)"></i>Wage Compliance Report</h4>
-    <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:3px">Workers paid below statutory minimum wage by skill category and zone</div>
+    <h4 class="mb-0 fw-bold"><i class="bi bi-currency-rupee me-2" style="color:var(--em-accent)"></i><%= t('report_wage_title') %></h4>
+    <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:3px"><%= t('report_wage_subtitle') %></div>
   </div>
-  <a href="?export=csv" class="btn btn-outline-secondary btn-sm"><i class="bi bi-filetype-csv me-1"></i>Export CSV</a>
+  <a href="?export=csv" class="btn btn-outline-secondary btn-sm"><i class="bi bi-filetype-csv me-1"></i><%= t('report_wage_export') %></a>
 </div>
 
 <%

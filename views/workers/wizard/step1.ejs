@@ -2,8 +2,8 @@
 
 <div class="card">
   <div class="card-header">
-    <span><i class="bi bi-person-fill me-2" style="color:var(--brand)"></i>Step 1 — Personal Details</span>
-    <span class="voice-hint"><i class="bi bi-mic-fill"></i> Tap mic to speak</span>
+    <span><i class="bi bi-person-fill me-2" style="color:var(--brand)"></i><%= t('wiz_step1_title') %></span>
+    <span class="voice-hint"><i class="bi bi-mic-fill"></i> <%= t('wiz_voice_hint') %></span>
   </div>
   <div class="card-body">
 
@@ -20,10 +20,10 @@
       <div class="row g-3">
         <div class="col-md-6">
           <label class="form-label">
-            <i class="bi bi-geo-alt text-muted"></i> Site <span class="req">*</span>
+            <i class="bi bi-geo-alt text-muted"></i> <%= t('wiz_label_site') %> <span class="req">*</span>
           </label>
           <select name="site_id" class="form-select" required <% if (user.role === 'site_supervisor') { %>disabled<% } %>>
-            <option value="">— Select Site —</option>
+            <option value=""><%= t('wiz_select_site_placeholder') %></option>
             <% sites.forEach(s => { %>
               <option value="<%= s.id %>" <%= (draft.site_id == s.id || defaultSiteId == s.id) ? 'selected' : '' %>>
                 <%= s.name %>
@@ -37,20 +37,20 @@
 
         <div class="col-md-6">
           <label class="form-label">
-            <i class="bi bi-person text-muted"></i> Full Name (as per Aadhaar) <span class="req">*</span>
-            <span class="voice-hint"><i class="bi bi-mic-fill"></i> speak</span>
+            <i class="bi bi-person text-muted"></i> <%= t('wiz_label_full_name') %> <span class="req">*</span>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> <%= t('wiz_speak') %></span>
           </label>
           <div class="input-voice-wrap">
             <input type="text" name="name" class="form-control" value="<%= draft.name || '' %>"
-              required placeholder="Worker's full name">
+              required placeholder="<%= t('wiz_label_full_name') %>">
             <button class="mic-btn" type="button" title="Speak to fill"><i class="bi bi-mic-fill"></i></button>
           </div>
         </div>
 
         <div class="col-md-6">
           <label class="form-label">
-            <i class="bi bi-person text-muted"></i> Father's Name <span class="req">*</span>
-            <span class="voice-hint"><i class="bi bi-mic-fill"></i> speak</span>
+            <i class="bi bi-person text-muted"></i> <%= t('wiz_label_father_name') %> <span class="req">*</span>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> <%= t('wiz_speak') %></span>
           </label>
           <div class="input-voice-wrap">
             <input type="text" name="father_name" class="form-control" value="<%= draft.father_name || '' %>" required>
@@ -60,7 +60,7 @@
 
         <div class="col-md-3">
           <label class="form-label">
-            <i class="bi bi-calendar2 text-muted"></i> Date of Birth <span class="req">*</span>
+            <i class="bi bi-calendar2 text-muted"></i> <%= t('wiz_label_dob') %> <span class="req">*</span>
           </label>
           <input type="date" name="dob" class="form-control" value="<%= draft.dob || '' %>"
             required max="<%= new Date(Date.now() - 18*365*24*60*60*1000).toISOString().split('T')[0] %>">
@@ -68,33 +68,33 @@
 
         <div class="col-md-3">
           <label class="form-label">
-            <i class="bi bi-gender-ambiguous text-muted"></i> Gender <span class="req">*</span>
+            <i class="bi bi-gender-ambiguous text-muted"></i> <%= t('wiz_label_gender') %> <span class="req">*</span>
           </label>
           <select name="gender" class="form-select" required>
-            <option value="">— Select —</option>
-            <% ['Male','Female','Other'].forEach(g => { %>
-              <option value="<%= g %>" <%= draft.gender === g ? 'selected' : '' %>><%= g %></option>
-            <% }) %>
+            <option value=""><%= t('wiz_select_placeholder') %></option>
+            <option value="Male" <%= draft.gender === 'Male' ? 'selected' : '' %>><%= t('wiz_gender_male') %></option>
+            <option value="Female" <%= draft.gender === 'Female' ? 'selected' : '' %>><%= t('wiz_gender_female') %></option>
+            <option value="Other" <%= draft.gender === 'Other' ? 'selected' : '' %>><%= t('wiz_gender_other') %></option>
           </select>
         </div>
 
         <div class="col-md-6">
           <label class="form-label">
-            <i class="bi bi-credit-card text-muted"></i> Aadhaar Number <span class="req">*</span>
-            <span class="voice-hint"><i class="bi bi-mic-fill"></i> speak</span>
+            <i class="bi bi-credit-card text-muted"></i> <%= t('wiz_label_aadhaar') %> <span class="req">*</span>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> <%= t('wiz_speak') %></span>
           </label>
           <div class="input-voice-wrap">
             <input type="text" name="aadhaar" class="form-control" value="<%= draft.aadhaar || '' %>"
               pattern="\d{12}" maxlength="12" placeholder="12-digit Aadhaar" required autocomplete="off">
             <button class="mic-btn" type="button" title="Speak to fill"><i class="bi bi-mic-fill"></i></button>
           </div>
-          <div class="form-text">12 digits only, no spaces or dashes</div>
+          <div class="form-text"><%= t('wiz_aadhaar_hint') %></div>
         </div>
 
         <div class="col-md-6">
           <label class="form-label">
-            <i class="bi bi-telephone text-muted"></i> Mobile Number <span class="req">*</span>
-            <span class="voice-hint"><i class="bi bi-mic-fill"></i> speak</span>
+            <i class="bi bi-telephone text-muted"></i> <%= t('wiz_label_mobile') %> <span class="req">*</span>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> <%= t('wiz_speak') %></span>
           </label>
           <div class="input-voice-wrap">
             <input type="tel" name="mobile" class="form-control" value="<%= draft.mobile || '' %>"
@@ -105,8 +105,8 @@
 
         <div class="col-md-6">
           <label class="form-label">
-            <i class="bi bi-envelope text-muted"></i> Email (optional)
-            <span class="voice-hint"><i class="bi bi-mic-fill"></i> speak</span>
+            <i class="bi bi-envelope text-muted"></i> <%= t('wiz_label_email') %>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> <%= t('wiz_speak') %></span>
           </label>
           <div class="input-voice-wrap">
             <input type="email" name="email" class="form-control" value="<%= draft.email || '' %>">
@@ -116,20 +116,21 @@
 
         <div class="col-md-6">
           <label class="form-label">
-            <i class="bi bi-heart text-muted"></i> Marital Status <span class="req">*</span>
+            <i class="bi bi-heart text-muted"></i> <%= t('wiz_label_marital_status') %> <span class="req">*</span>
           </label>
           <select name="marital_status" class="form-select" required>
-            <option value="">— Select —</option>
-            <% ['Single','Married','Widowed','Divorced'].forEach(s => { %>
-              <option value="<%= s %>" <%= draft.marital_status === s ? 'selected' : '' %>><%= s %></option>
-            <% }) %>
+            <option value=""><%= t('wiz_select_placeholder') %></option>
+            <option value="Single" <%= draft.marital_status === 'Single' ? 'selected' : '' %>><%= t('wiz_marital_single') %></option>
+            <option value="Married" <%= draft.marital_status === 'Married' ? 'selected' : '' %>><%= t('wiz_marital_married') %></option>
+            <option value="Widowed" <%= draft.marital_status === 'Widowed' ? 'selected' : '' %>><%= t('wiz_marital_widowed') %></option>
+            <option value="Divorced" <%= draft.marital_status === 'Divorced' ? 'selected' : '' %>><%= t('wiz_marital_divorced') %></option>
           </select>
         </div>
 
         <div class="col-12">
           <label class="form-label">
-            <i class="bi bi-house text-muted"></i> Address (as per Aadhaar) <span class="req">*</span>
-            <span class="voice-hint"><i class="bi bi-mic-fill"></i> speak</span>
+            <i class="bi bi-house text-muted"></i> <%= t('wiz_label_address_aadhaar') %> <span class="req">*</span>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> <%= t('wiz_speak') %></span>
           </label>
           <div class="input-voice-wrap">
             <textarea name="address_aadhaar" class="form-control" rows="2" required
@@ -140,8 +141,8 @@
 
         <div class="col-12">
           <label class="form-label">
-            <i class="bi bi-house-door text-muted"></i> Present Address (if different)
-            <span class="voice-hint"><i class="bi bi-mic-fill"></i> speak</span>
+            <i class="bi bi-house-door text-muted"></i> <%= t('wiz_label_present_address') %>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> <%= t('wiz_speak') %></span>
           </label>
           <div class="input-voice-wrap">
             <textarea name="present_address" class="form-control" rows="2"
@@ -154,14 +155,14 @@
       <div class="d-flex justify-content-between align-items-center mt-4 gap-2">
         <div class="d-flex gap-2">
           <a href="/workers/register/exit" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-x-lg me-1"></i>Exit
+            <i class="bi bi-x-lg me-1"></i><%= t('wiz_btn_exit') %>
           </a>
           <button type="submit" formaction="/workers/register/save-draft" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-floppy me-1"></i>Save & Exit
+            <i class="bi bi-floppy me-1"></i><%= t('wiz_btn_save_exit') %>
           </button>
         </div>
         <button type="submit" class="btn btn-primary">
-          Next: Employment <i class="bi bi-arrow-right ms-1"></i>
+          <%= t('wiz_btn_next_employment') %> <i class="bi bi-arrow-right ms-1"></i>
         </button>
       </div>
     </form>

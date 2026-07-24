@@ -32,6 +32,10 @@
             <% }) %>
           </select>
         </div>
+        <div class="col-12">
+          <label class="form-label fw-semibold">Registered Address</label>
+          <textarea name="address" class="form-control" rows="2" placeholder="Full address — used on statutory forms (salary slips, etc.)"><%= values.address %></textarea>
+        </div>
         <div class="col-12 col-md-6">
           <label class="form-label fw-semibold"><%= t('company_form_contact_email') %></label>
           <input type="email" name="contact_email" class="form-control" value="<%= values.contact_email %>">
@@ -39,6 +43,22 @@
         <div class="col-12 col-md-6">
           <label class="form-label fw-semibold"><%= t('company_form_contact_phone') %></label>
           <input type="tel" name="contact_phone" class="form-control" pattern="\d{10}" maxlength="10" placeholder="10-digit number" value="<%= values.contact_phone %>">
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label fw-semibold">Regulatory Regime</label>
+          <select name="regulatory_regime" class="form-select">
+            <option value="code_on_wages_2019" <%= values.regulatory_regime === 'code_on_wages_2019' ? 'selected' : '' %>>Code on Wages 2019 (Form V)</option>
+            <option value="osh_code_2020" <%= values.regulatory_regime === 'osh_code_2020' ? 'selected' : '' %>>OSH Code 2020 (Form XVI)</option>
+          </select>
+          <div class="form-text">Determines which statutory wage slip form is generated.</div>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label fw-semibold">Jurisdiction</label>
+          <select name="jurisdiction" class="form-select">
+            <option value="central" <%= values.jurisdiction === 'central' ? 'selected' : '' %>>Central Rules</option>
+            <option value="gujarat" <%= values.jurisdiction === 'gujarat' ? 'selected' : '' %>>Gujarat State Rules</option>
+          </select>
+          <div class="form-text">Central = rule 52; Gujarat state = rule 43.</div>
         </div>
         <div class="col-6 col-md-4">
           <label class="form-label fw-semibold"><%= t('company_form_worker_limit') %></label>

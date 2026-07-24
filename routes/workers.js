@@ -69,6 +69,7 @@ router.get('/import-template', isLoggedIn, can('workers:create'), ctrl.downloadT
 router.post('/import', isLoggedIn, can('workers:create'), csvUpload.single('file'), handleUploadError, ctrl.importCsv);
 
 router.get('/:id', isLoggedIn, can('workers:read'), ctrl.show);
+router.post('/:id/acknowledge-check', isLoggedIn, can('workers:update'), ctrl.acknowledgeCheck);
 router.delete('/:id', isLoggedIn, can('workers:delete'), ctrl.destroy);
 
 module.exports = router;

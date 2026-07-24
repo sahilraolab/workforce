@@ -1,6 +1,12 @@
 <div class="wizard-steps">
   <%
-    const stepLabels = ['Personal Details','Employment','Documents & Bank','Family Details','Review & Submit'];
+    const stepLabels = [
+      t('wiz_step_label_1'),
+      t('wiz_step_label_2'),
+      t('wiz_step_label_3'),
+      t('wiz_step_label_4'),
+      t('wiz_step_label_5'),
+    ];
   %>
   <% stepLabels.forEach((label, i) => {
     const n = i + 1;

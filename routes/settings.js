@@ -13,6 +13,9 @@ router.post('/users', isLoggedIn, can('users:manage'), ctrl.createUser);
 router.post('/users/:id/reset-password', isLoggedIn, can('users:manage'), ctrl.resetUserPassword);
 router.post('/users/:id/toggle-status', isLoggedIn, can('users:manage'), ctrl.toggleUserStatus);
 
+router.get('/company', isLoggedIn, can('settings:update'), ctrl.companySettings);
+router.post('/company', isLoggedIn, can('settings:update'), ctrl.updateCompanySettings);
+
 router.get('/wage-master', isLoggedIn, can('settings:read'), ctrl.wageMaster);
 router.post('/wage-master', isLoggedIn, can('settings:update'), ctrl.createWage);
 

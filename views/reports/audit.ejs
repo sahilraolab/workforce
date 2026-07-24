@@ -2,8 +2,8 @@
 <%- include('../partials/breadcrumb', { items: [{ label: 'Audit Log' }] }) %>
 <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
   <div>
-    <h4 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2" style="color:var(--em-accent)"></i>Audit Log</h4>
-    <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:3px">Complete record of all user actions across the system</div>
+    <h4 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2" style="color:var(--em-accent)"></i><%= t('report_audit_title') %></h4>
+    <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:3px"><%= t('report_audit_subtitle') %></div>
   </div>
   <a href="?<%= new URLSearchParams({...query, export:'csv'}).toString() %>" class="btn btn-outline-secondary btn-sm">
     <i class="bi bi-filetype-csv me-1"></i>Export CSV
@@ -15,22 +15,22 @@
   <div class="card-body" style="padding:.75rem 1rem">
     <form class="d-flex align-items-center gap-2 flex-wrap">
       <select name="entity" class="form-select form-select-sm" style="max-width:160px" onchange="this.form.submit()">
-        <option value="">All Entities</option>
+        <option value=""><%= t('report_audit_all_entities') %></option>
         <% ['Worker','Site','Company','Document','WageMaster','Payroll','User','CompanyLicense','ComplianceFiling'].forEach(e => { %>
           <option value="<%= e %>" <%= query.entity === e ? 'selected' : '' %>><%= e %></option>
         <% }) %>
       </select>
       <select name="action" class="form-select form-select-sm" style="max-width:130px" onchange="this.form.submit()">
-        <option value="">All Actions</option>
-        <% ['create','update','delete','login','export'].forEach(a => { %>
+        <option value=""><%= t('report_audit_all_actions') %></option>
+        <% ['create','update','delete','verify','reject','generate','export','login'].forEach(a => { %>
           <option value="<%= a %>" <%= query.action === a ? 'selected' : '' %> style="text-transform:capitalize"><%= a.charAt(0).toUpperCase() + a.slice(1) %></option>
         <% }) %>
       </select>
       <input type="date" name="from" class="form-control form-control-sm" style="max-width:145px" value="<%= query.from || '' %>" placeholder="From">
       <input type="date" name="to"   class="form-control form-control-sm" style="max-width:145px" value="<%= query.to   || '' %>" placeholder="To">
-      <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-funnel me-1"></i>Filter</button>
+      <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-funnel me-1"></i><%= t('report_audit_filter') %></button>
       <% if (query.entity || query.action || query.from || query.to) { %>
-        <a href="/reports/audit" class="btn btn-outline-secondary btn-sm">Clear</a>
+        <a href="/reports/audit" class="btn btn-outline-secondary btn-sm"><%= t('report_audit_clear') %></a>
       <% } %>
     </form>
   </div>

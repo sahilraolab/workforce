@@ -254,13 +254,14 @@ exports.auditReport = async (req, res) => {
   const where = {};
   if (req.tenantScope.company_id) where.company_id = req.tenantScope.company_id;
   if (req.query.entity) where.entity = req.query.entity;
+  if (req.query.action) where.action = req.query.action;
   if (req.query.from && req.query.to) {
     where.created_at = { [Op.between]: [new Date(req.query.from), new Date(req.query.to + 'T23:59:59')] };
   }
 
   const { count, rows: logs } = await AuditLog.findAndCountAll({
     where,
-    include: [{ model: require('../models').User, as: 'user', attributes: ['name', 'email'] }],
+    include: [{ model: require('../models').User, as: 'user', attributes: ['name', 'email', 'role'] }],
     order: [['created_at', 'DESC']],
     limit,
     offset,

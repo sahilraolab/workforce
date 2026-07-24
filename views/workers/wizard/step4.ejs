@@ -1,12 +1,12 @@
 <%- include('./_progress') %>
 
 <div class="card border-0 shadow-sm">
-  <div class="card-header bg-white"><h5 class="mb-0 fw-bold"><i class="bi bi-people me-2 text-primary"></i>Step 4 — Family Details</h5></div>
+  <div class="card-header bg-white"><h5 class="mb-0 fw-bold"><i class="bi bi-people me-2 text-primary"></i><%= t('wiz_step4_title') %></h5></div>
   <div class="card-body p-4">
 
     <div class="alert alert-info small">
       <i class="bi bi-info-circle me-1"></i>
-      Family details are optional. If Aadhaar is entered for any member, it must be a valid 12-digit number.
+      <%= t('wiz_step4_hint') %>
     </div>
 
     <form action="/workers/register/step4?_csrf=<%= encodeURIComponent(csrfToken) %>" method="POST" enctype="multipart/form-data" novalidate
@@ -14,21 +14,21 @@
 
       <!-- Spouse -->
       <div class="card mb-4">
-        <div class="card-header small fw-semibold bg-light">Spouse (optional)</div>
+        <div class="card-header small fw-semibold bg-light"><%= t('wiz_label_spouse') %></div>
         <div class="card-body row g-3">
           <div class="col-md-4">
-            <label class="form-label small fw-semibold">Name</label>
+            <label class="form-label small fw-semibold"><%= t('wiz_label_name') %></label>
             <input type="text" name="family_name[]" class="form-control" placeholder="Spouse name"
               value="<%= (draft._familyMembers && draft._familyMembers[0] && draft._familyMembers[0].relation === 'spouse') ? draft._familyMembers[0].name : '' %>">
           </div>
           <div class="col-md-4">
             <input type="hidden" name="family_relation[]" value="spouse">
-            <label class="form-label small fw-semibold">Aadhaar Number</label>
+            <label class="form-label small fw-semibold"><%= t('wiz_label_aadhaar') %></label>
             <input type="text" name="family_aadhaar[]" class="form-control"
               pattern="\d{12}" maxlength="12" placeholder="12-digit (optional)">
           </div>
           <div class="col-md-4">
-            <label class="form-label small fw-semibold">Photo (optional)</label>
+            <label class="form-label small fw-semibold"><%= t('wiz_label_photo') %></label>
             <input type="file" name="family_photo_0" class="form-control"
               accept=".jpg,.jpeg,.png"
               data-max-kb="100" data-warn-id="spouse-warn">
@@ -39,9 +39,9 @@
 
       <!-- Children -->
       <div class="d-flex justify-content-between align-items-center mb-2">
-        <h6 class="mb-0">Children</h6>
+        <h6 class="mb-0"><%= t('wiz_label_children') %></h6>
         <button type="button" class="btn btn-outline-primary btn-sm" @click="addChild()">
-          <i class="bi bi-plus me-1"></i>Add Child
+          <i class="bi bi-plus me-1"></i><%= t('wiz_btn_add_child') %>
         </button>
       </div>
 
@@ -53,18 +53,18 @@
                 <span class="badge bg-secondary" x-text="'C' + (idx + 1)"></span>
               </div>
               <div class="col-md-3">
-                <label class="form-label small fw-semibold">Name</label>
+                <label class="form-label small fw-semibold"><%= t('wiz_label_name') %></label>
                 <input type="text" name="family_name[]" class="form-control"
                   :placeholder="'Child ' + (idx+1) + ' name'" x-model="child.name">
                 <input type="hidden" name="family_relation[]" value="child">
               </div>
               <div class="col-md-4">
-                <label class="form-label small fw-semibold">Aadhaar Number</label>
+                <label class="form-label small fw-semibold"><%= t('wiz_label_aadhaar') %></label>
                 <input type="text" name="family_aadhaar[]" class="form-control"
                   pattern="\d{12}" maxlength="12" placeholder="12-digit (optional)" x-model="child.aadhaar">
               </div>
               <div class="col-md-3">
-                <label class="form-label small fw-semibold">Photo (optional)</label>
+                <label class="form-label small fw-semibold"><%= t('wiz_label_photo') %></label>
                 <input type="file" :name="'family_photo_' + (idx + 1)"
                   class="form-control" accept=".jpg,.jpeg,.png"
                   data-max-kb="100" :data-warn-id="'child-warn-' + idx">
@@ -78,20 +78,20 @@
             </div>
           </div>
         </template>
-        <div x-show="children.length === 0" class="text-muted small mb-3">No children added yet.</div>
+        <div x-show="children.length === 0" class="text-muted small mb-3"><%= t('wiz_children_none') %></div>
       </div>
 
       <div class="d-flex justify-content-between align-items-center mt-4 gap-2">
         <div class="d-flex gap-2">
           <a href="/workers/register/step3" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left me-1"></i>Back
+            <i class="bi bi-arrow-left me-1"></i><%= t('wiz_btn_back') %>
           </a>
           <button type="submit" formaction="/workers/register/save-draft" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-floppy me-1"></i>Save & Exit
+            <i class="bi bi-floppy me-1"></i><%= t('wiz_btn_save_exit') %>
           </button>
         </div>
         <button type="submit" class="btn btn-primary">
-          Next: Review & Submit <i class="bi bi-arrow-right ms-1"></i>
+          <%= t('wiz_btn_next_review') %> <i class="bi bi-arrow-right ms-1"></i>
         </button>
       </div>
     </form>
@@ -105,7 +105,6 @@ function familyForm() {
     addChild() {
       this.children.push({ name: '', aadhaar: '' });
       this.$nextTick(() => {
-        // Re-attach file size listeners for new rows
         document.querySelectorAll('input[data-max-kb]').forEach(input => {
           input.onchange = function() {
             const maxKb = parseInt(this.dataset.maxKb, 10);

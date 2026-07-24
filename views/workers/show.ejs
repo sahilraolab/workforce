@@ -256,13 +256,21 @@
               <% if (checkDesc[v.check_name]) { %>
               <div style="font-size:.7rem;color:var(--em-ink-3);margin-top:3px;font-style:italic"><%= checkDesc[v.check_name] %></div>
               <% } %>
-              <% if (v.result === 'fail' && isHuman && ['company_admin','hr_payroll','super_admin'].includes(user.role)) { %>
+              <% if (v.result === 'fail' && ['company_admin','hr_payroll','super_admin'].includes(user.role)) { %>
+              <% if (v.overridden) { %>
+              <div class="mt-2" style="font-size:.72rem;color:var(--eos-green-600)">
+                <i class="bi bi-check-circle-fill me-1"></i>Acknowledged by <%= v.override_by ? 'HR/Admin' : 'Admin' %>
+                <% if (v.override_note) { %> — <%= v.override_note %><% } %>
+              </div>
+              <% } else { %>
               <div class="mt-2">
                 <button type="button" class="btn btn-sm btn-outline-warning" style="font-size:.72rem"
-                  onclick="alert('Acknowledgement feature coming soon. A company admin can override after manual review.')">
+                  data-bs-toggle="modal" data-bs-target="#ackModal"
+                  data-check="<%= v.check_name %>" data-worker="<%= worker.id %>">
                   <i class="bi bi-person-check me-1"></i>Acknowledge / Override
                 </button>
               </div>
+              <% } %>
               <% } %>
             </div>
             <div style="flex-shrink:0">
@@ -324,4 +332,111 @@
   </div>
   <% } %>
 
+  <!-- Statutory Documents -->
+  <div class="col-12">
+    <div class="card" style="border-radius:12px">
+      <div class="card-header d-flex justify-content-between align-items-center" style="background:transparent;border-bottom:0.5px solid var(--em-line);padding:.85rem 1.1rem">
+        <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--em-ink-3)">
+          <i class="bi bi-file-earmark-text me-1" style="color:var(--em-accent)"></i>Statutory Documents
+        </span>
+        <span style="font-size:.72rem;color:var(--em-ink-3)">Opens in a new tab — Print or Save as PDF</span>
+      </div>
+      <div class="card-body" style="padding:.85rem 1rem">
+
+        <%
+          const _docRow = (icon, iconColor, title, subtitle, href) => `
+          <div class="d-flex align-items-start gap-3 flex-wrap py-2" style="border-bottom:0.5px solid var(--em-line-2)">
+            <div style="flex:1;min-width:200px">
+              <div style="font-size:.85rem;font-weight:600;color:var(--em-ink-1);margin-bottom:2px">
+                <i class="bi ${icon} me-1" style="color:${iconColor}"></i>${title}
+              </div>
+              <div style="font-size:.75rem;color:var(--em-ink-3)">${subtitle}</div>
+            </div>
+            <a href="${href}" target="_blank" class="btn btn-sm align-self-center"
+               style="background:${iconColor};color:#fff;font-size:.78rem;padding:.3rem .85rem;border-radius:7px;white-space:nowrap">
+              <i class="bi bi-box-arrow-up-right me-1"></i>Generate
+            </a>
+          </div>`;
+        %>
+
+        <!-- Salary Slip -->
+        <div class="d-flex align-items-start gap-3 flex-wrap py-2" style="border-bottom:0.5px solid var(--em-line-2)">
+          <div style="flex:1;min-width:200px">
+            <div style="font-size:.85rem;font-weight:600;color:var(--em-ink-1);margin-bottom:2px">
+              <i class="bi bi-receipt me-1" style="color:var(--em-accent)"></i>Salary Slip / Wage Slip
+            </div>
+            <div style="font-size:.75rem;color:var(--em-ink-3)">Form V (Code on Wages 2019) or Form XVI (OSH Code 2020) — as per company regulatory settings</div>
+          </div>
+          <form method="GET" action="/documents/salary-slip/<%= worker.id %>" target="_blank"
+                class="d-flex align-items-center gap-2 flex-wrap align-self-center">
+            <select name="month" class="form-select form-select-sm" style="width:auto;font-size:.78rem" required>
+              <option value="">Month</option>
+              <% const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+                 MONTHS.forEach((m, i) => { %>
+              <option value="<%= i+1 %>" <%= (i+1) === new Date().getMonth() ? 'selected' : '' %>><%= m %></option>
+              <% }) %>
+            </select>
+            <select name="year" class="form-select form-select-sm" style="width:auto;font-size:.78rem" required>
+              <% const currentYear = new Date().getFullYear();
+                 for (let y = currentYear; y >= currentYear - 3; y--) { %>
+              <option value="<%= y %>" <%= y === currentYear ? 'selected' : '' %>><%= y %></option>
+              <% } %>
+            </select>
+            <button type="submit" class="btn btn-sm" style="background:var(--em-accent);color:#fff;font-size:.78rem;padding:.3rem .85rem;border-radius:7px">
+              <i class="bi bi-box-arrow-up-right me-1"></i>Generate
+            </button>
+          </form>
+        </div>
+
+        <!-- Offer Letter -->
+        <%- _docRow('bi-envelope-paper', '#d97706', 'Offer Letter', 'Employment offer on company letterhead', '/documents/offer-letter/' + worker.id) %>
+
+        <!-- Service Certificate -->
+        <%- _docRow('bi-award', '#059669', 'Service Certificate', 'Certificate of employment issued on separation or request', '/documents/service-certificate/' + worker.id) %>
+
+        <!-- EPF Form 2 -->
+        <%- _docRow('bi-piggy-bank', '#7c3aed', 'EPF Form 2 — Nomination', 'PF &amp; Pension nomination declaration (EPF Scheme 1952 rules 5(1) &amp; 10)', '/documents/epf-form2/' + worker.id) %>
+
+        <!-- ESIC Form 1 -->
+        <%- _docRow('bi-hospital', '#0891b2', 'ESIC Form 1 — Declaration', 'Employee declaration with family members (ESI Regulations 1950, Reg. 11)', '/documents/esic-form1/' + worker.id) %>
+
+      </div>
+    </div>
+  </div>
+
 </div>
+
+<!-- Acknowledge/Override modal -->
+<div class="modal fade" id="ackModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <form id="ackForm" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="check_name" id="ackCheckName">
+        <div class="modal-header py-2">
+          <h6 class="modal-title fw-bold"><i class="bi bi-person-check me-2 text-warning"></i>Acknowledge Check</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body py-3">
+          <p style="font-size:.82rem;color:var(--em-ink-2);margin-bottom:.75rem">
+            Records that HR/Admin has reviewed and accepted this failed check. The original result stays visible for audit.
+          </p>
+          <label class="form-label small fw-semibold">Reason / Note <span class="text-muted">(optional)</span></label>
+          <textarea name="override_note" class="form-control form-control-sm" rows="2"
+            placeholder="e.g. Wage variance approved by management"></textarea>
+        </div>
+        <div class="modal-footer py-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-warning btn-sm"><i class="bi bi-check me-1"></i>Acknowledge</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+document.getElementById('ackModal').addEventListener('show.bs.modal', function(e) {
+  const btn = e.relatedTarget;
+  document.getElementById('ackCheckName').value = btn.dataset.check;
+  document.getElementById('ackForm').action = '/workers/' + btn.dataset.worker + '/acknowledge-check';
+});
+</script>

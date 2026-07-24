@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Employment Register — <%= company.name %></title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Times New Roman',Times,serif; font-size:8.5pt; color:#000; background:#f0f0f0; }
+.print-bar { background:#1e40af; padding:8px 16px; display:flex; align-items:center; gap:12px; }
+.print-bar span { color:#fff; font-family:system-ui,sans-serif; font-size:13px; flex:1; }
+.print-bar a { color:#bfdbfe; font-family:system-ui,sans-serif; font-size:12px; text-decoration:underline; }
+.print-bar button { background:#fff; color:#1e40af; border:none; border-radius:6px; padding:6px 18px; font-size:13px; font-weight:700; cursor:pointer; }
+.page { width:297mm; min-height:210mm; background:#fff; margin:12px auto; padding:10mm 12mm 8mm; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.form-header { text-align:center; margin-bottom:6px; }
+.form-header .title { font-size:12pt; font-weight:bold; }
+.form-header .sub { font-size:9pt; }
+.estab-line { font-size:9pt; margin-bottom:5px; border-bottom:0.5px solid #999; padding-bottom:3px; display:flex; gap:20px; flex-wrap:wrap; }
+.estab-line strong { font-weight:bold; }
+table.ereg { width:100%; border-collapse:collapse; font-size:7.5pt; }
+table.ereg th, table.ereg td { border:0.6px solid #555; padding:2px 4px; vertical-align:middle; }
+table.ereg thead th { background:#eee; font-weight:bold; font-size:7pt; text-align:center; }
+table.ereg .lft { text-align:left; }
+table.ereg .ctr { text-align:center; }
+@media print {
+  body { background:#fff; }
+  .print-bar { display:none !important; }
+  .page { margin:0; box-shadow:none; padding:8mm 10mm 6mm; }
+  @page { size:A4 landscape; margin:0; }
+}
+</style>
+</head>
+<body>
+<div class="print-bar">
+  <span>Employment Register — <%= company.name %></span>
+  <a href="/documents/generate">← Back</a>
+  <button onclick="window.print()">⬇ Print / Save PDF</button>
+</div>
+<div class="page">
+  <div class="form-header">
+    <div class="title">REGISTER OF EMPLOYED PERSONS</div>
+    <div class="sub">(As required under applicable labour laws — Form A / Employment Register)</div>
+  </div>
+  <div class="estab-line">
+    <span><strong>Establishment:</strong> <%= company.name %></span>
+    <span><strong>Site:</strong> <%= site ? site.name : 'All Sites' %></span>
+    <span><strong>Generated:</strong> <%= generatedOn %></span>
+  </div>
+  <table class="ereg">
+    <thead>
+      <tr>
+        <th class="ctr" style="width:22px">S.No</th>
+        <th class="lft" style="width:110px">Name</th>
+        <th class="lft" style="width:100px">Father's/Husband's Name</th>
+        <th class="ctr" style="width:35px">Gender</th>
+        <th class="ctr" style="width:55px">Date of Birth</th>
+        <th class="lft" style="width:70px">Category</th>
+        <th class="lft" style="width:50px">Zone</th>
+        <th class="ctr" style="width:55px">Date of Joining</th>
+        <th class="ctr" style="width:55px">Daily Wage (₹)</th>
+        <th class="lft" style="width:95px">UAN</th>
+        <th class="lft" style="width:110px">ESIC No.</th>
+        <th class="lft" style="width:75px">Aadhaar (masked)</th>
+        <th class="ctr" style="width:60px">Date of Leaving</th>
+        <th class="lft">Remarks</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% rows.forEach(row => { %>
+      <tr>
+        <td class="ctr"><%= row.sno %></td>
+        <td class="lft"><%= row.name %></td>
+        <td class="lft"><%= row.fatherName %></td>
+        <td class="ctr"><%= row.gender %></td>
+        <td class="ctr"><%= row.dob %></td>
+        <td class="lft"><%= row.category %></td>
+        <td class="lft"><%= row.zone %></td>
+        <td class="ctr"><%= row.doj %></td>
+        <td class="ctr"><%= row.wageRate %></td>
+        <td class="lft" style="font-size:7pt"><%= row.uan %></td>
+        <td class="lft" style="font-size:7pt"><%= row.esicNo %></td>
+        <td class="lft" style="font-size:7pt"><%= row.aadhaar %></td>
+        <td class="ctr">—</td>
+        <td></td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

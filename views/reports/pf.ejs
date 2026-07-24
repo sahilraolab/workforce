@@ -1,8 +1,8 @@
 <%- include('../partials/report-nav', { reportNavActive: 'pf' }) %>
 <%- include('../partials/breadcrumb', { items: [{ label: 'PF Compliance Report' }] }) %>
 <div class="mb-3">
-  <h4 class="mb-0 fw-bold"><i class="bi bi-building-fill-check me-2" style="color:var(--em-accent)"></i>PF Compliance Report</h4>
-  <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:3px">Provident Fund enrollment status for active workers</div>
+  <h4 class="mb-0 fw-bold"><i class="bi bi-building-fill-check me-2" style="color:var(--em-accent)"></i><%= t('report_pf_title') %></h4>
+  <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:3px"><%= t('report_pf_subtitle') %></div>
 </div>
 
 <%

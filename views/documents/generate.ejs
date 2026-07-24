@@ -1,0 +1,193 @@
+<%- include('../partials/breadcrumb', { items: [{ label: 'Generate Documents' }] }) %>
+
+<div class="mb-3">
+  <h4 class="mb-0 fw-bold"><i class="bi bi-file-earmark-text me-2" style="color:var(--em-accent)"></i>Generate Documents</h4>
+  <div style="font-size:.78rem;color:var(--em-ink-3);margin-top:3px">All documents open in a new tab — use browser Print → Save as PDF</div>
+</div>
+
+<!-- Filter bar -->
+<div class="card mb-4" style="border-radius:12px">
+  <div class="card-body py-2">
+    <form class="d-flex align-items-center gap-2 flex-wrap" method="GET">
+      <select name="site_id" class="form-select form-select-sm" style="max-width:200px" onchange="this.form.submit()">
+        <option value="">All Sites</option>
+        <% sites.forEach(s => { %>
+          <option value="<%= s.id %>" <%= String(selectedSite) === String(s.id) ? 'selected' : '' %>><%= s.name %></option>
+        <% }) %>
+      </select>
+      <select name="month" class="form-select form-select-sm" style="max-width:130px">
+        <% for (let m = 1; m <= 12; m++) { %>
+          <option value="<%= m %>" <%= m === selectedMonth ? 'selected' : '' %>>
+            <%= new Date(2000,m-1).toLocaleString('default',{month:'long'}) %>
+          </option>
+        <% } %>
+      </select>
+      <input type="number" name="year" class="form-control form-control-sm" value="<%= selectedYear %>" style="max-width:80px">
+      <button class="btn btn-sm btn-outline-secondary" type="submit">Apply</button>
+    </form>
+  </div>
+</div>
+
+<%
+  const qs = '?site_id=' + (selectedSite||'') + '&month=' + selectedMonth + '&year=' + selectedYear;
+  function docCard(icon, title, subtitle, href, iconColor) {
+%>
+<div class="col-md-6 col-lg-4">
+  <div class="card h-100" style="border-radius:12px">
+    <div class="card-body d-flex gap-3 align-items-start p-3">
+      <div style="font-size:1.6rem;color:<%= iconColor %>;flex-shrink:0"><i class="bi <%= icon %>"></i></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.88rem;font-weight:700;color:var(--em-ink-1);margin-bottom:2px"><%= title %></div>
+        <div style="font-size:.75rem;color:var(--em-ink-3);margin-bottom:8px"><%= subtitle %></div>
+        <a href="<%= href %>" target="_blank"
+           class="btn btn-sm" style="background:var(--em-accent);color:#fff;font-size:.76rem;padding:.28rem .75rem;border-radius:6px">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Generate
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<!-- Monthly / Site-Wide Documents -->
+<div class="mb-2 mt-1" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--em-ink-3)">
+  Monthly & Site-Wide Documents
+</div>
+<div class="row g-3 mb-4">
+  <%- docCard('bi-calendar3', 'Muster Roll', 'Monthly attendance register (P/H/A per worker per day)', '/documents/muster-roll' + qs, 'var(--em-accent)') %>
+  <%- docCard('bi-cash-stack', 'Wage Register', 'Monthly wages paid register with deductions', '/documents/wage-register' + qs, '#059669') %>
+  <%- docCard('bi-people', 'Employment Register', 'Register of all employed persons — Form A', '/documents/employment-register?site_id=' + (selectedSite||''), '#7c3aed') %>
+  <%- docCard('bi-calendar-minus', 'Leave Register', 'Monthly leave availed register (CL / SL / EL)', '/documents/leave-register' + qs, '#d97706') %>
+</div>
+
+<!-- Per-Worker Documents -->
+<div class="mb-2" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--em-ink-3)">
+  Per-Worker Documents — Select a Worker
+</div>
+<div class="card mb-3" style="border-radius:12px">
+  <div class="card-body p-3">
+    <div class="row g-2 align-items-center">
+      <div class="col-md-5">
+        <select id="workerSelect" class="form-select form-select-sm">
+          <option value="">— Select Worker —</option>
+          <% workers.forEach(w => { %>
+            <option value="<%= w.id %>"><%= w.name %><% if (w.site) { %> · <%= w.site.name %><% } %></option>
+          <% }) %>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3" id="perWorkerDocs" style="opacity:.4;pointer-events:none">
+  <div class="col-md-6 col-lg-4">
+    <div class="card h-100" style="border-radius:12px">
+      <div class="card-body d-flex gap-3 align-items-start p-3">
+        <div style="font-size:1.6rem;color:var(--em-accent);flex-shrink:0"><i class="bi bi-receipt"></i></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.88rem;font-weight:700;color:var(--em-ink-1);margin-bottom:2px">Salary Slip</div>
+          <div style="font-size:.75rem;color:var(--em-ink-3);margin-bottom:4px">Form V / Form XVI — as per company regulatory regime</div>
+          <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+            <select id="slipMonth" class="form-select form-select-sm" style="width:auto;font-size:.75rem">
+              <% for (let m = 1; m <= 12; m++) { %>
+                <option value="<%= m %>" <%= m === selectedMonth ? 'selected' : '' %>>
+                  <%= new Date(2000,m-1).toLocaleString('default',{month:'short'}) %>
+                </option>
+              <% } %>
+            </select>
+            <input type="number" id="slipYear" class="form-control form-control-sm" value="<%= selectedYear %>" style="width:72px;font-size:.75rem">
+            <a id="slipLink" href="#" target="_blank" class="btn btn-sm" style="background:var(--em-accent);color:#fff;font-size:.76rem;padding:.28rem .75rem;border-radius:6px">
+              <i class="bi bi-box-arrow-up-right me-1"></i>Generate
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 col-lg-4" id="card-offer-letter">
+    <div class="card h-100" style="border-radius:12px"><div class="card-body d-flex gap-3 align-items-start p-3">
+      <div style="font-size:1.6rem;color:#d97706;flex-shrink:0"><i class="bi bi-envelope-paper"></i></div>
+      <div style="flex:1">
+        <div style="font-size:.88rem;font-weight:700;color:var(--em-ink-1);margin-bottom:2px">Offer Letter</div>
+        <div style="font-size:.75rem;color:var(--em-ink-3);margin-bottom:8px">Employment offer on company letterhead</div>
+        <a class="worker-doc-link btn btn-sm" data-path="/documents/offer-letter/" target="_blank" href="#"
+           style="background:#d97706;color:#fff;font-size:.76rem;padding:.28rem .75rem;border-radius:6px">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Generate
+        </a>
+      </div>
+    </div></div>
+  </div>
+  <div class="col-md-6 col-lg-4">
+    <div class="card h-100" style="border-radius:12px"><div class="card-body d-flex gap-3 align-items-start p-3">
+      <div style="font-size:1.6rem;color:#059669;flex-shrink:0"><i class="bi bi-award"></i></div>
+      <div style="flex:1">
+        <div style="font-size:.88rem;font-weight:700;color:var(--em-ink-1);margin-bottom:2px">Service Certificate</div>
+        <div style="font-size:.75rem;color:var(--em-ink-3);margin-bottom:8px">Certificate of employment on separation</div>
+        <a class="worker-doc-link btn btn-sm" data-path="/documents/service-certificate/" target="_blank" href="#"
+           style="background:#059669;color:#fff;font-size:.76rem;padding:.28rem .75rem;border-radius:6px">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Generate
+        </a>
+      </div>
+    </div></div>
+  </div>
+  <div class="col-md-6 col-lg-4">
+    <div class="card h-100" style="border-radius:12px"><div class="card-body d-flex gap-3 align-items-start p-3">
+      <div style="font-size:1.6rem;color:#7c3aed;flex-shrink:0"><i class="bi bi-piggy-bank"></i></div>
+      <div style="flex:1">
+        <div style="font-size:.88rem;font-weight:700;color:var(--em-ink-1);margin-bottom:2px">EPF Form 2</div>
+        <div style="font-size:.75rem;color:var(--em-ink-3);margin-bottom:8px">PF Nomination & Declaration form (nominees required)</div>
+        <a class="worker-doc-link btn btn-sm" data-path="/documents/epf-form2/" target="_blank" href="#"
+           style="background:#7c3aed;color:#fff;font-size:.76rem;padding:.28rem .75rem;border-radius:6px">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Generate
+        </a>
+      </div>
+    </div></div>
+  </div>
+  <div class="col-md-6 col-lg-4">
+    <div class="card h-100" style="border-radius:12px"><div class="card-body d-flex gap-3 align-items-start p-3">
+      <div style="font-size:1.6rem;color:#0891b2;flex-shrink:0"><i class="bi bi-hospital"></i></div>
+      <div style="flex:1">
+        <div style="font-size:.88rem;font-weight:700;color:var(--em-ink-1);margin-bottom:2px">ESIC Form 1</div>
+        <div style="font-size:.75rem;color:var(--em-ink-3);margin-bottom:8px">ESIC Declaration form with family members</div>
+        <a class="worker-doc-link btn btn-sm" data-path="/documents/esic-form1/" target="_blank" href="#"
+           style="background:#0891b2;color:#fff;font-size:.76rem;padding:.28rem .75rem;border-radius:6px">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Generate
+        </a>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<script>
+const workerSelect = document.getElementById('workerSelect');
+const perWorkerDocs = document.getElementById('perWorkerDocs');
+const slipMonth = document.getElementById('slipMonth');
+const slipYear = document.getElementById('slipYear');
+const slipLink = document.getElementById('slipLink');
+
+function updateWorkerLinks() {
+  const wid = workerSelect.value;
+  if (wid) {
+    perWorkerDocs.style.opacity = '1';
+    perWorkerDocs.style.pointerEvents = 'auto';
+    document.querySelectorAll('.worker-doc-link').forEach(a => {
+      a.href = a.dataset.path + wid;
+    });
+    updateSlipLink();
+  } else {
+    perWorkerDocs.style.opacity = '.4';
+    perWorkerDocs.style.pointerEvents = 'none';
+  }
+}
+
+function updateSlipLink() {
+  const wid = workerSelect.value;
+  if (wid) {
+    slipLink.href = '/documents/salary-slip/' + wid + '?month=' + slipMonth.value + '&year=' + slipYear.value;
+  }
+}
+
+workerSelect.addEventListener('change', updateWorkerLinks);
+slipMonth.addEventListener('change', updateSlipLink);
+slipYear.addEventListener('input', updateSlipLink);
+</script>

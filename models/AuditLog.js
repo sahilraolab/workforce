@@ -5,7 +5,7 @@ const AuditLog = sequelize.define('AuditLog', {
   id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
   company_id: { type: DataTypes.INTEGER.UNSIGNED },
   user_id: { type: DataTypes.INTEGER.UNSIGNED },
-  action: { type: DataTypes.ENUM('create', 'update', 'delete', 'verify', 'reject'), allowNull: false },
+  action: { type: DataTypes.ENUM('create', 'update', 'delete', 'verify', 'reject', 'generate', 'export', 'login'), allowNull: false },
   entity: { type: DataTypes.STRING(100), allowNull: false },
   entity_id: { type: DataTypes.INTEGER.UNSIGNED },
   before_value: { type: DataTypes.JSON },

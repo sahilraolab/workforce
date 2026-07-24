@@ -19,6 +19,7 @@ const NotificationLog = require('./NotificationLog');
 const PasswordResetToken = require('./PasswordResetToken');
 const CompanyLicense = require('./CompanyLicense');
 const ComplianceFiling = require('./ComplianceFiling');
+const ComplianceSnapshot = require('./ComplianceSnapshot');
 
 // Company ↔ Site
 Company.hasMany(Site, { foreignKey: 'company_id', as: 'sites' });
@@ -112,6 +113,10 @@ ComplianceFiling.belongsTo(Company, { foreignKey: 'company_id', as: 'company' })
 User.hasMany(ComplianceFiling, { foreignKey: 'filed_by', as: 'filed_compliance_filings' });
 ComplianceFiling.belongsTo(User, { foreignKey: 'filed_by', as: 'filer' });
 
+// ComplianceSnapshot ↔ Company
+Company.hasMany(ComplianceSnapshot, { foreignKey: 'company_id', as: 'compliance_snapshots' });
+ComplianceSnapshot.belongsTo(Company, { foreignKey: 'company_id', as: 'company' });
+
 module.exports = {
   sequelize,
   Company,
@@ -133,4 +138,5 @@ module.exports = {
   PasswordResetToken,
   CompanyLicense,
   ComplianceFiling,
+  ComplianceSnapshot,
 };

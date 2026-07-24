@@ -14,7 +14,7 @@
     </a>`;
   }
   // Everything NOT already pinned in the bottom tab bar — full parity with the desktop sidebar.
-  const moreActive = ['/payroll','/sites','/settings','/admin'].some(seg => p.startsWith(seg));
+  const moreActive = ['/payroll','/sites','/settings','/admin','/documents'].some(seg => p.startsWith(seg));
 %>
 <nav id="bottom-nav">
   <%- tab('/dashboard', 'bi-speedometer2', t('nav_home')) %>
@@ -42,6 +42,7 @@
       <%- sheetItem('/payroll', 'bi-cash-stack', t('nav_payroll'), '/payroll') %>
     <% } %>
     <%- sheetItem('/reports', 'bi-bar-chart-line', t('nav_reports'), '/reports') %>
+    <%- sheetItem('/documents/generate', 'bi-file-earmark-text', t('nav_documents') || 'Documents', '/documents') %>
     <% if (['company_admin','super_admin'].includes(role)) { %>
       <div class="sb-group-label"><%= t('group_management') %></div>
       <%- sheetItem('/sites', 'bi-geo-alt', t('nav_sites'), '/sites') %>

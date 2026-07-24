@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Leave Register — <%= company.name %> (<%= monthName %> <%= year %>)</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Times New Roman',Times,serif; font-size:9pt; color:#000; background:#f0f0f0; }
+.print-bar { background:#1e40af; padding:8px 16px; display:flex; align-items:center; gap:12px; }
+.print-bar span { color:#fff; font-family:system-ui,sans-serif; font-size:13px; flex:1; }
+.print-bar a { color:#bfdbfe; font-family:system-ui,sans-serif; font-size:12px; text-decoration:underline; }
+.print-bar button { background:#fff; color:#1e40af; border:none; border-radius:6px; padding:6px 18px; font-size:13px; font-weight:700; cursor:pointer; }
+.page { width:210mm; min-height:297mm; background:#fff; margin:12px auto; padding:12mm 14mm 10mm; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.form-header { text-align:center; margin-bottom:8px; }
+.form-header .title { font-size:12pt; font-weight:bold; }
+.form-header .sub { font-size:9pt; }
+.estab-line { font-size:9pt; margin-bottom:6px; border-bottom:0.5px solid #999; padding-bottom:4px; }
+.estab-line strong { font-weight:bold; }
+table.lreg { width:100%; border-collapse:collapse; font-size:9pt; }
+table.lreg th, table.lreg td { border:0.7px solid #555; padding:4px 6px; text-align:center; vertical-align:middle; }
+table.lreg .lft { text-align:left; }
+table.lreg thead th { background:#eee; font-weight:bold; }
+table.lreg .total-row td { font-weight:bold; background:#f0f7ff; }
+.leave-detail { font-size:7.5pt; color:#555; }
+@media print {
+  body { background:#fff; }
+  .print-bar { display:none !important; }
+  .page { margin:0; box-shadow:none; padding:10mm 12mm 8mm; }
+  @page { size:A4 portrait; margin:0; }
+}
+</style>
+</head>
+<body>
+<div class="print-bar">
+  <span>Leave Register — <%= company.name %>, <%= monthName %> <%= year %></span>
+  <a href="/documents/generate">← Back</a>
+  <button onclick="window.print()">⬇ Print / Save PDF</button>
+</div>
+<div class="page">
+  <div class="form-header">
+    <div class="title">LEAVE REGISTER</div>
+    <div class="sub">(As required under applicable labour laws)</div>
+  </div>
+  <div class="estab-line">
+    <strong>Establishment:</strong> <%= company.name %> &nbsp;|&nbsp;
+    <strong>Site:</strong> <%= site ? site.name : 'All Sites' %> &nbsp;|&nbsp;
+    <strong>Period:</strong> <%= monthName %> <%= year %> &nbsp;|&nbsp;
+    <strong>Generated:</strong> <%= generatedOn %>
+  </div>
+  <table class="lreg">
+    <thead>
+      <tr>
+        <th style="width:30px">S.No</th>
+        <th class="lft" style="width:160px">Worker Name</th>
+        <th class="lft" style="width:90px">Category</th>
+        <th style="width:60px">Casual Leave</th>
+        <th style="width:60px">Sick Leave</th>
+        <th style="width:60px">Earned Leave</th>
+        <th style="width:55px">Total Days</th>
+        <th class="lft">Leave Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% rows.forEach(row => { %>
+      <tr>
+        <td><%= row.sno %></td>
+        <td class="lft"><%= row.name %></td>
+        <td class="lft"><%= row.category %></td>
+        <td><%= row.casual || '—' %></td>
+        <td><%= row.sick || '—' %></td>
+        <td><%= row.earned || '—' %></td>
+        <td style="font-weight:bold"><%= row.total || '—' %></td>
+        <td class="lft leave-detail">
+          <% row.leaves.forEach(l => { %>
+            <%= fmtDate(l.from_date) %> – <%= fmtDate(l.to_date) %> (<%= l.leave_type %>, <%= l.status %>)<% if (l.reason) { %> — <%= l.reason %><% } %><br>
+          <% }) %>
+          <% if (!row.leaves.length) { %>—<% } %>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <div style="margin-top:10px;font-size:8.5pt;text-align:right">
+    Signature of Employer / Manager: _________________________________ &nbsp; Date: ___________
+  </div>
+</div>
+</body>
+</html>

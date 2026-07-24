@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ESIC Form 1 — <%= worker.name %></title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Times New Roman',Times,serif; font-size:10pt; color:#000; background:#f0f0f0; line-height:1.4; }
+.print-bar { background:#1e40af; padding:8px 16px; display:flex; align-items:center; gap:12px; }
+.print-bar span { color:#fff; font-family:system-ui,sans-serif; font-size:13px; flex:1; }
+.print-bar a { color:#bfdbfe; font-family:system-ui,sans-serif; font-size:12px; text-decoration:underline; }
+.print-bar button { background:#fff; color:#1e40af; border:none; border-radius:6px; padding:6px 18px; font-size:13px; font-weight:700; cursor:pointer; }
+.page { width:210mm; min-height:297mm; background:#fff; margin:12px auto; padding:12mm 14mm 10mm; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.form-header { text-align:center; margin-bottom:10px; }
+.form-header .form-num { font-size:13pt; font-weight:bold; }
+.form-header .form-rule { font-size:9pt; font-style:italic; }
+.form-header .form-title { font-size:11pt; font-weight:bold; margin-top:4px; }
+.form-header .form-org { font-size:10pt; font-weight:bold; color:#444; margin-top:2px; }
+.field-table { width:100%; border-collapse:collapse; margin-bottom:8px; font-size:9.5pt; }
+.field-table td { padding:4px 6px; vertical-align:top; }
+.field-table .lbl { font-weight:bold; width:42%; border-bottom:0.5px solid #ccc; }
+.field-table .val { border-bottom:0.5px solid #999; }
+.section-title { font-size:10pt; font-weight:bold; background:#eee; padding:4px 8px; margin:10px 0 6px; border:0.6px solid #bbb; }
+table.family { width:100%; border-collapse:collapse; font-size:9pt; margin-bottom:8px; }
+table.family th, table.family td { border:0.7px solid #555; padding:4px 6px; text-align:center; vertical-align:middle; }
+table.family .lft { text-align:left; }
+table.family thead th { background:#eee; font-weight:bold; }
+.declaration-box { border:1px solid #999; padding:8px 10px; margin:10px 0; font-size:9pt; text-align:justify; }
+.sig-block { display:flex; justify-content:space-between; margin-top:16px; font-size:9.5pt; }
+.sig-box { text-align:center; }
+.sig-line { border-top:0.8px solid #555; padding-top:4px; margin-top:24px; width:150px; }
+@media print {
+  body { background:#fff; }
+  .print-bar { display:none !important; }
+  .page { margin:0; box-shadow:none; padding:10mm 12mm 8mm; }
+  @page { size:A4 portrait; margin:0; }
+}
+</style>
+</head>
+<body>
+<div class="print-bar">
+  <span>ESIC Form 1 (Declaration) — <%= worker.name %></span>
+  <a href="/workers/<%= worker.id %>">← Back to profile</a>
+  <button onclick="window.print()">⬇ Print / Save PDF</button>
+</div>
+<div class="page">
+  <div class="form-header">
+    <div class="form-num">FORM 1</div>
+    <div class="form-rule">[See Regulation 11 of the Employees' State Insurance (General) Regulations, 1950]</div>
+    <div class="form-title">DECLARATION FORM</div>
+    <div class="form-org">Employees' State Insurance Corporation</div>
+  </div>
+
+  <div style="font-size:9pt;margin-bottom:8px">
+    <strong>Name of Establishment:</strong> <%= company.name %> &nbsp;&nbsp;
+    <strong>Employer Code:</strong> ___________________ &nbsp;&nbsp;
+    <strong>Date:</strong> <%= issueDate %>
+  </div>
+
+  <div class="section-title">Part I — Employee Details</div>
+  <table class="field-table">
+    <tr><td class="lbl">1. Insurance Number (ESIC No.)</td><td class="val"><%= worker.esicNo %></td></tr>
+    <tr><td class="lbl">2. Name of Employee (in full)</td><td class="val"><%= worker.name %></td></tr>
+    <tr><td class="lbl">3. Father's / Husband's Name</td><td class="val"><%= worker.fatherName || '—' %></td></tr>
+    <tr><td class="lbl">4. Date of Birth</td><td class="val"><%= worker.dob %></td></tr>
+    <tr><td class="lbl">5. Sex</td><td class="val"><%= worker.gender %></td></tr>
+    <tr><td class="lbl">6. Permanent Address</td><td class="val"><%= worker.address %></td></tr>
+    <tr><td class="lbl">7. Mobile Number</td><td class="val"><%= worker.mobile %></td></tr>
+    <tr><td class="lbl">8. Designation / Nature of Work</td><td class="val"><%= worker.designation %></td></tr>
+    <tr><td class="lbl">9. Date of Joining</td><td class="val"><%= worker.doj %></td></tr>
+    <tr><td class="lbl">10. Aadhaar Number (masked)</td><td class="val"><%= worker.aadhaar %></td></tr>
+  </table>
+
+  <div class="section-title">Part II — Family Members</div>
+  <div style="font-size:9pt;margin-bottom:6px">
+    The following are members of my family as defined under section 2(11) of the ESI Act, 1948:
+  </div>
+  <% if (family.length === 0) { %>
+  <div style="font-size:9pt;color:#777;padding:6px;border:0.5px dashed #bbb;margin-bottom:8px">
+    No family members recorded. Add spouse / children in the worker profile to populate this section.
+  </div>
+  <% } else { %>
+  <table class="family">
+    <thead>
+      <tr>
+        <th style="width:30px">S.No</th>
+        <th class="lft">Name of Family Member</th>
+        <th>Relation</th>
+        <th>Aadhaar (masked)</th>
+        <th>Residing with Employee?</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% family.forEach(m => { %>
+      <tr>
+        <td><%= m.sno %></td>
+        <td class="lft"><%= m.name %></td>
+        <td><%= m.relation %></td>
+        <td><%= m.aadhaar %></td>
+        <td>Yes</td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+
+  <div class="declaration-box">
+    I hereby declare that to the best of my knowledge and belief, the information given above is true. I understand that if at any time any statement made or information given by me in this form is found to be false or incorrect, I shall be liable to such action as the Corporation may deem fit.
+  </div>
+
+  <div class="sig-block">
+    <div class="sig-box"><div class="sig-line">Signature / Thumb Impression of Employee<br>(<%= worker.name %>)</div></div>
+    <div class="sig-box"><div class="sig-line">Signature of Employer<br>with Seal (<%= company.name %>)</div></div>
+  </div>
+</div>
+</body>
+</html>

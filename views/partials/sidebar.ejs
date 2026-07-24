@@ -23,6 +23,7 @@
     <% } %>
 
     <%- item('/reports', 'bi-bar-chart-line', t('nav_reports'), '/reports') %>
+    <%- item('/documents/generate', 'bi-file-earmark-text', t('nav_documents') || 'Documents', '/documents') %>
 
     <% if (['company_admin','super_admin'].includes(role)) { %>
     <div class="sb-group-label"><%= t('group_management') %></div>

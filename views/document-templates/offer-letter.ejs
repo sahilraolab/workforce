@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Offer Letter — <%= worker.name %></title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Times New Roman',Times,serif; font-size:11pt; color:#000; background:#f0f0f0; line-height:1.55; }
+.print-bar { background:#1e40af; padding:8px 16px; display:flex; align-items:center; gap:12px; }
+.print-bar span { color:#fff; font-family:system-ui,sans-serif; font-size:13px; flex:1; }
+.print-bar a { color:#bfdbfe; font-family:system-ui,sans-serif; font-size:12px; text-decoration:underline; }
+.print-bar button { background:#fff; color:#1e40af; border:none; border-radius:6px; padding:6px 18px; font-size:13px; font-weight:700; cursor:pointer; }
+.page { width:210mm; min-height:297mm; background:#fff; margin:12px auto; padding:18mm 20mm 15mm; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.letterhead { text-align:center; border-bottom:2px solid #333; padding-bottom:8px; margin-bottom:12px; }
+.letterhead .co-name { font-size:16pt; font-weight:bold; letter-spacing:.04em; }
+.letterhead .co-addr { font-size:9pt; color:#555; margin-top:3px; }
+.ref-line { display:flex; justify-content:space-between; margin-bottom:16px; font-size:10pt; }
+.subject { margin-bottom:16px; font-size:11pt; }
+.subject strong { text-decoration:underline; }
+.body-text { margin-bottom:10px; text-align:justify; }
+.terms-table { width:100%; border-collapse:collapse; margin:12px 0; font-size:10.5pt; }
+.terms-table td { padding:4px 8px; border-bottom:0.5px solid #ddd; }
+.terms-table .lbl { font-weight:bold; width:45%; }
+.acceptance { border:1px solid #999; padding:10px 14px; margin-top:16px; font-size:10pt; }
+.sig-block { margin-top:20px; }
+.sig-block .row { display:flex; justify-content:space-between; margin-top:30px; font-size:10pt; }
+.sig-block .sig-line { border-top:0.8px solid #555; padding-top:4px; width:44%; text-align:center; }
+@media print {
+  body { background:#fff; }
+  .print-bar { display:none !important; }
+  .page { margin:0; box-shadow:none; padding:15mm 18mm 12mm; }
+  @page { size:A4 portrait; margin:0; }
+}
+</style>
+</head>
+<body>
+<div class="print-bar">
+  <span>Offer Letter — <%= worker.name %></span>
+  <a href="/workers/<%= worker.id %>">← Back to profile</a>
+  <button onclick="window.print()">⬇ Print / Save PDF</button>
+</div>
+<div class="page">
+  <div class="letterhead">
+    <div class="co-name"><%= company.name %></div>
+    <div class="co-addr"><%= establishment.address %></div>
+    <% if (company.contact_phone) { %><div class="co-addr">Ph: <%= company.contact_phone %><% if (company.contact_email) { %> &nbsp;|&nbsp; Email: <%= company.contact_email %><% } %></div><% } %>
+  </div>
+
+  <div class="ref-line">
+    <span>Ref: EMP/<%= worker.id %>/<%= new Date().getFullYear() %></span>
+    <span>Date: <%= issueDate %></span>
+  </div>
+
+  <div style="margin-bottom:14px">
+    <strong>To,</strong><br>
+    <%= worker.name %><br>
+    <% if (worker.fatherName) { %>S/o D/o <%= worker.fatherName %><br><% } %>
+    <%= worker.address || '' %>
+  </div>
+
+  <div class="subject">
+    <strong>Sub: Offer of Employment — <%= worker.designation %></strong>
+  </div>
+
+  <div class="body-text">Dear <%= worker.name %>,</div>
+
+  <div class="body-text">
+    We are pleased to offer you employment at <strong><%= company.name %></strong>
+    <% if (site) { %> at our site <strong><%= site.name %></strong><% } %> on the following terms and conditions:
+  </div>
+
+  <table class="terms-table">
+    <tr><td class="lbl">Designation / Category</td><td><%= worker.designation %></td></tr>
+    <tr><td class="lbl">Date of Joining</td><td><%= worker.doj %></td></tr>
+    <tr><td class="lbl">Daily Wage Rate</td><td>₹ <%= worker.wageRate %> per day</td></tr>
+    <tr><td class="lbl">Working Hours</td><td>As per the applicable law (generally 8 hours per day / 48 hours per week)</td></tr>
+    <tr><td class="lbl">Leave Entitlement</td><td>As per applicable state/central labour laws</td></tr>
+    <tr><td class="lbl">PF / ESIC</td><td>Applicable as per statutory requirements</td></tr>
+  </table>
+
+  <div class="body-text">
+    This offer is subject to satisfactory verification of your documents, background check, and compliance with company policies. The terms of employment are also subject to all applicable labour laws including the Code on Wages, 2019.
+  </div>
+
+  <div class="body-text">
+    Please sign and return the duplicate copy of this letter as your acceptance of the offer.
+  </div>
+
+  <div class="body-text" style="margin-top:14px">
+    We look forward to having you on our team.
+  </div>
+
+  <div class="acceptance">
+    <strong>Acceptance:</strong><br><br>
+    I, <strong><%= worker.name %></strong>, accept the above offer of employment and agree to the terms mentioned herein.<br><br>
+    Signature: _______________________________ &nbsp;&nbsp; Date: _______________
+  </div>
+
+  <div class="sig-block">
+    <div class="row">
+      <div class="sig-line">
+        Signature of Employee<br>(<%= worker.name %>)
+      </div>
+      <div class="sig-line">
+        For <%= company.name %><br>(Authorised Signatory)
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

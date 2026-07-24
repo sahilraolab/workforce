@@ -8,7 +8,7 @@ const EmploymentDetail = sequelize.define('EmploymentDetail', {
     type: DataTypes.ENUM('Unskilled', 'Semi-Skilled', 'Skilled', 'Executive', 'Manager'),
     allowNull: false,
   },
-  zone: { type: DataTypes.ENUM('Zone 1', 'Zone 2'), allowNull: false },
+  zone: { type: DataTypes.STRING(100), allowNull: false },
   wage_rate: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
   doj: { type: DataTypes.DATEONLY, allowNull: false },
   uan_encrypted: { type: DataTypes.TEXT },

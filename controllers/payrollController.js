@@ -89,3 +89,31 @@ exports.generate = async (req, res) => {
     res.redirect('/payroll');
   }
 };
+
+exports.adjust = async (req, res) => {
+  const { assertTenantOwnership } = require('../middlewares/tenantScope');
+  try {
+    const payroll = await Payroll.findByPk(req.params.id, {
+      include: [{ model: Worker, as: 'worker' }],
+    });
+    if (!payroll) { req.flash('error', 'Payroll record not found.'); return res.redirect('/payroll'); }
+    assertTenantOwnership(payroll.worker, req);
+
+    const otherDeductions = parseFloat(req.body.other_deductions) || 0;
+    const notes = (req.body.notes || '').trim();
+
+    const before = { other_deductions: payroll.other_deductions, net_pay: payroll.net_pay, notes: payroll.notes };
+    const newNetPay = parseFloat(payroll.gross) - parseFloat(payroll.pf_deduction) - parseFloat(payroll.esic_deduction) - otherDeductions;
+
+    await payroll.update({ other_deductions: otherDeductions, net_pay: newNetPay, notes });
+    await logAudit(req, { action: 'update', entity: 'Payroll', entity_id: payroll.id, before_value: before, after_value: { other_deductions: otherDeductions, net_pay: newNetPay, notes } });
+
+    req.flash('success', `Payroll adjusted for ${payroll.worker.name}.`);
+    res.redirect(`/payroll?month=${payroll.month}&year=${payroll.year}`);
+  } catch (err) {
+    if (err.status === 403) { req.flash('error', res.locals.t('err_access_denied')); return res.redirect('/payroll'); }
+    console.error(err);
+    req.flash('error', 'Could not adjust payroll record.');
+    res.redirect('/payroll');
+  }
+};
