@@ -51,13 +51,27 @@
 
 <!-- Monthly / Site-Wide Documents -->
 <div class="mb-2 mt-1" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--em-ink-3)">
-  Monthly & Site-Wide Documents
+  Monthly &amp; Site-Wide Registers
 </div>
 <div class="row g-3 mb-4">
-  <%- docCard('bi-calendar3', 'Muster Roll', 'Monthly attendance register (P/H/A per worker per day)', '/documents/muster-roll' + qs, 'var(--em-accent)') %>
-  <%- docCard('bi-cash-stack', 'Wage Register', 'Monthly wages paid register with deductions', '/documents/wage-register' + qs, '#059669') %>
-  <%- docCard('bi-people', 'Employment Register', 'Register of all employed persons — Form A', '/documents/employment-register?site_id=' + (selectedSite||''), '#7c3aed') %>
-  <%- docCard('bi-calendar-minus', 'Leave Register', 'Monthly leave availed register (CL / SL / EL)', '/documents/leave-register' + qs, '#d97706') %>
+  <%- docCard('bi-calendar3', 'Muster Roll', 'Attendance register — Form 9 / Form XIV / Form 14', '/documents/muster-roll' + qs, 'var(--em-accent)') %>
+  <%- docCard('bi-cash-stack', 'Wage Register', 'Register of Wages — Form IV / Form XV / Form 13', '/documents/wage-register' + qs, '#059669') %>
+  <%- docCard('bi-people', 'Employment Register', 'Register of Employees — Form I / Form XIII / Form 13', '/documents/employment-register?site_id=' + (selectedSite||''), '#7c3aed') %>
+  <%- docCard('bi-calendar-minus', 'Leave Register', 'Leave with wages register — Form XX / Form 19', '/documents/leave-register' + qs, '#d97706') %>
+  <%- docCard('bi-person-badge', 'Adult Worker Register', 'Register of Adult Workers — Form XVII / Form 17', '/documents/adult-worker-register?site_id=' + (selectedSite||''), '#0891b2') %>
+</div>
+
+<!-- Returns -->
+<div class="mb-2 mt-1" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--em-ink-3)">
+  Statutory Returns
+</div>
+<%
+  const returnYear = selectedYear;
+  const half = (selectedMonth <= 6) ? 1 : 2;
+%>
+<div class="row g-3 mb-4">
+  <%- docCard('bi-file-earmark-bar-graph', 'Annual Return', 'Form 23 — Unified Annual Return (OSH / CoW / IR / SS codes)', '/documents/annual-return?year=' + (returnYear - 1), '#b45309') %>
+  <%- docCard('bi-bar-chart-steps', 'Half Yearly Return', 'Form XVIII / Form 18 — filed twice a year', '/documents/half-yearly-return?half=' + half + '&year=' + returnYear, '#6d28d9') %>
 </div>
 
 <!-- Per-Worker Documents -->
@@ -156,14 +170,31 @@
       </div>
     </div></div>
   </div>
+  <div class="col-md-6 col-lg-4">
+    <div class="card h-100" style="border-radius:12px"><div class="card-body d-flex gap-3 align-items-start p-3">
+      <div style="font-size:1.6rem;color:#b45309;flex-shrink:0"><i class="bi bi-calendar-check"></i></div>
+      <div style="flex:1">
+        <div style="font-size:.88rem;font-weight:700;color:var(--em-ink-1);margin-bottom:2px">Leave Card</div>
+        <div style="font-size:.75rem;color:var(--em-ink-3);margin-bottom:4px">Form 20 / Form XX-A — per worker, per year</div>
+        <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+          <input type="number" id="leaveCardYear" class="form-control form-control-sm" value="<%= selectedYear %>" style="width:72px;font-size:.75rem">
+          <a id="leaveCardLink" href="#" target="_blank" class="btn btn-sm" style="background:#b45309;color:#fff;font-size:.76rem;padding:.28rem .75rem;border-radius:6px">
+            <i class="bi bi-box-arrow-up-right me-1"></i>Generate
+          </a>
+        </div>
+      </div>
+    </div></div>
+  </div>
 </div>
 
 <script>
-const workerSelect = document.getElementById('workerSelect');
-const perWorkerDocs = document.getElementById('perWorkerDocs');
-const slipMonth = document.getElementById('slipMonth');
-const slipYear = document.getElementById('slipYear');
-const slipLink = document.getElementById('slipLink');
+const workerSelect   = document.getElementById('workerSelect');
+const perWorkerDocs  = document.getElementById('perWorkerDocs');
+const slipMonth      = document.getElementById('slipMonth');
+const slipYear       = document.getElementById('slipYear');
+const slipLink       = document.getElementById('slipLink');
+const leaveCardYear  = document.getElementById('leaveCardYear');
+const leaveCardLink  = document.getElementById('leaveCardLink');
 
 function updateWorkerLinks() {
   const wid = workerSelect.value;
@@ -174,6 +205,7 @@ function updateWorkerLinks() {
       a.href = a.dataset.path + wid;
     });
     updateSlipLink();
+    updateLeaveCardLink();
   } else {
     perWorkerDocs.style.opacity = '.4';
     perWorkerDocs.style.pointerEvents = 'none';
@@ -187,7 +219,15 @@ function updateSlipLink() {
   }
 }
 
+function updateLeaveCardLink() {
+  const wid = workerSelect.value;
+  if (wid && leaveCardLink) {
+    leaveCardLink.href = '/documents/leave-card/' + wid + '?year=' + (leaveCardYear ? leaveCardYear.value : new Date().getFullYear());
+  }
+}
+
 workerSelect.addEventListener('change', updateWorkerLinks);
 slipMonth.addEventListener('change', updateSlipLink);
 slipYear.addEventListener('input', updateSlipLink);
+if (leaveCardYear) leaveCardYear.addEventListener('input', updateLeaveCardLink);
 </script>

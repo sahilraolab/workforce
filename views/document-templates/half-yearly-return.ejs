@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title><%= fh.num %> — Half Yearly Return — <%= company.name %> (<%= year %>)</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Times New Roman',Times,serif; font-size:10pt; color:#000; background:#f0f0f0; line-height:1.55; }
+.print-bar { background:#1e40af; padding:8px 16px; display:flex; align-items:center; gap:12px; }
+.print-bar span { color:#fff; font-family:system-ui,sans-serif; font-size:13px; flex:1; }
+.print-bar a { color:#bfdbfe; font-family:system-ui,sans-serif; font-size:12px; text-decoration:underline; }
+.print-bar button { background:#fff; color:#1e40af; border:none; border-radius:6px; padding:6px 18px; font-size:13px; font-weight:700; cursor:pointer; }
+.page { width:210mm; min-height:297mm; background:#fff; margin:12px auto; padding:12mm 16mm 10mm; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.form-header { text-align:center; border:1.5px solid #333; padding:6px 10px; margin-bottom:10px; }
+.form-header .fnum { font-size:13pt; font-weight:bold; letter-spacing:.05em; }
+.form-header .frule { font-size:8.5pt; font-style:italic; }
+.form-header .ftitle { font-size:11pt; font-weight:bold; margin-top:3px; text-transform:uppercase; letter-spacing:.04em; }
+.form-header .fperiod { font-size:10pt; font-weight:bold; margin-top:4px; border-top:1px solid #999; padding-top:4px; }
+.section { margin-bottom:14px; }
+.sec-title { font-size:10pt; font-weight:bold; background:#1e3a5f; color:#fff; padding:3px 8px; margin-bottom:0; }
+table.rtable { width:100%; border-collapse:collapse; font-size:9.5pt; }
+table.rtable th, table.rtable td { border:0.7px solid #555; padding:4px 8px; vertical-align:top; }
+table.rtable .lbl { font-weight:bold; width:55%; background:#f8f8f8; }
+table.rtable .val { min-width:120px; }
+table.rtable .note { font-size:8pt; color:#555; font-style:italic; }
+.sig-row { display:flex; justify-content:space-between; margin-top:30px; font-size:9.5pt; }
+.sig-box { border-top:0.8px solid #555; padding-top:5px; min-width:180px; text-align:center; }
+.footnote { font-size:7.5pt; margin-top:10px; border-top:0.5px solid #aaa; padding-top:5px; color:#444; font-style:italic; }
+@media print {
+  body { background:#fff; }
+  .print-bar { display:none !important; }
+  .page { margin:0; box-shadow:none; padding:10mm 14mm 8mm; }
+  @page { size:A4 portrait; margin:0; }
+}
+</style>
+</head>
+<body>
+<div class="print-bar">
+  <span><%= fh.num %> — Half Yearly Return — <%= company.name %>, <%= fromLabel %> to <%= toLabel %></span>
+  <a href="/documents/generate">← Back</a>
+  <button onclick="window.print()">⬇ Print / Save PDF</button>
+</div>
+<div class="page">
+  <div class="form-header">
+    <div class="fnum"><%= fh.num %></div>
+    <div class="frule">(<%= fh.rule %>)</div>
+    <div class="ftitle"><%= fh.title %></div>
+    <div class="fperiod">
+      Half Year <%= half %> of <%= year %> &nbsp;|&nbsp;
+      Period: <%= fromLabel %> to <%= toLabel %>
+    </div>
+  </div>
+
+  <!-- A. Establishment Details -->
+  <div class="section">
+    <div class="sec-title">A. Establishment Details</div>
+    <table class="rtable">
+      <tr><td class="lbl">1. Name of Establishment</td><td class="val"><%= company.name %></td></tr>
+      <tr><td class="lbl">2. Address</td><td class="val"><%= company.address || '—' %></td></tr>
+      <tr><td class="lbl">3. Nature of Industry / Work</td><td class="val">________________________</td></tr>
+      <tr><td class="lbl">4. Labour Identification Number (LIN)</td><td class="val">________________________</td></tr>
+      <tr><td class="lbl">5. Name of Employer / Manager</td><td class="val">________________________</td></tr>
+      <tr><td class="lbl">6. Period of Return</td><td class="val"><%= fromLabel %> to <%= toLabel %></td></tr>
+    </table>
+  </div>
+
+  <!-- B. Manpower Details -->
+  <div class="section">
+    <div class="sec-title">B. Manpower Employed During the Half Year</div>
+    <table class="rtable">
+      <tr>
+        <td class="lbl">1. Total number of workers employed</td>
+        <td class="val"><%= stats.totalWorkers %></td>
+        <td class="note">As at end of period</td>
+      </tr>
+      <tr>
+        <td class="lbl">2. Male workers</td>
+        <td class="val"><%= stats.male %></td>
+        <td class="note"></td>
+      </tr>
+      <tr>
+        <td class="lbl">3. Female workers</td>
+        <td class="val"><%= stats.female %></td>
+        <td class="note"></td>
+      </tr>
+      <tr>
+        <td class="lbl">4. Transgender / Other</td>
+        <td class="val"><%= stats.other %></td>
+        <td class="note"></td>
+      </tr>
+      <tr>
+        <td class="lbl">5. Maximum workers on any single day</td>
+        <td class="val">________________________</td>
+        <td class="note">To be filled manually</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- C. Leave Details -->
+  <div class="section">
+    <div class="sec-title">C. Leave Details During the Half Year</div>
+    <table class="rtable">
+      <tr>
+        <td class="lbl">1. Total Earned Leave (EL) days availed</td>
+        <td class="val"><%= leaveStats.earned %></td>
+        <td class="note">Approved leaves only</td>
+      </tr>
+      <tr>
+        <td class="lbl">2. Total Casual Leave (CL) days availed</td>
+        <td class="val"><%= leaveStats.casual %></td>
+        <td class="note"></td>
+      </tr>
+      <tr>
+        <td class="lbl">3. Total Sick Leave (SL) days availed</td>
+        <td class="val"><%= leaveStats.sick %></td>
+        <td class="note"></td>
+      </tr>
+      <tr>
+        <td class="lbl">4. Total leave days availed (all types)</td>
+        <td class="val"><strong><%= leaveStats.total %></strong></td>
+        <td class="note"></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- D. Accidents / Occurrences -->
+  <div class="section">
+    <div class="sec-title">D. Accidents &amp; Dangerous Occurrences</div>
+    <table class="rtable">
+      <tr><td class="lbl">1. Number of accidents during the period</td><td class="val">________________________</td><td class="note">Fill manually</td></tr>
+      <tr><td class="lbl">2. Number of fatal accidents</td><td class="val">________________________</td><td class="note"></td></tr>
+      <tr><td class="lbl">3. Man-days lost due to accidents</td><td class="val">________________________</td><td class="note"></td></tr>
+      <tr><td class="lbl">4. Dangerous occurrences</td><td class="val">________________________</td><td class="note"></td></tr>
+    </table>
+  </div>
+
+  <div class="sig-row">
+    <div class="sig-box">Signature of Employer<br>(Name &amp; Designation)</div>
+    <div class="sig-box">Date of Submission: ___________<br>Submitted to: Labour Officer</div>
+  </div>
+
+  <div class="footnote">
+    * This return is to be submitted within 30 days of the close of each half year (by 31st July and 31st January).<br>
+    Prepared in accordance with <%= fh.note %>. Fields marked "Fill manually" require HR records not in the system.
+  </div>
+</div>
+</body>
+</html>

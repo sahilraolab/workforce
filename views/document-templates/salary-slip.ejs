@@ -154,28 +154,28 @@
       <!-- Row 4: UAN -->
       <tr>
         <td class="sl">4</td>
-        <td class="field-name">UAN (if applicable)</td>
+        <td class="field-name">UAN (Universal Account Number)</td>
         <td class="field-val"><%= worker.uan || '—' %></td>
       </tr>
 
-      <!-- Row 5: Mode of payment -->
+      <!-- Row 5: Bank Account Number (statutory requirement Form V item 5) -->
       <tr>
         <td class="sl">5</td>
-        <td class="field-name">Mode of Payment</td>
-        <td class="field-val"><%= worker.modeOfPayment %></td>
+        <td class="field-name">Bank Account Number</td>
+        <td class="field-val"><%= worker.modeOfPayment === 'Cash' ? 'Cash Payment' : '____________________________' %></td>
       </tr>
 
-      <!-- Row 6: Days present -->
+      <!-- Row 6: Wage period -->
       <tr>
         <td class="sl">6</td>
-        <td class="field-name">Total Days / Units of Work in Wage Period</td>
-        <td class="field-val"><%= payroll.daysPresent %> days present out of <%= payroll.daysInMonth %> working days</td>
+        <td class="field-name">Wage Period</td>
+        <td class="field-val"><%= wagePeriodFrom %> to <%= wagePeriodTo %></td>
       </tr>
 
-      <!-- Row 7: Wages earned — header row -->
+      <!-- Row 7: Rate of wages payable (per Form V item 7) -->
       <tr>
         <td class="sl">7</td>
-        <td class="field-name" colspan="2"><strong>Wages Earned</strong></td>
+        <td class="field-name" colspan="2"><strong>Rate of Wages Payable / Wages Earned</strong></td>
       </tr>
 
       <!-- Sub-header row for wages -->
@@ -220,10 +220,17 @@
         <td class="sub-col"><%= fmtAmt(payroll.gross) %></td>
       </tr>
 
-      <!-- Row 8: Deductions — header -->
+      <!-- Row 8: Attendance (per Form V item 8) -->
       <tr>
         <td class="sl">8</td>
-        <td class="field-name" colspan="2"><strong>Deductions</strong></td>
+        <td class="field-name">Total Attendance / Units of Work Done</td>
+        <td class="field-val"><%= payroll.daysPresent %> days present out of <%= payroll.daysInMonth %> working days</td>
+      </tr>
+
+      <!-- Row 11: Deductions — header (Form V item 11) -->
+      <tr>
+        <td class="sl">11</td>
+        <td class="field-name" colspan="2"><strong>Total Deductions</strong></td>
       </tr>
 
       <!-- Sub-header for deductions -->
@@ -261,31 +268,24 @@
         <td class="sub-col"><%= fmtAmt(payroll.totalDeductions) %></td>
       </tr>
 
-      <!-- Row 9: Net wages -->
+      <!-- Row 12: Net wages paid (Form V item 12) -->
       <tr class="net-row">
-        <td class="sl">9</td>
+        <td class="sl">12</td>
         <td class="field-name">Net Wages Paid</td>
         <td class="field-val"><strong><%= fmtAmt(payroll.netPay) %></strong> &nbsp;<span style="font-size:8.5pt;font-weight:normal;font-style:italic">(<%= payroll.netPayWords %>)</span></td>
-      </tr>
-
-      <!-- Row 10: Date of payment -->
-      <tr>
-        <td class="sl">10</td>
-        <td class="field-name">Date of Payment</td>
-        <td class="field-val"><%= payroll.dateOfPayment || '—' %></td>
       </tr>
 
     </tbody>
   </table>
 
-  <!-- Signature row -->
+  <!-- Signature row (statutory) -->
   <div class="sig-row">
     <div class="sig-box">
-      <strong>11. Signature / Stamp of Employer</strong>
+      <strong>Signature / Stamp of Employer or Pay-in-Charge</strong>
       <div style="margin-top:20px;font-size:8.5pt;color:#555">Name &amp; Designation: ______________________________</div>
     </div>
     <div class="sig-box">
-      <strong>12. Signature / Thumb Impression of Employee</strong>
+      <strong>Signature / Thumb Impression of Employee</strong>
       <div style="margin-top:20px;font-size:8.5pt;color:#555">Date of Receipt: ______________________________</div>
     </div>
   </div>
@@ -293,6 +293,7 @@
   <!-- Footer note -->
   <div class="form-note">
     Note: This wage slip has been generated in accordance with <%= formNote %>. The employer shall issue this wage slip to every employee before the expiry of the second working day following the last day of the wage period.
+    * Required in case register is maintained physically.
   </div>
 
 </div><!-- /.page -->

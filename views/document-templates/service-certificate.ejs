@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Service Certificate — <%= worker.name %></title>
+<title><%= fh.num %> — Service Certificate — <%= worker.name %></title>
 <style>
 * { box-sizing:border-box; margin:0; padding:0; }
 body { font-family:'Times New Roman',Times,serif; font-size:11pt; color:#000; background:#f0f0f0; line-height:1.6; }
@@ -10,85 +10,130 @@ body { font-family:'Times New Roman',Times,serif; font-size:11pt; color:#000; ba
 .print-bar span { color:#fff; font-family:system-ui,sans-serif; font-size:13px; flex:1; }
 .print-bar a { color:#bfdbfe; font-family:system-ui,sans-serif; font-size:12px; text-decoration:underline; }
 .print-bar button { background:#fff; color:#1e40af; border:none; border-radius:6px; padding:6px 18px; font-size:13px; font-weight:700; cursor:pointer; }
-.page { width:210mm; min-height:297mm; background:#fff; margin:12px auto; padding:18mm 20mm 15mm; box-shadow:0 2px 8px rgba(0,0,0,.18); }
-.letterhead { text-align:center; border-bottom:2px solid #333; padding-bottom:8px; margin-bottom:20px; }
-.letterhead .co-name { font-size:16pt; font-weight:bold; }
-.letterhead .co-addr { font-size:9pt; color:#555; margin-top:3px; }
-.cert-title { text-align:center; margin:20px 0 18px; }
-.cert-title h2 { font-size:14pt; font-weight:bold; text-decoration:underline; letter-spacing:.06em; }
-.cert-body { text-indent:2em; margin-bottom:12px; text-align:justify; }
+.page { width:210mm; min-height:297mm; background:#fff; margin:12px auto; padding:16mm 20mm 14mm; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.form-id { text-align:center; font-size:11pt; font-style:italic; margin-bottom:6px; }
+.letterhead { text-align:center; border-bottom:2px solid #333; padding-bottom:8px; margin-bottom:18px; }
+.letterhead .co-name { font-size:16pt; font-weight:bold; letter-spacing:.04em; }
+.letterhead .co-detail { font-size:9pt; color:#444; margin-top:3px; }
+.cert-title { text-align:center; margin:16px 0 14px; }
+.cert-title h2 { font-size:14pt; font-weight:bold; text-decoration:underline; letter-spacing:.06em; text-transform:uppercase; }
+.cert-title .form-cite { font-size:9pt; font-style:italic; color:#555; margin-top:3px; }
+.details-table { width:100%; border-collapse:collapse; margin:14px 0; font-size:10.5pt; }
+.details-table td { padding:5px 6px; vertical-align:top; border:0.7px solid #777; }
+.details-table .lbl { font-weight:bold; width:46%; background:#f8f8f8; }
+.cert-body { text-indent:2.5em; margin-bottom:12px; text-align:justify; font-size:10.5pt; }
 .cert-body strong { font-weight:bold; }
-.details-box { border:1px solid #bbb; padding:10px 16px; margin:14px 0; }
-.details-box table { width:100%; }
-.details-box td { padding:3px 0; }
-.details-box .lbl { font-weight:bold; width:45%; }
-.seal-row { display:flex; justify-content:space-between; margin-top:40px; font-size:10.5pt; }
-.seal-row .sig-box { text-align:center; }
-.seal-row .sig-line { border-top:0.8px solid #555; padding-top:4px; margin-top:30px; width:160px; }
+.conduct-box { border:0.7px solid #aaa; padding:8px 14px; margin:12px 0; font-size:10.5pt; }
+.seal-row { display:flex; justify-content:space-between; margin-top:44px; font-size:10pt; }
+.seal-box { text-align:center; }
+.sig-line { border-top:0.8px solid #555; padding-top:5px; margin-top:32px; width:180px; text-align:center; font-size:9.5pt; }
+.footnote { font-size:8pt; font-style:italic; color:#555; margin-top:18px; border-top:0.5px solid #bbb; padding-top:6px; }
 @media print {
   body { background:#fff; }
   .print-bar { display:none !important; }
-  .page { margin:0; box-shadow:none; padding:14mm 18mm 12mm; }
+  .page { margin:0; box-shadow:none; padding:12mm 18mm 10mm; }
   @page { size:A4 portrait; margin:0; }
 }
 </style>
 </head>
 <body>
 <div class="print-bar">
-  <span>Service Certificate — <%= worker.name %></span>
+  <span><%= fh.num %> — Service Certificate — <%= worker.name %></span>
   <a href="/workers/<%= worker.id %>">← Back to profile</a>
   <button onclick="window.print()">⬇ Print / Save PDF</button>
 </div>
 <div class="page">
+
+  <div class="form-id"><%= fh.num %> &nbsp;|&nbsp; (<%= fh.rule %>)</div>
+
   <div class="letterhead">
     <div class="co-name"><%= company.name %></div>
-    <div class="co-addr"><%= establishment.address %></div>
-    <% if (company.contact_phone) { %><div class="co-addr">Ph: <%= company.contact_phone %></div><% } %>
+    <div class="co-detail"><%= establishment.address %></div>
+    <% if (company.contact_phone) { %><div class="co-detail">Ph: <%= company.contact_phone %></div><% } %>
+    <% if (company.contact_email) { %><div class="co-detail">Email: <%= company.contact_email %></div><% } %>
   </div>
 
-  <div style="text-align:right;margin-bottom:8px;font-size:10pt">Date: <%= issueDate %></div>
+  <div style="text-align:right; margin-bottom:4px; font-size:10pt">
+    Date of Issue: <strong><%= issueDate %></strong>
+  </div>
 
   <div class="cert-title">
-    <h2>SERVICE CERTIFICATE</h2>
+    <h2>Service Certificate</h2>
+    <div class="form-cite">Issued under <%= fh.note %></div>
   </div>
 
   <div class="cert-body">
-    This is to certify that <strong><%= worker.name %></strong>
-    <% if (worker.fatherName) { %>S/o D/o <strong><%= worker.fatherName %></strong><% } %>
-    was employed with <strong><%= company.name %></strong>
-    <% if (site) { %>at <strong><%= site.name %></strong><% } %>
-    in the capacity of <strong><%= worker.designation %></strong>.
+    This is to certify that <strong><%= worker.name %></strong><% if (worker.fatherName) { %>,
+    S/o / D/o / W/o <strong><%= worker.fatherName %></strong>,<% } %>
+    was employed with <strong><%= company.name %></strong><% if (site) { %>
+    at <strong><%= site.name %></strong><% } %>
+    in the capacity of <strong><%= worker.designation %></strong> and has worked to our satisfaction during the period of employment.
   </div>
 
-  <div class="details-box">
-    <table>
-      <tr><td class="lbl">Employee Name</td><td><%= worker.name %></td></tr>
-      <% if (worker.fatherName) { %><tr><td class="lbl">Father's / Husband's Name</td><td><%= worker.fatherName %></td></tr><% } %>
-      <tr><td class="lbl">Designation / Category</td><td><%= worker.designation %></td></tr>
-      <tr><td class="lbl">Date of Joining</td><td><%= worker.doj %></td></tr>
-      <tr><td class="lbl">Last Working Day</td><td>____________________</td></tr>
-      <tr><td class="lbl">Daily Wage Rate</td><td>₹ <%= worker.wageRate %> per day</td></tr>
-    </table>
+  <table class="details-table">
+    <tr>
+      <td class="lbl">1. Name of Worker</td>
+      <td><%= worker.name %></td>
+    </tr>
+    <% if (worker.fatherName) { %>
+    <tr>
+      <td class="lbl">2. Father's / Mother's / Spouse Name</td>
+      <td><%= worker.fatherName %></td>
+    </tr>
+    <% } %>
+    <tr>
+      <td class="lbl">3. Designation / Category of Work</td>
+      <td><%= worker.designation %></td>
+    </tr>
+    <tr>
+      <td class="lbl">4. Date of Joining</td>
+      <td><%= worker.doj %></td>
+    </tr>
+    <tr>
+      <td class="lbl">5. Date of Leaving / Last Working Day</td>
+      <td>____________________________</td>
+    </tr>
+    <tr>
+      <td class="lbl">6. Reason for Leaving</td>
+      <td>____________________________</td>
+    </tr>
+    <tr>
+      <td class="lbl">7. Last Drawn Wage Rate</td>
+      <td>₹ <%= worker.wageRate %> per day</td>
+    </tr>
+  </table>
+
+  <div class="conduct-box">
+    <strong>Conduct &amp; Behaviour during service:</strong><br>
+    <span style="padding-left:1em">Good / Satisfactory / Average &nbsp; (circle as applicable)</span><br><br>
+    <strong>Skills / Nature of Work performed:</strong><br>
+    <span style="padding-left:1em">____________________________________________________________________</span>
   </div>
 
   <div class="cert-body">
-    During the period of employment, the conduct and behaviour of the said employee was found to be
-    <strong>satisfactory</strong>. This certificate is being issued at the request of the employee for whatever purpose it may serve.
-  </div>
-
-  <div class="cert-body">
-    We wish the employee all the best in future endeavours.
+    This certificate is issued at the request of the above-named worker for whatever purpose it may serve.
+    We wish the worker all the best in future endeavours.
   </div>
 
   <div class="seal-row">
-    <div class="sig-box">
-      <div class="sig-line">Signature of Employee<br>(<%= worker.name %>)</div>
+    <div class="seal-box">
+      <div class="sig-line">
+        Signature of Worker<br>(<%= worker.name %>)
+      </div>
     </div>
-    <div class="sig-box">
-      <div style="font-size:9pt;color:#aaa;margin-bottom:4px">(Affix company seal)</div>
-      <div class="sig-line">For <%= company.name %><br>(Authorised Signatory)</div>
+    <div class="seal-box">
+      <div style="font-size:8.5pt; color:#aaa; margin-bottom:4px">(Affix company seal here)</div>
+      <div class="sig-line">
+        For <%= company.name %><br>(Authorised Signatory with Designation)
+      </div>
     </div>
   </div>
+
+  <div class="footnote">
+    * This service certificate has been issued in accordance with <%= fh.note %>.<br>
+    Note: Required in case register is maintained physically. The employer is required to issue this certificate on the date of separation of the worker.
+  </div>
+
 </div>
 </body>
 </html>

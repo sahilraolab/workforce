@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title><%= fh.num %> — Annual Return — <%= company.name %> (<%= year %>)</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Times New Roman',Times,serif; font-size:10pt; color:#000; background:#f0f0f0; line-height:1.55; }
+.print-bar { background:#1e40af; padding:8px 16px; display:flex; align-items:center; gap:12px; }
+.print-bar span { color:#fff; font-family:system-ui,sans-serif; font-size:13px; flex:1; }
+.print-bar a { color:#bfdbfe; font-family:system-ui,sans-serif; font-size:12px; text-decoration:underline; }
+.print-bar button { background:#fff; color:#1e40af; border:none; border-radius:6px; padding:6px 18px; font-size:13px; font-weight:700; cursor:pointer; }
+.page { width:210mm; background:#fff; margin:12px auto; padding:12mm 16mm 10mm; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.form-header { text-align:center; border:1.5px solid #333; padding:7px 10px; margin-bottom:10px; }
+.form-header .fnum { font-size:13pt; font-weight:bold; letter-spacing:.05em; }
+.form-header .frule { font-size:8.5pt; font-style:italic; }
+.form-header .ftitle { font-size:11pt; font-weight:bold; margin-top:3px; text-transform:uppercase; letter-spacing:.04em; }
+.form-header .fy { font-size:11pt; font-weight:bold; margin-top:4px; border-top:1px solid #999; padding-top:4px; }
+.notice { background:#fffbeb; border:0.8px solid #d97706; border-radius:4px; padding:6px 10px; font-size:8.5pt; color:#78350f; margin-bottom:10px; }
+.section { margin-bottom:14px; }
+.sec-title { font-size:10pt; font-weight:bold; background:#1e3a5f; color:#fff; padding:3px 8px; margin-bottom:0; }
+table.rtable { width:100%; border-collapse:collapse; font-size:9pt; }
+table.rtable th, table.rtable td { border:0.7px solid #555; padding:4px 7px; vertical-align:top; }
+table.rtable .lbl { font-weight:bold; width:52%; background:#f8f8f8; }
+table.rtable .val { min-width:110px; }
+table.rtable .note { font-size:7.5pt; color:#555; font-style:italic; width:30%; }
+table.rtable .sub-hdr td { font-weight:bold; background:#dde8ff; font-size:8.5pt; }
+.manpower-grid { width:100%; border-collapse:collapse; font-size:8.5pt; }
+.manpower-grid th, .manpower-grid td { border:0.7px solid #555; padding:3px 5px; text-align:center; }
+.manpower-grid th { background:#dde8ff; font-weight:bold; }
+.manpower-grid .lft { text-align:left; }
+.sig-row { display:flex; justify-content:space-between; margin-top:30px; font-size:9.5pt; }
+.sig-box { border-top:0.8px solid #555; padding-top:5px; min-width:180px; text-align:center; }
+.footnote { font-size:7.5pt; margin-top:10px; border-top:0.5px solid #aaa; padding-top:5px; color:#444; font-style:italic; }
+@media print {
+  body { background:#fff; }
+  .print-bar { display:none !important; }
+  .page { margin:0; box-shadow:none; padding:10mm 14mm 8mm; }
+  @page { size:A4 portrait; margin:0; }
+}
+</style>
+</head>
+<body>
+<div class="print-bar">
+  <span><%= fh.num %> — Annual Return — <%= company.name %>, Year <%= year %></span>
+  <a href="/documents/generate">← Back</a>
+  <button onclick="window.print()">⬇ Print / Save PDF</button>
+</div>
+<div class="page">
+  <div class="form-header">
+    <div class="fnum"><%= fh.num %></div>
+    <div class="frule">(<%= fh.rule %>)</div>
+    <div class="ftitle"><%= fh.title %></div>
+    <div class="fy">FOR THE YEAR ENDING 31st DECEMBER <%= year %></div>
+  </div>
+
+  <div class="notice">
+    <strong>Filing Note:</strong> This is a printable draft for reference. The annual return must be filed <strong>on or before 28th/29th February</strong> of the following year via the ShramSuvidha portal (for central) or the designated state portal. Fill blank fields from HR records before online submission.
+  </div>
+
+  <!-- A. General Information -->
+  <div class="section">
+    <div class="sec-title">A. General Information (Part I — Applicable to All Establishments)</div>
+    <table class="rtable">
+      <tr><td class="lbl">1. Labour Identification Number (LIN)</td><td class="val">________________________</td><td class="note">EPFO/ESIC/MCA/MoLE LIN</td></tr>
+      <tr><td class="lbl">2. Period of Return</td><td class="val">01 January <%= year %> to 31 December <%= year %></td><td class="note">Calendar year</td></tr>
+      <tr><td class="lbl">3. Name of Establishment</td><td class="val"><%= company.name %></td><td class="note"></td></tr>
+      <tr><td class="lbl">4. Address</td><td class="val"><%= company.address || '________________________' %></td><td class="note"></td></tr>
+      <tr><td class="lbl">5. Email ID</td><td class="val"><%= company.contact_email || '________________________' %></td><td class="note"></td></tr>
+      <tr><td class="lbl">6. Telephone / Mobile No.</td><td class="val"><%= company.contact_phone || '________________________' %></td><td class="note"></td></tr>
+      <tr><td class="lbl">7. Nature of Industry / Principal Activity</td><td class="val">________________________</td><td class="note">Fill manually</td></tr>
+      <tr><td class="lbl">8. Hours of Work in a Day</td><td class="val">8 hours</td><td class="note"></td></tr>
+      <tr><td class="lbl">9. Number of Shifts</td><td class="val">________________________</td><td class="note">Fill manually</td></tr>
+    </table>
+  </div>
+
+  <!-- B. Manpower -->
+  <div class="section">
+    <div class="sec-title">B. Details of Manpower Deployed (Section C)</div>
+    <table class="manpower-grid">
+      <thead>
+        <tr>
+          <th class="lft" rowspan="2" style="width:40%">Details</th>
+          <th colspan="4">Directly Employed</th>
+          <th colspan="4">Employed through Contractor</th>
+          <th rowspan="2">Grand Total</th>
+        </tr>
+        <tr>
+          <th>Highly Skilled</th>
+          <th>Skilled</th>
+          <th>Semi-Skilled</th>
+          <th>Unskilled</th>
+          <th>Highly Skilled</th>
+          <th>Skilled</th>
+          <th>Semi-Skilled</th>
+          <th>Unskilled</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="lft">(i) Maximum workers on any day during the year</td>
+          <td>—</td><td>—</td><td>—</td><td>—</td>
+          <td>—</td><td>—</td><td>—</td><td>—</td>
+          <td><strong><%= stats.maxWorkers %></strong></td>
+        </tr>
+        <tr>
+          <td class="lft">(ii) Average workers employed during the year</td>
+          <td>—</td><td>—</td><td>—</td><td>—</td>
+          <td>—</td><td>—</td><td>—</td><td>—</td>
+          <td><strong><%= stats.avgWorkers %></strong></td>
+        </tr>
+        <tr>
+          <td class="lft">— of which: Male</td>
+          <td colspan="4" style="text-align:center">—</td>
+          <td colspan="4" style="text-align:center">—</td>
+          <td><%= stats.male %></td>
+        </tr>
+        <tr>
+          <td class="lft">— of which: Female</td>
+          <td colspan="4" style="text-align:center">—</td>
+          <td colspan="4" style="text-align:center">—</td>
+          <td><%= stats.female %></td>
+        </tr>
+        <tr>
+          <td class="lft">— of which: Transgender / Other</td>
+          <td colspan="4" style="text-align:center">—</td>
+          <td colspan="4" style="text-align:center">—</td>
+          <td><%= stats.other %></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- C. Health & Welfare Amenities -->
+  <div class="section">
+    <div class="sec-title">C. Details of Health &amp; Welfare Amenities Provided (Section E)</div>
+    <table class="rtable">
+      <tr><td class="lbl">1. Canteen facility provided</td><td class="val">Yes / No</td><td class="note">s.24(v) OSH Code 2020</td></tr>
+      <tr><td class="lbl">2. Crèche facility provided</td><td class="val">Yes / No</td><td class="note">s.67 Social Security Code</td></tr>
+      <tr><td class="lbl">3. Ambulance room / First aid</td><td class="val">Yes / No</td><td class="note">s.24(2)(i) OSH Code</td></tr>
+      <tr><td class="lbl">4. Safety Committee constituted</td><td class="val">Yes / No</td><td class="note">s.22(1) OSH Code</td></tr>
+      <tr><td class="lbl">5. Safety Officer appointed</td><td class="val">No. of Safety Officers: _____</td><td class="note">s.22(2) OSH Code</td></tr>
+    </table>
+  </div>
+
+  <!-- D. Bonus -->
+  <div class="section">
+    <div class="sec-title">D. Details of Payment of Bonus (Section H)</div>
+    <table class="rtable">
+      <tr><td class="lbl">1. No. of employees covered under Bonus provision</td><td class="val">________________________</td><td class="note">Fill manually</td></tr>
+      <tr><td class="lbl">2. Total amount of bonus actually paid (₹)</td><td class="val">________________________</td><td class="note"></td></tr>
+      <tr><td class="lbl">3. Date on which bonus was paid</td><td class="val">________________________</td><td class="note"></td></tr>
+    </table>
+  </div>
+
+  <!-- E. Accidents -->
+  <div class="section">
+    <div class="sec-title">E. Accidents &amp; Dangerous Occurrences (Section I)</div>
+    <table class="rtable">
+      <tr><td class="lbl">1. Total accidents (worker injured / away 48+ hrs)</td><td class="val">________________________</td><td class="note">Fill manually</td></tr>
+      <tr><td class="lbl">2. Fatal accidents (names of deceased)</td><td class="val">________________________</td><td class="note">s.10 OSH Code</td></tr>
+      <tr><td class="lbl">3. Dangerous occurrences</td><td class="val">________________________</td><td class="note">s.11 OSH Code</td></tr>
+      <tr><td class="lbl">4. Notifiable diseases cases</td><td class="val">________________________</td><td class="note">3rd Schedule OSH Code</td></tr>
+    </table>
+  </div>
+
+  <div class="sig-row">
+    <div class="sig-box">Signature of Employer<br>(Name, Designation &amp; Seal)</div>
+    <div class="sig-box">Date: _______________<br>Place: _______________</div>
+  </div>
+
+  <div class="footnote">
+    * This annual return must be filed on or before 28th/29th February of the following year. For OSH Code 2020 (Central), file via ShramSuvidha portal.<br>
+    * Columns showing "—" require skill-wise breakdown — fill before online submission.<br>
+    Prepared in accordance with <%= fh.note %>. Data auto-populated from WorkforceEOS records as of <%= generatedOn %>.
+  </div>
+</div>
+</body>
+</html>

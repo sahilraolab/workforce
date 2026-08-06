@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title><%= fh.num %> — Adult Worker Register — <%= company.name %></title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Times New Roman',Times,serif; font-size:8pt; color:#000; background:#f0f0f0; }
+.print-bar { background:#1e40af; padding:8px 16px; display:flex; align-items:center; gap:12px; }
+.print-bar span { color:#fff; font-family:system-ui,sans-serif; font-size:13px; flex:1; }
+.print-bar a { color:#bfdbfe; font-family:system-ui,sans-serif; font-size:12px; text-decoration:underline; }
+.print-bar button { background:#fff; color:#1e40af; border:none; border-radius:6px; padding:6px 18px; font-size:13px; font-weight:700; cursor:pointer; }
+.page { width:297mm; min-height:210mm; background:#fff; margin:12px auto; padding:8mm 10mm 7mm; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.form-header { text-align:center; border:1px solid #333; padding:4px 8px; margin-bottom:4px; }
+.form-header .fnum { font-size:11pt; font-weight:bold; }
+.form-header .frule { font-size:8pt; font-style:italic; }
+.form-header .ftitle { font-size:10pt; font-weight:bold; margin-top:2px; text-transform:uppercase; }
+.estab-block { border:0.6px solid #555; padding:3px 8px; margin-bottom:5px; font-size:7.5pt; display:flex; gap:20px; flex-wrap:wrap; }
+.estab-block .ef { display:flex; gap:4px; align-items:baseline; }
+.estab-block .el { font-weight:bold; white-space:nowrap; }
+.estab-block .ev { border-bottom:0.5px solid #999; min-width:80px; }
+table.awreg { width:100%; border-collapse:collapse; font-size:7pt; }
+table.awreg th, table.awreg td { border:0.6px solid #555; padding:2px 3px; text-align:center; vertical-align:middle; }
+table.awreg .lft { text-align:left; }
+table.awreg thead tr:first-child th { background:#1e3a5f; color:#fff; font-size:7.5pt; font-weight:bold; }
+table.awreg thead tr:last-child th { background:#dde8ff; font-weight:bold; font-size:6.5pt; }
+.sig-row { margin-top:8px; text-align:right; font-size:8pt; }
+.footnote { font-size:6.5pt; margin-top:4px; border-top:0.5px solid #aaa; padding-top:3px; color:#444; font-style:italic; }
+@media print {
+  body { background:#fff; }
+  .print-bar { display:none !important; }
+  .page { margin:0; box-shadow:none; padding:6mm 8mm 5mm; }
+  @page { size:A4 landscape; margin:0; }
+}
+</style>
+</head>
+<body>
+<div class="print-bar">
+  <span><%= fh.num %> — Register of Adult Workers — <%= company.name %></span>
+  <a href="/documents/generate">← Back</a>
+  <button onclick="window.print()">⬇ Print / Save PDF</button>
+</div>
+<div class="page">
+  <div class="form-header">
+    <div class="fnum"><%= fh.num %></div>
+    <div class="frule">(<%= fh.rule %>)</div>
+    <div class="ftitle"><%= fh.title %></div>
+  </div>
+  <div class="estab-block">
+    <div class="ef"><span class="el">Name of Establishment:</span><span class="ev"><%= company.name %></span></div>
+    <div class="ef"><span class="el">Site / Location:</span><span class="ev"><%= site ? site.name : 'All Sites' %></span></div>
+    <div class="ef"><span class="el">Generated on:</span><span class="ev"><%= generatedOn %></span></div>
+    <div class="ef"><span class="el">As per:</span><span class="ev"><%= fh.note %></span></div>
+  </div>
+  <table class="awreg">
+    <thead>
+      <tr>
+        <th colspan="5">PERSONAL DETAILS</th>
+        <th colspan="5">EMPLOYMENT &amp; WORK DETAILS</th>
+        <th colspan="2">IDENTITY</th>
+      </tr>
+      <tr>
+        <th style="width:20px">Sl.</th>
+        <th style="min-width:110px">Name of Worker</th>
+        <th style="width:95px">Father's / Mother's / Spouse Name</th>
+        <th style="width:26px">Gender</th>
+        <th style="width:48px">Date of Birth</th>
+        <th style="width:65px">Category / Designation (HS/S/SS/US)</th>
+        <th style="width:48px">Date of Joining</th>
+        <th style="width:44px">Hours of Work per Day</th>
+        <th style="width:44px">Overtime Applicable</th>
+        <th style="width:44px">Weekly Rest Day</th>
+        <th style="width:68px">Aadhaar No. (masked)</th>
+        <th style="width:65px">Mobile No.</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% rows.forEach(row => { %>
+      <tr>
+        <td><%= row.sno %></td>
+        <td class="lft"><%= row.name %></td>
+        <td class="lft"><%= row.fatherName %></td>
+        <td><%= row.gender %></td>
+        <td><%= row.dob %></td>
+        <td class="lft"><%= row.category %></td>
+        <td><%= row.doj %></td>
+        <td><%= row.hoursOfWork %></td>
+        <td><%= row.overtime %></td>
+        <td><%= row.restDay %></td>
+        <td style="font-size:6.5pt"><%= row.aadhaar %></td>
+        <td><%= row.mobile %></td>
+      </tr>
+      <% }) %>
+      <% if (!rows.length) { %>
+      <tr><td colspan="12" style="text-align:center;padding:10px;color:#777">No active workers found.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+  <div class="sig-row">
+    Signature of Employer / Manager: _________________________________ &nbsp;&nbsp; Date: _______________
+  </div>
+  <div class="footnote">
+    * HS = Highly Skilled &nbsp;|&nbsp; S = Skilled &nbsp;|&nbsp; SS = Semi-Skilled &nbsp;|&nbsp; US = Unskilled<br>
+    This register has been maintained in accordance with <%= fh.note %>. To be preserved for 5 years from date of last entry.
+  </div>
+</div>
+</body>
+</html>

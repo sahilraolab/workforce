@@ -49,6 +49,107 @@ function formConfig(regulatory_regime, jurisdiction) {
   return { formNumber: 'FORM V', formRule: 'See rule 52', formNote: 'the Code on Wages, 2019 (Central Rules)' };
 }
 
+function getFormHeader(docType, regulatory_regime, jurisdiction) {
+  const r = regulatory_regime || 'code_on_wages_2019';
+  const j = jurisdiction || 'central';
+  const C = {
+    employment_register: {
+      code_on_wages_2019: {
+        central: { num: 'FORM I', rule: 'See Rule 51(1)(i)', title: 'REGISTER OF EMPLOYEES (KARMCHARI REGISTER)', note: 'Code on Wages, 2019 (Central Rules)' },
+        gujarat: { num: 'FORM IV', rule: 'See Rule 40(1)(a)', title: 'REGISTER OF EMPLOYEES', note: 'Code on Wages, 2019 (Gujarat State Rules)' },
+      },
+      osh_code_2020: {
+        central: { num: 'FORM XIII', rule: 'See Rule 58(1)(a)', title: 'REGISTER OF WORKERS', note: 'OSH Code, 2020 (Central Rules)' },
+        gujarat:  { num: 'FORM 13', rule: 'See Rule 57(1)(a)', title: 'REGISTER OF WORKERS', note: 'OSH Code, 2020 (Gujarat State Rules)' },
+      },
+    },
+    wage_register: {
+      code_on_wages_2019: {
+        central: { num: 'FORM IV', rule: 'See Clause (ii) of Sub Rule (1) of Rule 51', title: 'REGISTER OF WAGES, OVERTIME, ADVANCES, FINES AND DEDUCTIONS FOR DAMAGE AND LOSS', note: 'Code on Wages, 2019 (Central Rules)' },
+        gujarat: { num: 'REGISTER OF WAGES – I', rule: 'See Rule 40', title: 'REGISTER OF WAGES, OVERTIME, FINE, DEDUCTION FOR DAMAGE & LOSS', note: 'Code on Wages, 2019 (Gujarat State Rules)' },
+      },
+      osh_code_2020: {
+        central: { num: 'FORM XV', rule: 'See Rule 72(1)', title: 'REGISTER OF WAGES, OVERTIME AND DEDUCTIONS', note: 'OSH Code, 2020 (Central Rules)' },
+        gujarat:  { num: 'FORM 13', rule: 'See Rule 66(1)', title: 'REGISTER OF WAGES', note: 'OSH Code, 2020 (Gujarat State Rules)' },
+      },
+    },
+    muster_roll: {
+      code_on_wages_2019: {
+        central: { num: 'FORM 9', rule: 'See Clause (iii) of Sub Rule (1) of Rule 51', title: 'ATTENDANCE REGISTER CUM MUSTER ROLL', note: 'Code on Wages, 2019 (Central Rules)' },
+        gujarat: { num: 'FORM 9', rule: 'See Rule 40', title: 'ATTENDANCE REGISTER CUM MUSTER ROLL', note: 'Code on Wages, 2019 (Gujarat State Rules)' },
+      },
+      osh_code_2020: {
+        central: { num: 'FORM XIV', rule: 'See Rule 71(1)', title: 'ATTENDANCE REGISTER CUM MUSTER ROLL', note: 'OSH Code, 2020 (Central Rules)' },
+        gujarat:  { num: 'FORM 14', rule: 'See Rule 65(1)', title: 'ATTENDANCE REGISTER CUM MUSTER ROLL', note: 'OSH Code, 2020 (Gujarat State Rules)' },
+      },
+    },
+    leave_register: {
+      code_on_wages_2019: {
+        central: { num: 'LEAVE REGISTER', rule: 'As per Code on Wages, 2019', title: 'LEAVE WITH WAGES REGISTER', note: 'Code on Wages, 2019 (Central Rules)' },
+        gujarat: { num: 'LEAVE REGISTER', rule: 'As per Code on Wages, 2019', title: 'LEAVE WITH WAGES REGISTER', note: 'Code on Wages, 2019 (Gujarat State Rules)' },
+      },
+      osh_code_2020: {
+        central: { num: 'FORM XX', rule: 'See Rule 79(1)', title: 'LEAVE WITH WAGES REGISTER', note: 'OSH Code, 2020 (Central Rules)' },
+        gujarat:  { num: 'FORM 19', rule: 'See Rule 73(1)', title: 'LEAVE WITH WAGES REGISTER', note: 'OSH Code, 2020 (Gujarat State Rules)' },
+      },
+    },
+    service_certificate: {
+      code_on_wages_2019: {
+        central: { num: 'SERVICE CERTIFICATE', rule: 'As per Code on Wages, 2019', title: 'SERVICE CERTIFICATE', note: 'Code on Wages, 2019 (Central Rules)' },
+        gujarat: { num: 'SERVICE CERTIFICATE', rule: 'As per Code on Wages, 2019', title: 'SERVICE CERTIFICATE', note: 'Code on Wages, 2019 (Gujarat State Rules)' },
+      },
+      osh_code_2020: {
+        central: { num: 'FORM 16', rule: 'See Rule 76', title: 'SERVICE CERTIFICATE', note: 'OSH Code, 2020 (Central Rules)' },
+        gujarat:  { num: 'FORM 16', rule: 'See Rule 70', title: 'SERVICE CERTIFICATE', note: 'OSH Code, 2020 (Gujarat State Rules)' },
+      },
+    },
+    adult_worker_register: {
+      code_on_wages_2019: {
+        central: { num: 'ADULT WORKER REGISTER', rule: 'As per Code on Wages, 2019', title: 'REGISTER OF ADULT WORKERS', note: 'Code on Wages, 2019 (Central Rules)' },
+        gujarat: { num: 'ADULT WORKER REGISTER', rule: 'As per Code on Wages, 2019', title: 'REGISTER OF ADULT WORKERS', note: 'Code on Wages, 2019 (Gujarat State Rules)' },
+      },
+      osh_code_2020: {
+        central: { num: 'FORM XVII', rule: 'See Rule 71(2)', title: 'REGISTER OF ADULT WORKERS', note: 'OSH Code, 2020 (Central Rules)' },
+        gujarat:  { num: 'FORM 17', rule: 'See Rule 65(2)', title: 'REGISTER OF ADULT WORKERS', note: 'OSH Code, 2020 (Gujarat State Rules)' },
+      },
+    },
+    leave_card: {
+      code_on_wages_2019: {
+        central: { num: 'LEAVE CARD', rule: 'As per Code on Wages, 2019', title: 'LEAVE CARD', note: 'Code on Wages, 2019 (Central Rules)' },
+        gujarat: { num: 'LEAVE CARD', rule: 'As per Code on Wages, 2019', title: 'LEAVE CARD', note: 'Code on Wages, 2019 (Gujarat State Rules)' },
+      },
+      osh_code_2020: {
+        central: { num: 'FORM XX-A', rule: 'See Rule 79(2)', title: 'LEAVE CARD', note: 'OSH Code, 2020 (Central Rules)' },
+        gujarat:  { num: 'FORM 20', rule: 'See Rule 73(2)', title: 'LEAVE CARD', note: 'OSH Code, 2020 (Gujarat State Rules)' },
+      },
+    },
+    annual_return: {
+      code_on_wages_2019: {
+        central: { num: 'ANNUAL RETURN', rule: 'As per Code on Wages, 2019', title: 'ANNUAL RETURN', note: 'Code on Wages, 2019 (Central Rules)' },
+        gujarat: { num: 'ANNUAL RETURN', rule: 'As per Code on Wages, 2019', title: 'ANNUAL RETURN', note: 'Code on Wages, 2019 (Gujarat State Rules)' },
+      },
+      osh_code_2020: {
+        central: { num: 'FORM 23', rule: 'See Rule 37', title: 'UNIFIED ANNUAL RETURN', note: 'OSH Code, 2020 / IR Code, 2020 / Social Security Code, 2020 / Code on Wages, 2019' },
+        gujarat:  { num: 'FORM 23', rule: 'See Rule 37', title: 'ANNUAL RETURN', note: 'OSH Code, 2020 (Gujarat State Rules)' },
+      },
+    },
+    half_yearly_return: {
+      code_on_wages_2019: {
+        central: { num: 'HALF YEARLY RETURN', rule: 'As per Code on Wages, 2019', title: 'HALF YEARLY RETURN', note: 'Code on Wages, 2019 (Central Rules)' },
+        gujarat: { num: 'HALF YEARLY RETURN', rule: 'As per Code on Wages, 2019', title: 'HALF YEARLY RETURN', note: 'Code on Wages, 2019 (Gujarat State Rules)' },
+      },
+      osh_code_2020: {
+        central: { num: 'FORM XVIII', rule: 'See Rule 75(1)', title: 'HALF YEARLY RETURN', note: 'OSH Code, 2020 (Central Rules)' },
+        gujarat:  { num: 'FORM 18', rule: 'See Rule 69(1)', title: 'HALF YEARLY RETURN', note: 'OSH Code, 2020 (Gujarat State Rules)' },
+      },
+    },
+  };
+  const d = C[docType] || {};
+  const rc = d[r] || d['osh_code_2020'] || d['code_on_wages_2019'] || {};
+  const cfg = rc[j] || rc['central'] || rc['gujarat'];
+  return cfg || { num: 'FORM', rule: '', title: docType.replace(/_/g, ' ').toUpperCase(), note: '' };
+}
+
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
 async function fetchWorkerFull(workerId) {
@@ -131,6 +232,7 @@ async function buildSalarySlipData(workerId, month, year) {
 
 async function buildMusterRollData(companyId, siteId, month, year) {
   const company = await fetchCompany(companyId);
+  const fh = getFormHeader('muster_roll', company.regulatory_regime, company.jurisdiction);
   const site = siteId ? await Site.findByPk(siteId) : null;
   const workers = await fetchSiteWorkers(companyId, siteId);
   const lastDay = new Date(year, month, 0).getDate();
@@ -167,13 +269,14 @@ async function buildMusterRollData(companyId, siteId, month, year) {
     return { sno: idx + 1, id: w.id, name: w.name, category: w.employment ? w.employment.category : '—', dayStatuses, present, half, absent, total: present + half };
   });
 
-  return { company, site, month, year, monthName: MONTH_NAMES[month], days, rows, lastDay, generatedOn: fmtDate(new Date()) };
+  return { fh, company, site, month, year, monthName: MONTH_NAMES[month], days, rows, lastDay, generatedOn: fmtDate(new Date()) };
 }
 
 // ─── 3. Wage Register ─────────────────────────────────────────────────────────
 
 async function buildWageRegisterData(companyId, siteId, month, year) {
   const company = await fetchCompany(companyId);
+  const fh = getFormHeader('wage_register', company.regulatory_regime, company.jurisdiction);
   const site = siteId ? await Site.findByPk(siteId) : null;
   const workers = await fetchSiteWorkers(companyId, siteId);
   const payrolls = await Payroll.findAll({
@@ -202,13 +305,14 @@ async function buildWageRegisterData(companyId, siteId, month, year) {
     };
   });
 
-  return { company, site, month, year, monthName: MONTH_NAMES[month], rows, totals: { gross: totGross, pf: totPF, esic: totESIC, other: totOther, net: totNet }, fmtAmt, generatedOn: fmtDate(new Date()) };
+  return { fh, company, site, month, year, monthName: MONTH_NAMES[month], rows, totals: { gross: totGross, pf: totPF, esic: totESIC, other: totOther, net: totNet }, fmtAmt, generatedOn: fmtDate(new Date()) };
 }
 
 // ─── 4. Employment Register ───────────────────────────────────────────────────
 
 async function buildEmploymentRegisterData(companyId, siteId) {
   const company = await fetchCompany(companyId);
+  const fh = getFormHeader('employment_register', company.regulatory_regime, company.jurisdiction);
   const site = siteId ? await Site.findByPk(siteId) : null;
   const workers = await fetchSiteWorkers(companyId, siteId);
   const rows = workers.map((w, idx) => {
@@ -226,13 +330,14 @@ async function buildEmploymentRegisterData(companyId, siteId) {
       mobile: w.mobile || '—', aadhaar: w.aadhaar_last4 ? 'XXXX-XXXX-' + w.aadhaar_last4 : '—',
     };
   });
-  return { company, site, rows, generatedOn: fmtDate(new Date()) };
+  return { fh, company, site, rows, generatedOn: fmtDate(new Date()) };
 }
 
 // ─── 5. Leave Register ────────────────────────────────────────────────────────
 
 async function buildLeaveRegisterData(companyId, siteId, month, year) {
   const company = await fetchCompany(companyId);
+  const fh = getFormHeader('leave_register', company.regulatory_regime, company.jurisdiction);
   const site = siteId ? await Site.findByPk(siteId) : null;
   const workers = await fetchSiteWorkers(companyId, siteId);
   const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -261,7 +366,7 @@ async function buildLeaveRegisterData(companyId, siteId, month, year) {
     return { sno: idx + 1, name: w.name, category: w.employment ? w.employment.category : '—', casual, sick, earned, total: casual + sick + earned, leaves };
   });
 
-  return { company, site, month, year, monthName: MONTH_NAMES[month], rows, generatedOn: fmtDate(new Date()), fmtDate };
+  return { fh, company, site, month, year, monthName: MONTH_NAMES[month], rows, generatedOn: fmtDate(new Date()), fmtDate };
 }
 
 // ─── 6. Offer Letter ──────────────────────────────────────────────────────────
@@ -292,8 +397,9 @@ async function buildServiceCertificateData(workerId) {
   const emp = worker.employment;
   const company = worker.company;
   const site = worker.site;
+  const fh = getFormHeader('service_certificate', company.regulatory_regime, company.jurisdiction);
   return {
-    company, site, establishment: establishmentBlock(company, site),
+    fh, company, site, establishment: establishmentBlock(company, site),
     worker: {
       id: worker.id, name: worker.name, fatherName: worker.father_name,
       designation: emp ? emp.category : '—',
@@ -339,6 +445,148 @@ async function buildEsicForm1Data(workerId) {
     family,
     issueDate: fmtDate(new Date()),
   };
+}
+
+// ─── 10. Adult Worker Register ────────────────────────────────────────────────
+
+async function buildAdultWorkerRegisterData(companyId, siteId) {
+  const company = await fetchCompany(companyId);
+  const fh = getFormHeader('adult_worker_register', company.regulatory_regime, company.jurisdiction);
+  const site = siteId ? await Site.findByPk(siteId) : null;
+  const workers = await fetchSiteWorkers(companyId, siteId);
+  const rows = workers.map((w, idx) => {
+    const emp = w.employment;
+    return {
+      sno: idx + 1, id: w.id, name: w.name, fatherName: w.father_name || '—',
+      gender: w.gender || '—', dob: fmtDate(w.dob),
+      category: emp ? emp.category : '—',
+      doj: fmtDate(emp && emp.doj),
+      wageRate: emp ? parseFloat(emp.wage_rate).toFixed(2) : '—',
+      hoursOfWork: '8', overtime: 'As per rules', restDay: 'Sunday',
+      mobile: w.mobile || '—',
+      aadhaar: w.aadhaar_last4 ? 'XXXX-XXXX-' + w.aadhaar_last4 : '—',
+    };
+  });
+  return { fh, company, site, rows, generatedOn: fmtDate(new Date()) };
+}
+
+// ─── 11. Leave Card (per worker, per year) ────────────────────────────────────
+
+async function buildLeaveCardData(workerId, year) {
+  const worker = await fetchWorkerFull(workerId);
+  const emp = worker.employment;
+  const company = worker.company;
+  const site = worker.site;
+  const fh = getFormHeader('leave_card', company.regulatory_regime, company.jurisdiction);
+
+  const startDate = `${year}-01-01`;
+  const endDate = `${year}-12-31`;
+  const allLeaves = await LeaveRecord.findAll({
+    where: {
+      worker_id: workerId,
+      from_date: { [Op.lte]: endDate },
+      to_date: { [Op.gte]: startDate },
+    },
+    order: [['from_date', 'ASC']],
+  });
+
+  const monthRows = MONTH_NAMES.slice(1).map((mn, i) => {
+    const m = i + 1;
+    const mLeaves = allLeaves.filter(l => {
+      const lm = new Date(l.from_date).getMonth() + 1;
+      return lm === m;
+    });
+    const el = mLeaves.filter(l => l.leave_type === 'earned'  && l.status === 'approved').reduce((s, l) => s + l.days, 0);
+    const cl = mLeaves.filter(l => l.leave_type === 'casual'  && l.status === 'approved').reduce((s, l) => s + l.days, 0);
+    const sl = mLeaves.filter(l => l.leave_type === 'sick'    && l.status === 'approved').reduce((s, l) => s + l.days, 0);
+    return { month: mn, el, cl, sl, total: el + cl + sl, leaves: mLeaves };
+  });
+
+  const totalEl = monthRows.reduce((s, r) => s + r.el, 0);
+  const totalCl = monthRows.reduce((s, r) => s + r.cl, 0);
+  const totalSl = monthRows.reduce((s, r) => s + r.sl, 0);
+
+  return {
+    fh, company, site, year,
+    worker: { id: worker.id, name: worker.name, fatherName: worker.father_name, designation: emp ? emp.category : '—', doj: fmtDate(emp && emp.doj) },
+    monthRows, totals: { el: totalEl, cl: totalCl, sl: totalSl, all: totalEl + totalCl + totalSl },
+    generatedOn: fmtDate(new Date()), fmtDate,
+  };
+}
+
+// ─── 12. Annual Return ────────────────────────────────────────────────────────
+
+async function buildAnnualReturnData(companyId, year) {
+  const company = await fetchCompany(companyId);
+  const fh = getFormHeader('annual_return', company.regulatory_regime, company.jurisdiction);
+
+  const allWorkers = await Worker.findAll({
+    where: { company_id: companyId },
+    include: [{ model: EmploymentDetail, as: 'employment' }],
+    attributes: ['id', 'gender', 'status'],
+  });
+
+  const active = allWorkers.filter(w => w.status === 'active');
+  const countBy = (arr, gend) => arr.filter(w => (w.gender || '').toLowerCase() === gend).length;
+
+  const stats = {
+    maxWorkers: active.length,
+    avgWorkers: active.length,
+    male: countBy(active, 'male'),
+    female: countBy(active, 'female'),
+    other: active.length - countBy(active, 'male') - countBy(active, 'female'),
+  };
+
+  return { fh, company, year, stats, generatedOn: fmtDate(new Date()) };
+}
+
+// ─── 13. Half Yearly Return ───────────────────────────────────────────────────
+
+async function buildHalfYearlyReturnData(companyId, half, year) {
+  const company = await fetchCompany(companyId);
+  const fh = getFormHeader('half_yearly_return', company.regulatory_regime, company.jurisdiction);
+
+  const fromMonth = half === 1 ? 1 : 7;
+  const toMonth   = half === 1 ? 6 : 12;
+  const fromLabel = `${MONTH_NAMES[fromMonth]} ${year}`;
+  const toLabel   = `${MONTH_NAMES[toMonth]} ${year}`;
+
+  const active = await Worker.findAll({
+    where: { company_id: companyId, status: 'active' },
+    include: [{ model: EmploymentDetail, as: 'employment' }],
+    attributes: ['id', 'name', 'gender'],
+  });
+
+  const countBy = (arr, gend) => arr.filter(w => (w.gender || '').toLowerCase() === gend).length;
+
+  const stats = {
+    totalWorkers: active.length,
+    male: countBy(active, 'male'),
+    female: countBy(active, 'female'),
+    other: active.length - countBy(active, 'male') - countBy(active, 'female'),
+  };
+
+  const startDate = `${year}-${String(fromMonth).padStart(2, '0')}-01`;
+  const lastDay   = new Date(year, toMonth, 0).getDate();
+  const endDate   = `${year}-${String(toMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+  const leaves = await LeaveRecord.findAll({
+    where: {
+      worker_id: { [Op.in]: active.map(w => w.id) },
+      status: 'approved',
+      from_date: { [Op.lte]: endDate },
+      to_date:   { [Op.gte]: startDate },
+    },
+  });
+
+  const leaveStats = {
+    earned: leaves.filter(l => l.leave_type === 'earned').reduce((s, l) => s + l.days, 0),
+    casual: leaves.filter(l => l.leave_type === 'casual').reduce((s, l) => s + l.days, 0),
+    sick:   leaves.filter(l => l.leave_type === 'sick').reduce((s, l) => s + l.days, 0),
+  };
+  leaveStats.total = leaveStats.earned + leaveStats.casual + leaveStats.sick;
+
+  return { fh, company, year, half, fromLabel, toLabel, stats, leaveStats, generatedOn: fmtDate(new Date()) };
 }
 
 // ─── Render helpers ───────────────────────────────────────────────────────────
@@ -394,9 +642,30 @@ async function renderEsicForm1(workerId) {
   return render('esic-form1.ejs', data);
 }
 
+async function renderAdultWorkerRegister(companyId, siteId) {
+  const data = await buildAdultWorkerRegisterData(companyId, siteId);
+  return render('adult-worker-register.ejs', data);
+}
+
+async function renderLeaveCard(workerId, year) {
+  const data = await buildLeaveCardData(workerId, year);
+  return render('leave-card.ejs', data);
+}
+
+async function renderAnnualReturn(companyId, year) {
+  const data = await buildAnnualReturnData(companyId, year);
+  return render('annual-return.ejs', data);
+}
+
+async function renderHalfYearlyReturn(companyId, half, year) {
+  const data = await buildHalfYearlyReturnData(companyId, half, year);
+  return render('half-yearly-return.ejs', data);
+}
+
 module.exports = {
   renderSalarySlipHtml, renderMusterRoll, renderWageRegister,
   renderEmploymentRegister, renderLeaveRegister, renderOfferLetter,
   renderServiceCertificate, renderEpfForm2, renderEsicForm1,
+  renderAdultWorkerRegister, renderLeaveCard, renderAnnualReturn, renderHalfYearlyReturn,
   buildSalarySlipData, fmtAmt, fmtDate, MONTH_NAMES,
 };

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title><%= fh.num %> — Leave Card — <%= worker.name %> (<%= year %>)</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Times New Roman',Times,serif; font-size:10pt; color:#000; background:#f0f0f0; }
+.print-bar { background:#1e40af; padding:8px 16px; display:flex; align-items:center; gap:12px; }
+.print-bar span { color:#fff; font-family:system-ui,sans-serif; font-size:13px; flex:1; }
+.print-bar a { color:#bfdbfe; font-family:system-ui,sans-serif; font-size:12px; text-decoration:underline; }
+.print-bar button { background:#fff; color:#1e40af; border:none; border-radius:6px; padding:6px 18px; font-size:13px; font-weight:700; cursor:pointer; }
+.page { width:210mm; min-height:148mm; background:#fff; margin:12px auto; padding:10mm 14mm 9mm; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.form-header { text-align:center; border:1px solid #333; padding:4px 8px; margin-bottom:6px; }
+.form-header .fnum { font-size:11pt; font-weight:bold; }
+.form-header .frule { font-size:8pt; font-style:italic; }
+.form-header .ftitle { font-size:10pt; font-weight:bold; margin-top:2px; text-transform:uppercase; }
+.worker-block { display:flex; gap:0; margin-bottom:6px; }
+.worker-block table { width:100%; border-collapse:collapse; font-size:9pt; }
+.worker-block td { border:0.6px solid #777; padding:3px 6px; }
+.worker-block .lbl { font-weight:bold; width:42%; background:#f5f5f5; }
+table.lcard { width:100%; border-collapse:collapse; font-size:9pt; margin-top:6px; }
+table.lcard th, table.lcard td { border:0.7px solid #555; padding:3px 5px; text-align:center; vertical-align:middle; }
+table.lcard .lft { text-align:left; }
+table.lcard thead th { background:#1e3a5f; color:#fff; font-weight:bold; font-size:8.5pt; }
+table.lcard .total-row td { font-weight:bold; background:#f0f7ff; }
+.sig-row { display:flex; justify-content:space-between; margin-top:14px; font-size:9pt; }
+.sig-box { border-top:0.7px solid #555; padding-top:4px; min-width:160px; text-align:center; }
+.footnote { font-size:7.5pt; margin-top:8px; border-top:0.5px solid #aaa; padding-top:4px; color:#444; font-style:italic; }
+@media print {
+  body { background:#fff; }
+  .print-bar { display:none !important; }
+  .page { margin:0; box-shadow:none; padding:8mm 12mm 6mm; }
+  @page { size:A4 portrait; margin:0; }
+}
+</style>
+</head>
+<body>
+<div class="print-bar">
+  <span><%= fh.num %> — Leave Card — <%= worker.name %>, Year <%= year %></span>
+  <a href="/workers/<%= worker.id %>">← Back to profile</a>
+  <button onclick="window.print()">⬇ Print / Save PDF</button>
+</div>
+<div class="page">
+  <div class="form-header">
+    <div class="fnum"><%= fh.num %></div>
+    <div class="frule">(<%= fh.rule %>)</div>
+    <div class="ftitle"><%= fh.title %> &nbsp;—&nbsp; Year: <%= year %></div>
+  </div>
+
+  <div class="worker-block">
+    <table>
+      <tr>
+        <td class="lbl">Name of Establishment</td>
+        <td><%= company.name %></td>
+        <td class="lbl">Name of Worker</td>
+        <td><%= worker.name %></td>
+      </tr>
+      <tr>
+        <td class="lbl">Site / Location</td>
+        <td><%= site ? site.name : '—' %></td>
+        <td class="lbl">Designation / Category</td>
+        <td><%= worker.designation %></td>
+      </tr>
+      <tr>
+        <td class="lbl">Date of Joining</td>
+        <td><%= worker.doj %></td>
+        <td class="lbl">Generated on</td>
+        <td><%= generatedOn %></td>
+      </tr>
+    </table>
+  </div>
+
+  <table class="lcard">
+    <thead>
+      <tr>
+        <th style="width:85px">Month</th>
+        <th style="width:60px">Earned Leave (EL)</th>
+        <th style="width:60px">Casual Leave (CL)</th>
+        <th style="width:60px">Sick Leave (SL)</th>
+        <th style="width:55px">Total Days</th>
+        <th class="lft">Leave Dates / Remarks</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% monthRows.forEach(row => { %>
+      <tr>
+        <td class="lft"><%= row.month %></td>
+        <td><%= row.el || '—' %></td>
+        <td><%= row.cl || '—' %></td>
+        <td><%= row.sl || '—' %></td>
+        <td style="font-weight:<%= row.total ? 'bold' : 'normal' %>"><%= row.total || '—' %></td>
+        <td class="lft" style="font-size:7.5pt">
+          <% row.leaves.forEach(l => { %>
+            <%= fmtDate(l.from_date) %> to <%= fmtDate(l.to_date) %>
+            (<%= l.leave_type %>, <%= l.days %> day<%= l.days !== 1 ? 's' : '' %>)<% if (l.reason) { %> — <%= l.reason %><% } %><br>
+          <% }) %>
+          <% if (!row.leaves.length) { %>—<% } %>
+        </td>
+      </tr>
+      <% }) %>
+      <tr class="total-row">
+        <td class="lft">ANNUAL TOTAL</td>
+        <td><%= totals.el %></td>
+        <td><%= totals.cl %></td>
+        <td><%= totals.sl %></td>
+        <td><%= totals.all %></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="sig-row">
+    <div class="sig-box">
+      Signature of Worker<br>(<%= worker.name %>)
+    </div>
+    <div class="sig-box">
+      Signature of Employer / Manager
+    </div>
+  </div>
+
+  <div class="footnote">
+    EL = Earned Leave &nbsp;|&nbsp; CL = Casual Leave &nbsp;|&nbsp; SL = Sick Leave<br>
+    This leave card has been issued in accordance with <%= fh.note %>. A copy shall be supplied to the worker at the beginning of each calendar year.
+  </div>
+</div>
+</body>
+</html>

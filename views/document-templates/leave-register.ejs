@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Leave Register — <%= company.name %> (<%= monthName %> <%= year %>)</title>
+<title><%= fh.num %> — Leave Register — <%= company.name %> (<%= monthName %> <%= year %>)</title>
 <style>
 * { box-sizing:border-box; margin:0; padding:0; }
 body { font-family:'Times New Roman',Times,serif; font-size:9pt; color:#000; background:#f0f0f0; }
@@ -10,54 +10,65 @@ body { font-family:'Times New Roman',Times,serif; font-size:9pt; color:#000; bac
 .print-bar span { color:#fff; font-family:system-ui,sans-serif; font-size:13px; flex:1; }
 .print-bar a { color:#bfdbfe; font-family:system-ui,sans-serif; font-size:12px; text-decoration:underline; }
 .print-bar button { background:#fff; color:#1e40af; border:none; border-radius:6px; padding:6px 18px; font-size:13px; font-weight:700; cursor:pointer; }
-.page { width:210mm; min-height:297mm; background:#fff; margin:12px auto; padding:12mm 14mm 10mm; box-shadow:0 2px 8px rgba(0,0,0,.18); }
-.form-header { text-align:center; margin-bottom:8px; }
-.form-header .title { font-size:12pt; font-weight:bold; }
-.form-header .sub { font-size:9pt; }
-.estab-line { font-size:9pt; margin-bottom:6px; border-bottom:0.5px solid #999; padding-bottom:4px; }
-.estab-line strong { font-weight:bold; }
-table.lreg { width:100%; border-collapse:collapse; font-size:9pt; }
-table.lreg th, table.lreg td { border:0.7px solid #555; padding:4px 6px; text-align:center; vertical-align:middle; }
+.page { width:210mm; min-height:297mm; background:#fff; margin:12px auto; padding:10mm 13mm 9mm; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.form-header { text-align:center; border:1px solid #333; padding:4px 8px; margin-bottom:5px; }
+.form-header .fnum { font-size:11pt; font-weight:bold; }
+.form-header .frule { font-size:8pt; font-style:italic; }
+.form-header .ftitle { font-size:10pt; font-weight:bold; margin-top:2px; text-transform:uppercase; }
+.estab-block { border:0.6px solid #555; padding:4px 8px; margin-bottom:5px; font-size:8.5pt; display:flex; gap:20px; flex-wrap:wrap; }
+.estab-block .ef { display:flex; gap:4px; align-items:baseline; }
+.estab-block .el { font-weight:bold; white-space:nowrap; }
+.estab-block .ev { border-bottom:0.5px solid #999; min-width:90px; }
+table.lreg { width:100%; border-collapse:collapse; font-size:8.5pt; }
+table.lreg th, table.lreg td { border:0.7px solid #555; padding:3px 5px; text-align:center; vertical-align:middle; }
 table.lreg .lft { text-align:left; }
-table.lreg thead th { background:#eee; font-weight:bold; }
+table.lreg thead tr:first-child th { background:#1e3a5f; color:#fff; font-weight:bold; font-size:8pt; }
+table.lreg thead tr:last-child th { background:#dde8ff; font-weight:bold; font-size:7.5pt; }
 table.lreg .total-row td { font-weight:bold; background:#f0f7ff; }
-.leave-detail { font-size:7.5pt; color:#555; }
+.leave-detail { font-size:7pt; color:#555; text-align:left; }
+.sig-row { margin-top:10px; text-align:right; font-size:8.5pt; }
+.footnote { font-size:7.5pt; margin-top:5px; border-top:0.5px solid #aaa; padding-top:4px; color:#444; font-style:italic; }
 @media print {
   body { background:#fff; }
   .print-bar { display:none !important; }
-  .page { margin:0; box-shadow:none; padding:10mm 12mm 8mm; }
+  .page { margin:0; box-shadow:none; padding:8mm 11mm 7mm; }
   @page { size:A4 portrait; margin:0; }
 }
 </style>
 </head>
 <body>
 <div class="print-bar">
-  <span>Leave Register — <%= company.name %>, <%= monthName %> <%= year %></span>
+  <span><%= fh.num %> — Leave Register — <%= company.name %>, <%= monthName %> <%= year %></span>
   <a href="/documents/generate">← Back</a>
   <button onclick="window.print()">⬇ Print / Save PDF</button>
 </div>
 <div class="page">
   <div class="form-header">
-    <div class="title">LEAVE REGISTER</div>
-    <div class="sub">(As required under applicable labour laws)</div>
+    <div class="fnum"><%= fh.num %></div>
+    <div class="frule">(<%= fh.rule %>)</div>
+    <div class="ftitle"><%= fh.title %></div>
   </div>
-  <div class="estab-line">
-    <strong>Establishment:</strong> <%= company.name %> &nbsp;|&nbsp;
-    <strong>Site:</strong> <%= site ? site.name : 'All Sites' %> &nbsp;|&nbsp;
-    <strong>Period:</strong> <%= monthName %> <%= year %> &nbsp;|&nbsp;
-    <strong>Generated:</strong> <%= generatedOn %>
+  <div class="estab-block">
+    <div class="ef"><span class="el">Establishment:</span><span class="ev"><%= company.name %></span></div>
+    <div class="ef"><span class="el">Site:</span><span class="ev"><%= site ? site.name : 'All Sites' %></span></div>
+    <div class="ef"><span class="el">Period:</span><span class="ev"><%= monthName %> <%= year %></span></div>
+    <div class="ef"><span class="el">Generated:</span><span class="ev"><%= generatedOn %></span></div>
+    <div class="ef"><span class="el">As per:</span><span class="ev"><%= fh.note %></span></div>
   </div>
   <table class="lreg">
     <thead>
       <tr>
-        <th style="width:30px">S.No</th>
-        <th class="lft" style="width:160px">Worker Name</th>
-        <th class="lft" style="width:90px">Category</th>
-        <th style="width:60px">Casual Leave</th>
-        <th style="width:60px">Sick Leave</th>
-        <th style="width:60px">Earned Leave</th>
-        <th style="width:55px">Total Days</th>
-        <th class="lft">Leave Details</th>
+        <th rowspan="2" style="width:28px">Sl. No.</th>
+        <th rowspan="2" class="lft" style="min-width:150px">Name of Worker</th>
+        <th rowspan="2" class="lft" style="width:80px">Category / Designation</th>
+        <th colspan="4">Leave Availed (Approved)</th>
+        <th rowspan="2" class="lft">Leave Dates &amp; Remarks</th>
+      </tr>
+      <tr>
+        <th style="width:55px">Earned Leave (EL)</th>
+        <th style="width:55px">Casual Leave (CL)</th>
+        <th style="width:55px">Sick Leave (SL)</th>
+        <th style="width:50px">Total Days</th>
       </tr>
     </thead>
     <tbody>
@@ -65,23 +76,33 @@ table.lreg .total-row td { font-weight:bold; background:#f0f7ff; }
       <tr>
         <td><%= row.sno %></td>
         <td class="lft"><%= row.name %></td>
-        <td class="lft"><%= row.category %></td>
+        <td class="lft" style="font-size:7.5pt"><%= row.category %></td>
+        <td><%= row.earned || '—' %></td>
         <td><%= row.casual || '—' %></td>
         <td><%= row.sick || '—' %></td>
-        <td><%= row.earned || '—' %></td>
         <td style="font-weight:bold"><%= row.total || '—' %></td>
-        <td class="lft leave-detail">
+        <td class="leave-detail">
           <% row.leaves.forEach(l => { %>
-            <%= fmtDate(l.from_date) %> – <%= fmtDate(l.to_date) %> (<%= l.leave_type %>, <%= l.status %>)<% if (l.reason) { %> — <%= l.reason %><% } %><br>
+            <%= fmtDate(l.from_date) %> to <%= fmtDate(l.to_date) %>
+            (<%= l.leave_type.charAt(0).toUpperCase() + l.leave_type.slice(1) %>,
+            <%= l.days %> day<%= l.days !== 1 ? 's' : '' %>,
+            <%= l.status %>)<% if (l.reason) { %> — <%= l.reason %><% } %><br>
           <% }) %>
           <% if (!row.leaves.length) { %>—<% } %>
         </td>
       </tr>
       <% }) %>
+      <% if (!rows.length) { %>
+      <tr><td colspan="8" style="text-align:center;padding:10px;color:#777">No workers found.</td></tr>
+      <% } %>
     </tbody>
   </table>
-  <div style="margin-top:10px;font-size:8.5pt;text-align:right">
-    Signature of Employer / Manager: _________________________________ &nbsp; Date: ___________
+  <div class="sig-row">
+    Signature of Employer / Manager: _________________________________ &nbsp;&nbsp; Date: _______________
+  </div>
+  <div class="footnote">
+    EL = Earned Leave &nbsp;|&nbsp; CL = Casual Leave &nbsp;|&nbsp; SL = Sick Leave<br>
+    This register has been maintained in accordance with <%= fh.note %>. Records to be preserved for 5 years from date of last entry.
   </div>
 </div>
 </body>

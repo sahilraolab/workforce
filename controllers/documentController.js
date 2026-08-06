@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-const { Document, Worker, Site } = require('../models');
+const { Document, Worker, Site, Company } = require('../models');
 const { assertTenantOwnership, scopeWhere } = require('../middlewares/tenantScope');
 const { logAudit } = require('../middlewares/auditLogger');
 const gen = require('../services/documentGenerator');
@@ -215,6 +215,48 @@ exports.leaveRegister = async (req, res) => {
     const year = parseInt(req.query.year) || new Date().getFullYear();
     const html = await gen.renderLeaveRegister(companyId, siteId, month, year);
     await logAudit(req, { action: 'generate', entity: 'Document', after_value: { doc_type: 'leave_register', month, year, siteId } });
+    res.send(html);
+  } catch (err) { handleDocError(err, req, res, '/documents/generate'); }
+};
+
+exports.adultWorkerRegister = async (req, res) => {
+  try {
+    const companyId = req.tenantScope.company_id;
+    const siteId = req.query.site_id || null;
+    const html = await gen.renderAdultWorkerRegister(companyId, siteId);
+    await logAudit(req, { action: 'generate', entity: 'Document', after_value: { doc_type: 'adult_worker_register', siteId } });
+    res.send(html);
+  } catch (err) { handleDocError(err, req, res, '/documents/generate'); }
+};
+
+exports.leaveCard = async (req, res) => {
+  try {
+    const workerId = parseInt(req.params.workerId);
+    const year = parseInt(req.query.year) || new Date().getFullYear();
+    await checkWorkerAccess(workerId, req);
+    const html = await gen.renderLeaveCard(workerId, year);
+    await logAudit(req, { action: 'generate', entity: 'Document', entity_id: workerId, after_value: { doc_type: 'leave_card', year } });
+    res.send(html);
+  } catch (err) { handleDocError(err, req, res, '/documents/generate'); }
+};
+
+exports.annualReturn = async (req, res) => {
+  try {
+    const companyId = req.tenantScope.company_id;
+    const year = parseInt(req.query.year) || new Date().getFullYear() - 1;
+    const html = await gen.renderAnnualReturn(companyId, year);
+    await logAudit(req, { action: 'generate', entity: 'Document', after_value: { doc_type: 'annual_return', year } });
+    res.send(html);
+  } catch (err) { handleDocError(err, req, res, '/documents/generate'); }
+};
+
+exports.halfYearlyReturn = async (req, res) => {
+  try {
+    const companyId = req.tenantScope.company_id;
+    const half = parseInt(req.query.half) === 2 ? 2 : 1;
+    const year = parseInt(req.query.year) || new Date().getFullYear();
+    const html = await gen.renderHalfYearlyReturn(companyId, half, year);
+    await logAudit(req, { action: 'generate', entity: 'Document', after_value: { doc_type: 'half_yearly_return', half, year } });
     res.send(html);
   } catch (err) { handleDocError(err, req, res, '/documents/generate'); }
 };

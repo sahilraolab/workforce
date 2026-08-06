@@ -2,68 +2,76 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Muster Roll — <%= company.name %> (<%= monthName %> <%= year %>)</title>
+<title><%= fh.num %> — Muster Roll — <%= company.name %> (<%= monthName %> <%= year %>)</title>
 <style>
 * { box-sizing:border-box; margin:0; padding:0; }
-body { font-family:'Times New Roman',Times,serif; font-size:9pt; color:#000; background:#f0f0f0; }
+body { font-family:'Times New Roman',Times,serif; font-size:8pt; color:#000; background:#f0f0f0; }
 .print-bar { background:#1e40af; padding:8px 16px; display:flex; align-items:center; gap:12px; }
 .print-bar span { color:#fff; font-family:system-ui,sans-serif; font-size:13px; flex:1; }
 .print-bar a { color:#bfdbfe; font-family:system-ui,sans-serif; font-size:12px; text-decoration:underline; }
 .print-bar button { background:#fff; color:#1e40af; border:none; border-radius:6px; padding:6px 18px; font-size:13px; font-weight:700; cursor:pointer; }
-.page { width:297mm; min-height:210mm; background:#fff; margin:12px auto; padding:10mm 12mm 8mm; box-shadow:0 2px 8px rgba(0,0,0,.18); }
-.form-header { text-align:center; margin-bottom:6px; }
-.form-header .title { font-size:12pt; font-weight:bold; letter-spacing:.06em; }
-.form-header .sub { font-size:9pt; }
-.estab-line { font-size:9pt; margin-bottom:5px; border-bottom:0.5px solid #999; padding-bottom:3px; display:flex; gap:20px; flex-wrap:wrap; }
-.estab-line span { display:inline-flex; gap:6px; }
-.estab-line strong { font-weight:bold; }
-table.muster { width:100%; border-collapse:collapse; font-size:7.5pt; }
-table.muster th, table.muster td { border:0.6px solid #555; padding:2px 3px; text-align:center; vertical-align:middle; white-space:nowrap; }
-table.muster .lname { text-align:left; max-width:120px; overflow:hidden; text-overflow:ellipsis; }
-table.muster .lcat { text-align:left; max-width:70px; }
-table.muster thead th { background:#eee; font-weight:bold; font-size:7pt; }
-table.muster .sno { width:22px; }
-table.muster .cnt { font-weight:bold; background:#f5f5f5; }
+.page { width:297mm; min-height:210mm; background:#fff; margin:12px auto; padding:7mm 9mm 6mm; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.form-header { text-align:center; border:1px solid #333; padding:4px 8px; margin-bottom:4px; }
+.form-header .fnum { font-size:11pt; font-weight:bold; }
+.form-header .frule { font-size:8pt; font-style:italic; }
+.form-header .ftitle { font-size:10pt; font-weight:bold; margin-top:2px; text-transform:uppercase; }
+.estab-block { border:0.6px solid #555; padding:3px 8px; margin-bottom:4px; font-size:7.5pt; display:flex; gap:20px; flex-wrap:wrap; }
+.estab-block .ef { display:flex; gap:4px; align-items:baseline; }
+.estab-block .el { font-weight:bold; white-space:nowrap; }
+.estab-block .ev { border-bottom:0.5px solid #999; min-width:80px; }
+table.muster { width:100%; border-collapse:collapse; font-size:6.5pt; }
+table.muster th, table.muster td { border:0.6px solid #555; padding:1.5px 2px; text-align:center; vertical-align:middle; white-space:nowrap; }
+table.muster .lname { text-align:left; max-width:110px; overflow:hidden; text-overflow:ellipsis; }
+table.muster .lcat { text-align:left; max-width:60px; font-size:6pt; }
+table.muster thead th { background:#1e3a5f; color:#fff; font-weight:bold; font-size:6.5pt; }
+table.muster .sno { width:18px; }
+table.muster .cnt { font-weight:bold; background:#e8f0fe; }
 table.muster .total-row td { font-weight:bold; background:#f0f7ff; }
-.legend { font-size:7.5pt; margin-top:5px; }
-.sig-row { display:flex; justify-content:flex-end; margin-top:8px; font-size:8.5pt; }
+.legend { font-size:7pt; margin-top:5px; }
+.sig-row { margin-top:6px; text-align:right; font-size:8pt; }
+.footnote { font-size:6.5pt; margin-top:4px; border-top:0.5px solid #aaa; padding-top:3px; color:#444; font-style:italic; }
 @media print {
   body { background:#fff; }
   .print-bar { display:none !important; }
-  .page { margin:0; box-shadow:none; padding:8mm 10mm 6mm; }
+  .page { margin:0; box-shadow:none; padding:5mm 7mm 4mm; }
   @page { size:A4 landscape; margin:0; }
 }
 </style>
 </head>
 <body>
 <div class="print-bar">
-  <span>Muster Roll — <%= company.name %>, <%= monthName %> <%= year %></span>
+  <span><%= fh.num %> — Muster Roll — <%= company.name %>, <%= monthName %> <%= year %></span>
   <a href="/documents/generate">← Back</a>
   <button onclick="window.print()">⬇ Print / Save PDF</button>
 </div>
 <div class="page">
   <div class="form-header">
-    <div class="title">MUSTER ROLL / ATTENDANCE REGISTER</div>
-    <div class="sub">(As required under the Code on Wages, 2019 and applicable labour laws)</div>
+    <div class="fnum"><%= fh.num %></div>
+    <div class="frule">(<%= fh.rule %>)</div>
+    <div class="ftitle"><%= fh.title %></div>
   </div>
-  <div class="estab-line">
-    <span><strong>Establishment:</strong> <%= company.name %></span>
-    <span><strong>Site:</strong> <%= site ? site.name : 'All Sites' %></span>
-    <span><strong>Month:</strong> <%= monthName %> <%= year %></span>
-    <span><strong>Generated:</strong> <%= generatedOn %></span>
+  <div class="estab-block">
+    <div class="ef"><span class="el">Name of Establishment:</span><span class="ev"><%= company.name %></span></div>
+    <div class="ef"><span class="el">Site:</span><span class="ev"><%= site ? site.name : 'All Sites' %></span></div>
+    <div class="ef"><span class="el">Month &amp; Year:</span><span class="ev"><%= monthName %> <%= year %></span></div>
+    <div class="ef"><span class="el">Generated:</span><span class="ev"><%= generatedOn %></span></div>
+    <div class="ef"><span class="el">As per:</span><span class="ev"><%= fh.note %></span></div>
   </div>
   <%
-    const statusCode = s => s === 'P' ? 'P' : s === 'H' ? 'H' : s === 'A' ? 'A' : '—';
-    const statusStyle = s => s === 'P' ? 'color:#166534' : s === 'H' ? 'color:#92400e' : s === 'A' ? 'color:#991b1b' : 'color:#9ca3af';
+    const statusStyle = s => s === 'P' ? 'color:#166534;font-weight:bold' : s === 'H' ? 'color:#92400e' : s === 'A' ? 'color:#991b1b' : 'color:#9ca3af';
   %>
   <table class="muster">
     <thead>
       <tr>
-        <th class="sno">S.No</th>
-        <th class="lname">Worker Name</th>
-        <th class="lcat">Category</th>
-        <% days.forEach(d => { %><th style="width:16px"><%= d %></th><% }) %>
-        <th class="cnt">P</th><th class="cnt">H</th><th class="cnt">A</th><th class="cnt">Total</th>
+        <th class="sno">Sl.</th>
+        <th class="lname" style="min-width:110px">Name of Worker</th>
+        <th class="lcat" style="min-width:60px">Category</th>
+        <% days.forEach(d => { %><th style="width:14px"><%= d %></th><% }) %>
+        <th class="cnt" style="width:22px">P</th>
+        <th class="cnt" style="width:18px">H</th>
+        <th class="cnt" style="width:18px">A</th>
+        <th class="cnt" style="width:24px">Total Days</th>
+        <th style="width:50px">Initials of Worker</th>
       </tr>
     </thead>
     <tbody>
@@ -71,7 +79,7 @@ table.muster .total-row td { font-weight:bold; background:#f0f7ff; }
       <tr>
         <td><%= row.sno %></td>
         <td class="lname" style="text-align:left"><%= row.name %></td>
-        <td class="lcat" style="text-align:left;font-size:7pt"><%= row.category %></td>
+        <td class="lcat" style="text-align:left"><%= row.category %></td>
         <% row.dayStatuses.forEach(s => { %>
           <td style="<%= statusStyle(s) %>"><%= s %></td>
         <% }) %>
@@ -79,15 +87,22 @@ table.muster .total-row td { font-weight:bold; background:#f0f7ff; }
         <td class="cnt" style="color:#92400e"><%= row.half %></td>
         <td class="cnt" style="color:#991b1b"><%= row.absent %></td>
         <td class="cnt"><%= row.total %></td>
+        <td></td>
       </tr>
       <% }) %>
+      <% if (!rows.length) { %>
+      <tr><td colspan="<%= 5 + days.length %>" style="text-align:center;padding:8px;color:#777">No workers found.</td></tr>
+      <% } %>
     </tbody>
   </table>
   <div class="legend">
-    <strong>Legend:</strong>&nbsp; P = Present &nbsp;|&nbsp; H = Half Day &nbsp;|&nbsp; A = Absent &nbsp;|&nbsp; — = Not Marked
+    <strong>Legend:</strong>&nbsp; P = Present &nbsp;|&nbsp; H = Half Day &nbsp;|&nbsp; A = Absent &nbsp;|&nbsp; — = Not Marked &nbsp;|&nbsp; OT = Overtime (mark separately in wage register)
   </div>
   <div class="sig-row">
-    <span>Signature of Employer / Manager: _________________________________ &nbsp; Date: ___________</span>
+    Signature of Employer / Manager: _________________________________ &nbsp;&nbsp; Date: _______________
+  </div>
+  <div class="footnote">
+    This attendance register has been maintained in accordance with <%= fh.note %>. Register to be preserved for 3 years from the date of last entry.
   </div>
 </div>
 </body>

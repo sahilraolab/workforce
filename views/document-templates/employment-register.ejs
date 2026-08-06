@@ -2,66 +2,81 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Employment Register — <%= company.name %></title>
+<title><%= fh.num %> — <%= company.name %></title>
 <style>
 * { box-sizing:border-box; margin:0; padding:0; }
-body { font-family:'Times New Roman',Times,serif; font-size:8.5pt; color:#000; background:#f0f0f0; }
+body { font-family:'Times New Roman',Times,serif; font-size:8pt; color:#000; background:#f0f0f0; }
 .print-bar { background:#1e40af; padding:8px 16px; display:flex; align-items:center; gap:12px; }
 .print-bar span { color:#fff; font-family:system-ui,sans-serif; font-size:13px; flex:1; }
 .print-bar a { color:#bfdbfe; font-family:system-ui,sans-serif; font-size:12px; text-decoration:underline; }
 .print-bar button { background:#fff; color:#1e40af; border:none; border-radius:6px; padding:6px 18px; font-size:13px; font-weight:700; cursor:pointer; }
-.page { width:297mm; min-height:210mm; background:#fff; margin:12px auto; padding:10mm 12mm 8mm; box-shadow:0 2px 8px rgba(0,0,0,.18); }
-.form-header { text-align:center; margin-bottom:6px; }
-.form-header .title { font-size:12pt; font-weight:bold; }
-.form-header .sub { font-size:9pt; }
-.estab-line { font-size:9pt; margin-bottom:5px; border-bottom:0.5px solid #999; padding-bottom:3px; display:flex; gap:20px; flex-wrap:wrap; }
-.estab-line strong { font-weight:bold; }
-table.ereg { width:100%; border-collapse:collapse; font-size:7.5pt; }
-table.ereg th, table.ereg td { border:0.6px solid #555; padding:2px 4px; vertical-align:middle; }
-table.ereg thead th { background:#eee; font-weight:bold; font-size:7pt; text-align:center; }
-table.ereg .lft { text-align:left; }
+.page { width:297mm; min-height:210mm; background:#fff; margin:12px auto; padding:8mm 10mm 7mm; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.form-header { text-align:center; border:1px solid #333; padding:5px 8px; margin-bottom:4px; }
+.form-header .fnum { font-size:11pt; font-weight:bold; letter-spacing:.04em; }
+.form-header .frule { font-size:8pt; font-style:italic; }
+.form-header .ftitle { font-size:10pt; font-weight:bold; margin-top:2px; text-transform:uppercase; }
+.estab-block { border:0.6px solid #555; padding:4px 8px; margin-bottom:5px; font-size:8pt; display:flex; gap:24px; flex-wrap:wrap; }
+.estab-block .ef { display:flex; gap:4px; align-items:baseline; }
+.estab-block .el { font-weight:bold; white-space:nowrap; }
+.estab-block .ev { border-bottom:0.5px solid #999; min-width:100px; }
+table.ereg { width:100%; border-collapse:collapse; font-size:7pt; }
+table.ereg th, table.ereg td { border:0.6px solid #555; padding:2px 3px; vertical-align:middle; }
+table.ereg thead tr:first-child th { background:#222; color:#fff; font-size:7.5pt; text-align:center; font-weight:bold; }
+table.ereg thead tr:last-child th { background:#ddd; font-weight:bold; text-align:center; font-size:6.5pt; }
 table.ereg .ctr { text-align:center; }
+table.ereg .lft { text-align:left; }
+.sig-row { margin-top:8px; text-align:right; font-size:8pt; }
+.footnote { font-size:7pt; margin-top:4px; border-top:0.5px solid #aaa; padding-top:3px; color:#444; font-style:italic; }
 @media print {
   body { background:#fff; }
   .print-bar { display:none !important; }
-  .page { margin:0; box-shadow:none; padding:8mm 10mm 6mm; }
+  .page { margin:0; box-shadow:none; padding:6mm 8mm 5mm; }
   @page { size:A4 landscape; margin:0; }
 }
 </style>
 </head>
 <body>
 <div class="print-bar">
-  <span>Employment Register — <%= company.name %></span>
+  <span><%= fh.num %> — Employment Register — <%= company.name %></span>
   <a href="/documents/generate">← Back</a>
   <button onclick="window.print()">⬇ Print / Save PDF</button>
 </div>
 <div class="page">
   <div class="form-header">
-    <div class="title">REGISTER OF EMPLOYED PERSONS</div>
-    <div class="sub">(As required under applicable labour laws — Form A / Employment Register)</div>
+    <div class="fnum"><%= fh.num %></div>
+    <div class="frule">(<%= fh.rule %>)</div>
+    <div class="ftitle"><%= fh.title %></div>
   </div>
-  <div class="estab-line">
-    <span><strong>Establishment:</strong> <%= company.name %></span>
-    <span><strong>Site:</strong> <%= site ? site.name : 'All Sites' %></span>
-    <span><strong>Generated:</strong> <%= generatedOn %></span>
+  <div class="estab-block">
+    <div class="ef"><span class="el">Name of Establishment:</span><span class="ev"><%= company.name %></span></div>
+    <div class="ef"><span class="el">Site / Location:</span><span class="ev"><%= site ? site.name : 'All Sites' %></span></div>
+    <div class="ef"><span class="el">Generated on:</span><span class="ev"><%= generatedOn %></span></div>
+    <div class="ef"><span class="el">As per:</span><span class="ev"><%= fh.note %></span></div>
   </div>
   <table class="ereg">
     <thead>
       <tr>
-        <th class="ctr" style="width:22px">S.No</th>
-        <th class="lft" style="width:110px">Name</th>
-        <th class="lft" style="width:100px">Father's/Husband's Name</th>
-        <th class="ctr" style="width:35px">Gender</th>
-        <th class="ctr" style="width:55px">Date of Birth</th>
-        <th class="lft" style="width:70px">Category</th>
-        <th class="lft" style="width:50px">Zone</th>
-        <th class="ctr" style="width:55px">Date of Joining</th>
-        <th class="ctr" style="width:55px">Daily Wage (₹)</th>
-        <th class="lft" style="width:95px">UAN</th>
-        <th class="lft" style="width:110px">ESIC No.</th>
-        <th class="lft" style="width:75px">Aadhaar (masked)</th>
-        <th class="ctr" style="width:60px">Date of Leaving</th>
-        <th class="lft">Remarks</th>
+        <th colspan="4" style="text-align:left;padding-left:4px">PERSONAL DETAILS</th>
+        <th colspan="4" style="text-align:left;padding-left:4px">EMPLOYMENT DETAILS</th>
+        <th colspan="2" style="text-align:left;padding-left:4px">STATUTORY NUMBERS</th>
+        <th colspan="2" style="text-align:left;padding-left:4px">CONTACT / BANK</th>
+        <th colspan="2" style="text-align:left;padding-left:4px">SEPARATION</th>
+      </tr>
+      <tr>
+        <th style="width:20px">S.No.</th>
+        <th style="width:115px">Name of Employee</th>
+        <th style="width:100px">Father's / Mother's / Spouse Name</th>
+        <th style="width:28px">Gender</th>
+        <th style="width:52px">Date of Birth</th>
+        <th style="width:68px">Category / Designation (HS/S/SS/US)*</th>
+        <th style="width:52px">Date of Joining</th>
+        <th style="width:50px">Daily Wage (₹)</th>
+        <th style="width:88px">UAN (EPF)</th>
+        <th style="width:90px">ESIC IP No.</th>
+        <th style="width:72px">Aadhaar (masked)</th>
+        <th style="width:68px">Mobile No.</th>
+        <th style="width:52px">Date of Leaving</th>
+        <th>Reason for Leaving</th>
       </tr>
     </thead>
     <tbody>
@@ -72,19 +87,29 @@ table.ereg .ctr { text-align:center; }
         <td class="lft"><%= row.fatherName %></td>
         <td class="ctr"><%= row.gender %></td>
         <td class="ctr"><%= row.dob %></td>
-        <td class="lft"><%= row.category %></td>
-        <td class="lft"><%= row.zone %></td>
+        <td class="lft"><%= row.category %><% if (row.zone && row.zone !== '—') { %> / <%= row.zone %><% } %></td>
         <td class="ctr"><%= row.doj %></td>
         <td class="ctr"><%= row.wageRate %></td>
-        <td class="lft" style="font-size:7pt"><%= row.uan %></td>
-        <td class="lft" style="font-size:7pt"><%= row.esicNo %></td>
-        <td class="lft" style="font-size:7pt"><%= row.aadhaar %></td>
+        <td class="lft" style="font-size:6.5pt"><%= row.uan %></td>
+        <td class="lft" style="font-size:6.5pt"><%= row.esicNo %></td>
+        <td class="lft" style="font-size:6.5pt"><%= row.aadhaar %></td>
+        <td class="ctr"><%= row.mobile %></td>
         <td class="ctr">—</td>
         <td></td>
       </tr>
       <% }) %>
+      <% if (!rows.length) { %>
+      <tr><td colspan="14" style="text-align:center;padding:10px;color:#777">No active workers found for this site.</td></tr>
+      <% } %>
     </tbody>
   </table>
+  <div class="sig-row">
+    Signature of Employer / Manager: _________________________________ &nbsp;&nbsp; Date: _______________
+  </div>
+  <div class="footnote">
+    * HS = Highly Skilled &nbsp;|&nbsp; S = Skilled &nbsp;|&nbsp; SS = Semi-Skilled &nbsp;|&nbsp; US = Unskilled<br>
+    This register has been prepared in accordance with <%= fh.note %>. Records to be preserved for 5 years from the date of last entry.
+  </div>
 </div>
 </body>
 </html>

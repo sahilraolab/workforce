@@ -174,11 +174,14 @@ exports.toggleUserStatus = async (req, res) => {
 };
 
 exports.wageMaster = async (req, res) => {
+  if (!req.tenantScope.company_id) {
+    req.flash('error', 'Wage master is managed per company. Select a company first.');
+    return res.redirect('/companies');
+  }
   const wages = await WageMaster.findAll({
     where: { company_id: req.tenantScope.company_id },
     order: [['category', 'ASC'], ['zone', 'ASC'], ['effective_from', 'DESC']],
   });
-  // Unique zone names already in the system (used as datalist suggestions)
   const existingZones = [...new Set(wages.map(w => w.zone))].sort();
   res.render('settings/wage-master', { title: 'Wage Master', wages, categories: WORKER_CATEGORIES, zones: existingZones });
 };
@@ -188,6 +191,10 @@ function normalizeZone(raw) {
 }
 
 exports.createWage = async (req, res) => {
+  if (!req.tenantScope.company_id) {
+    req.flash('error', 'Wage master is managed per company. Select a company first.');
+    return res.redirect('/companies');
+  }
   const { category, wage_rate, effective_from } = req.body;
   const zone = normalizeZone(req.body.zone);
   if (!zone) {
