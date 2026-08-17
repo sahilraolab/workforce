@@ -1,8 +1,13 @@
 <%- include('./_progress') %>
 
+<% const ocrX = draft._ocrExtracted || {}; %>
+<% const ocrField = (name) => draft[name] || ocrX[name] || ''; %>
+<% const ocrClass = (name) => (!draft[name] && ocrX[name]) ? 'ocr-autofilled' : ''; %>
+<% const ocrFilledCount = ['name', 'dob', 'gender', 'aadhaar', 'address_aadhaar', 'pan_number'].filter(f => !draft[f] && ocrX[f]).length; %>
+
 <div class="card">
   <div class="card-header">
-    <span><i class="bi bi-briefcase-fill me-2" style="color:var(--amber)"></i><%= t('wiz_step2_title') %></span>
+    <span><i class="bi bi-person-fill me-2" style="color:var(--brand)"></i><%= t('wiz_step2_title') %></span>
     <span class="voice-hint"><i class="bi bi-mic-fill"></i> <%= t('wiz_voice_hint') %></span>
   </div>
   <div class="card-body">
@@ -14,111 +19,158 @@
     </div>
     <% } %>
 
-    <script>
-      const WAGE_MAP = {};
-      <% wageMasters.forEach(wm => { %>
-      WAGE_MAP['<%= wm.category %>|<%= wm.zone %>'] = '<%= wm.wage_rate %>';
-      <% }) %>
-      const MSG_AUTO_FILLED = <%= JSON.stringify(t('wiz_auto_filled_wage')) %>;
-      const MSG_NO_RATE = <%= JSON.stringify(t('wiz_no_standard_rate')) %>;
-    </script>
+    <% if (ocrFilledCount > 0) { %>
+    <div class="ocr-scan-box mb-3">
+      <i class="bi bi-magic text-muted"></i>
+      We pre-filled <%= ocrFilledCount %> field(s) below from the documents you uploaded — please check them over before continuing.
+    </div>
+    <% } %>
 
-    <form action="/workers/register/step2" method="POST" novalidate x-data="employmentForm()">
+    <form action="/workers/register/step2" method="POST" novalidate>
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
       <div class="row g-3">
-        <div class="col-md-4">
+        <div class="col-md-6">
           <label class="form-label">
-            <i class="bi bi-layers text-muted"></i> <%= t('wiz_label_category') %> <span class="req">*</span>
+            <i class="bi bi-geo-alt text-muted"></i> <%= t('wiz_label_site') %> <span class="req">*</span>
           </label>
-          <select name="category" class="form-select" x-model="category" @change="lookupWage()" required>
-            <option value=""><%= t('wiz_select_category_placeholder') %></option>
-            <% ['Unskilled','Semi-Skilled','Skilled','Executive','Manager'].forEach(c => { %>
-              <option value="<%= c %>" <%= draft.category === c ? 'selected' : '' %>><%= c %></option>
+          <select name="site_id" class="form-select" required <% if (user.role === 'site_supervisor') { %>disabled<% } %>>
+            <option value=""><%= t('wiz_select_site_placeholder') %></option>
+            <% sites.forEach(s => { %>
+              <option value="<%= s.id %>" <%= (draft.site_id == s.id || defaultSiteId == s.id) ? 'selected' : '' %>>
+                <%= s.name %>
+              </option>
             <% }) %>
+          </select>
+          <% if (user.role === 'site_supervisor') { %>
+            <input type="hidden" name="site_id" value="<%= defaultSiteId %>">
+          <% } %>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">
+            <i class="bi bi-person text-muted"></i> <%= t('wiz_label_full_name') %> <span class="req">*</span>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> <%= t('wiz_speak') %></span>
+          </label>
+          <div class="input-voice-wrap">
+            <input type="text" name="name" class="form-control <%= ocrClass('name') %>" value="<%= ocrField('name') %>"
+              required placeholder="<%= t('wiz_label_full_name') %>">
+            <button class="mic-btn" type="button" title="Speak to fill"><i class="bi bi-mic-fill"></i></button>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">
+            <i class="bi bi-person text-muted"></i> <%= t('wiz_label_father_name') %> <span class="req">*</span>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> <%= t('wiz_speak') %></span>
+          </label>
+          <div class="input-voice-wrap">
+            <input type="text" name="father_name" class="form-control" value="<%= draft.father_name || '' %>" required>
+            <button class="mic-btn" type="button" title="Speak to fill"><i class="bi bi-mic-fill"></i></button>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">
+            <i class="bi bi-calendar2 text-muted"></i> <%= t('wiz_label_dob') %> <span class="req">*</span>
+          </label>
+          <input type="date" name="dob" class="form-control <%= ocrClass('dob') %>" value="<%= ocrField('dob') %>"
+            required max="<%= new Date(Date.now() - 18*365*24*60*60*1000).toISOString().split('T')[0] %>">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">
+            <i class="bi bi-gender-ambiguous text-muted"></i> <%= t('wiz_label_gender') %> <span class="req">*</span>
+          </label>
+          <% const genderVal = ocrField('gender'); %>
+          <select name="gender" class="form-select <%= ocrClass('gender') %>" required>
+            <option value=""><%= t('wiz_select_placeholder') %></option>
+            <option value="Male" <%= genderVal === 'Male' ? 'selected' : '' %>><%= t('wiz_gender_male') %></option>
+            <option value="Female" <%= genderVal === 'Female' ? 'selected' : '' %>><%= t('wiz_gender_female') %></option>
+            <option value="Other" <%= genderVal === 'Other' ? 'selected' : '' %>><%= t('wiz_gender_other') %></option>
           </select>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-6">
           <label class="form-label">
-            <i class="bi bi-pin-map text-muted"></i> <%= t('wiz_label_zone') %> <span class="req">*</span>
-          </label>
-          <%
-            const _zones = [...new Set((wageMasters||[]).map(wm => wm.zone).filter(Boolean))];
-          %>
-          <input type="text" name="zone" list="wiz-zone-list" class="form-control"
-                 value="<%= draft.zone || '' %>" placeholder="e.g. Zone 1, North"
-                 autocomplete="off" x-model="zone" @change="lookupWage()" required>
-          <datalist id="wiz-zone-list">
-            <% _zones.forEach(z => { %><option value="<%= z %>"><% }) %>
-          </datalist>
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label">
-            <i class="bi bi-currency-rupee text-muted"></i> <%= t('wiz_label_wage_rate') %> <span class="req">*</span>
+            <i class="bi bi-credit-card text-muted"></i> <%= t('wiz_label_aadhaar') %> <span class="req">*</span>
             <span class="voice-hint"><i class="bi bi-mic-fill"></i> <%= t('wiz_speak') %></span>
           </label>
           <div class="input-voice-wrap">
-            <div class="input-group">
-              <span class="input-group-text">₹</span>
-              <input type="number" name="wage_rate" class="form-control" x-model="wageRate"
-                step="0.01" min="0" required value="<%= draft.wage_rate || '' %>"
-                style="padding-right:2.6rem">
-            </div>
+            <input type="text" name="aadhaar" class="form-control <%= ocrClass('aadhaar') %>" value="<%= ocrField('aadhaar') %>"
+              pattern="\d{12}" maxlength="12" placeholder="12-digit Aadhaar" required autocomplete="off">
             <button class="mic-btn" type="button" title="Speak to fill"><i class="bi bi-mic-fill"></i></button>
           </div>
-          <div class="form-text" x-show="wageSource" x-text="wageSource"></div>
+          <div class="form-text"><%= t('wiz_aadhaar_hint') %></div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-6">
           <label class="form-label">
-            <i class="bi bi-calendar2-check text-muted"></i> <%= t('wiz_label_doj') %> <span class="req">*</span>
+            <i class="bi bi-credit-card-2-front text-muted"></i> PAN Number
+            <span class="badge bg-secondary ms-1"><%= t('wiz_doc_optional') %></span>
           </label>
-          <input type="date" name="doj" class="form-control" value="<%= draft.doj || '' %>" required>
+          <input type="text" name="pan_number" class="form-control <%= ocrClass('pan_number') %>" value="<%= ocrField('pan_number') %>"
+            pattern="[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}" maxlength="10" placeholder="e.g. ABCPS1234F"
+            style="text-transform:uppercase" autocomplete="off">
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-6">
           <label class="form-label">
-            <i class="bi bi-person-badge text-muted"></i> <%= t('wiz_label_uan') %>
+            <i class="bi bi-telephone text-muted"></i> <%= t('wiz_label_mobile') %> <span class="req">*</span>
             <span class="voice-hint"><i class="bi bi-mic-fill"></i> <%= t('wiz_speak') %></span>
           </label>
           <div class="input-voice-wrap">
-            <input type="text" name="uan" class="form-control" value="<%= draft.uan || '' %>"
-              pattern="\d{12}" maxlength="12" placeholder="12-digit UAN">
+            <input type="tel" name="mobile" class="form-control" value="<%= draft.mobile || '' %>"
+              pattern="\d{10}" maxlength="10" placeholder="10-digit mobile" required>
             <button class="mic-btn" type="button" title="Speak to fill"><i class="bi bi-mic-fill"></i></button>
           </div>
-          <div class="form-text"><%= t('wiz_uan_hint') %></div>
         </div>
 
-        <div class="col-md-4" x-data="{ esic: '<%= draft.esic_applicable || 'no' %>' }">
+        <div class="col-md-6">
           <label class="form-label">
-            <i class="bi bi-hospital text-muted"></i> <%= t('wiz_label_esic_applicable') %> <span class="req">*</span>
+            <i class="bi bi-envelope text-muted"></i> <%= t('wiz_label_email') %>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> <%= t('wiz_speak') %></span>
           </label>
-          <div class="d-flex gap-3 mt-1">
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="esic_applicable" value="yes"
-                x-model="esic" id="esicYes" <%= draft.esic_applicable === 'yes' ? 'checked' : '' %>>
-              <label class="form-check-label" for="esicYes">Yes</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="esic_applicable" value="no"
-                x-model="esic" id="esicNo" <%= draft.esic_applicable !== 'yes' ? 'checked' : '' %>>
-              <label class="form-check-label" for="esicNo">No</label>
-            </div>
+          <div class="input-voice-wrap">
+            <input type="email" name="email" class="form-control" value="<%= draft.email || '' %>">
+            <button class="mic-btn" type="button" title="Speak to fill"><i class="bi bi-mic-fill"></i></button>
           </div>
-          <div class="mt-2" x-show="esic === 'yes'" x-cloak>
-            <label class="form-label" style="font-size:.8rem">
-              <%= t('wiz_label_esic_number') %> <span class="req">*</span>
-              <span class="voice-hint"><i class="bi bi-mic-fill"></i> <%= t('wiz_speak') %></span>
-            </label>
-            <div class="input-voice-wrap">
-              <input type="text" name="esic_number" class="form-control form-control-sm"
-                value="<%= draft.esic_number || '' %>"
-                pattern="\d{17}" maxlength="17" placeholder="17-digit ESIC number"
-                :required="esic === 'yes'">
-              <button class="mic-btn" type="button" title="Speak to fill"><i class="bi bi-mic-fill"></i></button>
-            </div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">
+            <i class="bi bi-heart text-muted"></i> <%= t('wiz_label_marital_status') %> <span class="req">*</span>
+          </label>
+          <select name="marital_status" class="form-select" required>
+            <option value=""><%= t('wiz_select_placeholder') %></option>
+            <option value="Single" <%= draft.marital_status === 'Single' ? 'selected' : '' %>><%= t('wiz_marital_single') %></option>
+            <option value="Married" <%= draft.marital_status === 'Married' ? 'selected' : '' %>><%= t('wiz_marital_married') %></option>
+            <option value="Widowed" <%= draft.marital_status === 'Widowed' ? 'selected' : '' %>><%= t('wiz_marital_widowed') %></option>
+            <option value="Divorced" <%= draft.marital_status === 'Divorced' ? 'selected' : '' %>><%= t('wiz_marital_divorced') %></option>
+          </select>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">
+            <i class="bi bi-house text-muted"></i> <%= t('wiz_label_address_aadhaar') %> <span class="req">*</span>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> <%= t('wiz_speak') %></span>
+          </label>
+          <div class="input-voice-wrap">
+            <textarea name="address_aadhaar" class="form-control <%= ocrClass('address_aadhaar') %>" rows="2" required
+              style="padding-right:2.6rem"><%= ocrField('address_aadhaar') %></textarea>
+            <button class="mic-btn" type="button" title="Speak to fill" style="top:1rem;transform:none"><i class="bi bi-mic-fill"></i></button>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">
+            <i class="bi bi-house-door text-muted"></i> <%= t('wiz_label_present_address') %>
+            <span class="voice-hint"><i class="bi bi-mic-fill"></i> <%= t('wiz_speak') %></span>
+          </label>
+          <div class="input-voice-wrap">
+            <textarea name="present_address" class="form-control" rows="2"
+              style="padding-right:2.6rem"><%= draft.present_address || '' %></textarea>
+            <button class="mic-btn" type="button" title="Speak to fill" style="top:1rem;transform:none"><i class="bi bi-mic-fill"></i></button>
           </div>
         </div>
       </div>
@@ -133,29 +185,9 @@
           </button>
         </div>
         <button type="submit" class="btn btn-primary">
-          <%= t('wiz_btn_next_documents') %> <i class="bi bi-arrow-right ms-1"></i>
+          <%= t('wiz_btn_next_employment') %> <i class="bi bi-arrow-right ms-1"></i>
         </button>
       </div>
     </form>
   </div>
 </div>
-
-<script>
-function employmentForm() {
-  return {
-    category: '<%= draft.category || '' %>',
-    zone: '<%= draft.zone || '' %>',
-    wageRate: '<%= draft.wage_rate || '' %>',
-    wageSource: '',
-    lookupWage() {
-      const key = `${this.category}|${this.zone}`;
-      if (WAGE_MAP[key]) {
-        this.wageRate = WAGE_MAP[key];
-        this.wageSource = MSG_AUTO_FILLED.replace('{{rate}}', WAGE_MAP[key]);
-      } else if (this.category && this.zone) {
-        this.wageSource = MSG_NO_RATE;
-      }
-    }
-  };
-}
-</script>

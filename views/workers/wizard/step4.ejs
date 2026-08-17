@@ -30,7 +30,7 @@
           <div class="col-md-4">
             <label class="form-label small fw-semibold"><%= t('wiz_label_photo') %></label>
             <input type="file" name="family_photo_0" class="form-control"
-              accept=".jpg,.jpeg,.png"
+              accept="image/*"
               data-max-kb="100" data-warn-id="spouse-warn">
             <div id="spouse-warn" class="file-size-warn" style="display:none"></div>
           </div>
@@ -66,7 +66,7 @@
               <div class="col-md-3">
                 <label class="form-label small fw-semibold"><%= t('wiz_label_photo') %></label>
                 <input type="file" :name="'family_photo_' + (idx + 1)"
-                  class="form-control" accept=".jpg,.jpeg,.png"
+                  class="form-control" accept="image/*"
                   data-max-kb="100" :data-warn-id="'child-warn-' + idx">
                 <div :id="'child-warn-' + idx" class="file-size-warn" style="display:none"></div>
               </div>

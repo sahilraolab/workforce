@@ -119,6 +119,21 @@ chmod 755 /var/www/workforce/uploads
 
 ---
 
+## Step 6b — VPS: OCR autofill (Aadhaar / bank passbook)
+
+Document OCR runs server-side via `tesseract.js`. On first use it downloads
+its English language model (~5MB) into `/var/www/workforce/.ocr-cache/` and
+reuses it after that — so the VPS needs outbound internet access the first
+time a document is scanned (jsdelivr/unpkg CDN). No extra install step is
+needed beyond `npm install`.
+
+```bash
+mkdir -p /var/www/workforce/.ocr-cache
+chmod 755 /var/www/workforce/.ocr-cache
+```
+
+---
+
 ## Step 7 — VPS: Set up PM2
 
 ```bash

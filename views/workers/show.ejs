@@ -2,8 +2,8 @@
 
 <%
   const initials = worker.name ? worker.name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0,2) : '?';
-  const docLabels = { aadhaar: 'Aadhaar Card', passport_photo: 'Passport Photo', bank_passbook: 'Bank Passbook', uan_card: 'UAN Card', esic_card: 'ESIC Card' };
-  const docIcons  = { aadhaar: 'bi-fingerprint', passport_photo: 'bi-image', bank_passbook: 'bi-bank', uan_card: 'bi-card-list', esic_card: 'bi-heart-pulse' };
+  const docLabels = { aadhaar: 'Aadhaar Card', aadhaar_back: 'Aadhaar Card (Back)', pan_card: 'PAN Card', passport_photo: 'Passport Photo', bank_passbook: 'Bank Passbook', uan_card: 'UAN Card', esic_card: 'ESIC Card' };
+  const docIcons  = { aadhaar: 'bi-fingerprint', aadhaar_back: 'bi-fingerprint', pan_card: 'bi-credit-card-2-front', passport_photo: 'bi-image', bank_passbook: 'bi-bank', uan_card: 'bi-card-list', esic_card: 'bi-heart-pulse' };
 %>
 
 <!-- Profile header card -->
@@ -42,6 +42,12 @@
         <div style="font-size:.65rem;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.05em">Aadhaar</div>
         <div style="font-size:.9rem;font-weight:600;color:#fff">••••&nbsp;<%= worker.aadhaar_last4 %></div>
       </div>
+      <% if (worker.pan_last4) { %>
+      <div style="background:rgba(255,255,255,.12);border:0.5px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 14px">
+        <div style="font-size:.65rem;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.05em">PAN</div>
+        <div style="font-size:.9rem;font-weight:600;color:#fff">••••••&nbsp;<%= worker.pan_last4 %></div>
+      </div>
+      <% } %>
       <% if (worker.employment && worker.employment.uan_last4) { %>
       <div style="background:rgba(255,255,255,.12);border:0.5px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 14px">
         <div style="font-size:.65rem;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.05em">UAN</div>
@@ -163,6 +169,9 @@
             <div style="flex:1;min-width:0">
               <div class="eos-doc-name"><%= docLabels[doc.doc_type] || doc.doc_type %></div>
               <div class="eos-doc-meta">Uploaded <%= doc.created_at ? new Date(doc.created_at).toLocaleDateString('en-IN') : '' %></div>
+              <% if (doc.ocr_match === 'mismatch') { %>
+              <div class="small text-danger mt-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>OCR: doesn't match entered details</div>
+              <% } %>
             </div>
             <div class="eos-doc-status d-flex gap-1 align-items-center">
               <span class="badge <%= doc.status === 'verified' ? 'bg-success' : doc.status === 'rejected' ? 'bg-danger' : 'bg-warning' %>">

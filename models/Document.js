@@ -6,7 +6,7 @@ const Document = sequelize.define('Document', {
   worker_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
   doc_type: {
     type: DataTypes.ENUM(
-      'aadhaar', 'passport_photo', 'bank_passbook', 'uan_card', 'esic_card',
+      'aadhaar', 'aadhaar_back', 'pan_card', 'passport_photo', 'bank_passbook', 'uan_card', 'esic_card',
       'salary_slip', 'muster_roll', 'wage_register', 'offer_letter', 'service_certificate'
     ),
     allowNull: false,
@@ -21,6 +21,8 @@ const Document = sequelize.define('Document', {
   file_size: { type: DataTypes.INTEGER.UNSIGNED },
   mime_type: { type: DataTypes.STRING(100) },
   original_name: { type: DataTypes.STRING(255) },
+  ocr_data: { type: DataTypes.JSON },
+  ocr_match: { type: DataTypes.ENUM('match', 'mismatch', 'unchecked'), defaultValue: 'unchecked' },
   status: { type: DataTypes.ENUM('pending', 'verified', 'rejected'), defaultValue: 'pending' },
   rejection_reason: { type: DataTypes.TEXT },
   uploaded_by: { type: DataTypes.INTEGER.UNSIGNED },

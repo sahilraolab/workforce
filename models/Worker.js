@@ -11,6 +11,8 @@ const Worker = sequelize.define('Worker', {
   gender: { type: DataTypes.ENUM('Male', 'Female', 'Other'), allowNull: false },
   aadhaar_encrypted: { type: DataTypes.TEXT },
   aadhaar_last4: { type: DataTypes.CHAR(4) },
+  pan_encrypted: { type: DataTypes.TEXT },
+  pan_last4: { type: DataTypes.CHAR(4) },
   address_aadhaar: { type: DataTypes.TEXT, allowNull: false },
   present_address: { type: DataTypes.TEXT },
   mobile: { type: DataTypes.STRING(15), allowNull: false },

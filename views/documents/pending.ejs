@@ -17,6 +17,11 @@
     <div class="worker-card-meta">
       <span><i class="bi bi-calendar"></i> <%= t('documents_uploaded') %>: <%= new Date(doc.created_at).toLocaleDateString() %></span>
     </div>
+    <% if (doc.ocr_match === 'mismatch') { %>
+    <div class="small text-danger mt-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>OCR: details on this document don't match what was entered.</div>
+    <% } else if (doc.ocr_match === 'match') { %>
+    <div class="small text-success mt-1"><i class="bi bi-check-circle-fill me-1"></i>OCR: details match.</div>
+    <% } %>
     <div class="worker-card-actions">
       <a href="/documents/<%= doc.id %>" target="_blank" class="btn btn-outline-secondary btn-sm flex-fill">
         <i class="bi bi-eye me-1"></i><%= t('documents_view') %>
@@ -44,7 +49,14 @@
       <% docs.forEach(doc => { %>
       <tr>
         <td><a href="/workers/<%= doc.worker_id %>" class="text-decoration-none"><%= doc.worker ? doc.worker.name : '—' %></a></td>
-        <td class="text-capitalize small"><%= doc.doc_type.replace('_', ' ') %></td>
+        <td class="text-capitalize small">
+          <%= doc.doc_type.replace('_', ' ') %>
+          <% if (doc.ocr_match === 'mismatch') { %>
+          <span class="badge bg-danger ms-1" title="OCR-extracted details don't match what was entered"><i class="bi bi-exclamation-triangle-fill"></i> mismatch</span>
+          <% } else if (doc.ocr_match === 'match') { %>
+          <span class="badge bg-success ms-1" title="OCR-extracted details match"><i class="bi bi-check-circle-fill"></i> matched</span>
+          <% } %>
+        </td>
         <td class="small text-muted"><%= new Date(doc.created_at).toLocaleDateString() %></td>
         <td class="text-nowrap">
           <a href="/documents/<%= doc.id %>" target="_blank" class="btn btn-outline-secondary btn-sm" title="<%= t('documents_view') %>"><i class="bi bi-eye"></i></a>

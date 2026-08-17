@@ -1273,6 +1273,16 @@ a.em-stat:hover .em-stat-arrow { opacity: 1; transform: translateX(0); }
 .eos-alert.success i { color: var(--eos-green-600); }
 .eos-alert.success .eos-alert-text { color: #1e3d08; }
 
+/* ─── OCR autofill ───────────────────────────────────────────────────────── */
+.ocr-scan-box {
+  border: 1px dashed var(--eos-blue-100, #bcdcf5); border-radius: 10px;
+  padding: .75rem .9rem; background: var(--eos-blue-50, #f2f8fd);
+}
+.ocr-autofilled { background: var(--eos-green-50, #eef8e3) !important; border-color: var(--eos-green-600, #4f9d20) !important; }
+.ocr-status.text-success { color: var(--eos-green-600, #4f9d20); }
+.ocr-status.text-danger  { color: var(--eos-red-600, #c0392b); }
+.ocr-status.text-warning { color: var(--eos-amber-600, #b8730a); }
+
 /* ─── Mobile responsive tweaks ───────────────────────────────────────────── */
 @media (max-width: 640px) {
   .em-stat-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }

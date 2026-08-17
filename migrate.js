@@ -117,7 +117,7 @@ async function run() {
   });
 
   // ── 6. ComplianceSnapshot: create table if missing ───────────────────────────
-  console.log('\n[6/6] ComplianceSnapshot — create table if not exists');
+  console.log('\n[6/7] ComplianceSnapshot — create table if not exists');
   await rawSQL(
     `CREATE TABLE IF NOT EXISTS \`compliance_snapshots\` (
       \`id\`             INT UNSIGNED      NOT NULL AUTO_INCREMENT,
@@ -132,6 +132,49 @@ async function run() {
       UNIQUE KEY \`uq_snapshot\` (\`company_id\`, \`snapshot_month\`, \`snapshot_year\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
     'compliance_snapshots table'
+  );
+
+  // ── 7. Document: add OCR autofill/verification columns ───────────────────────
+  console.log('\n[7/9] Document — add ocr_data, ocr_match');
+  await addCol('documents', 'ocr_data', {
+    type: DataTypes.JSON,
+    allowNull: true,
+    after: 'original_name',
+  });
+  await addCol('documents', 'ocr_match', {
+    type: DataTypes.ENUM('match', 'mismatch', 'unchecked'),
+    defaultValue: 'unchecked',
+    after: 'ocr_data',
+  });
+
+  // ── 8. Document: allow storing the Aadhaar back side separately ──────────────
+  console.log('\n[8/9] Document — expand doc_type ENUM with aadhaar_back');
+  await rawSQL(
+    `ALTER TABLE \`documents\` MODIFY COLUMN \`doc_type\`
+     ENUM('aadhaar','aadhaar_back','passport_photo','bank_passbook','uan_card','esic_card',
+          'salary_slip','muster_roll','wage_register','offer_letter','service_certificate')
+     NOT NULL`,
+    'documents.doc_type ENUM expanded with aadhaar_back'
+  );
+
+  // ── 9. PAN card: worker fields + document type ────────────────────────────────
+  console.log('\n[9/9] Worker — add pan_encrypted, pan_last4; Document — add pan_card doc_type');
+  await addCol('workers', 'pan_encrypted', {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    after: 'aadhaar_last4',
+  });
+  await addCol('workers', 'pan_last4', {
+    type: DataTypes.CHAR(4),
+    allowNull: true,
+    after: 'pan_encrypted',
+  });
+  await rawSQL(
+    `ALTER TABLE \`documents\` MODIFY COLUMN \`doc_type\`
+     ENUM('aadhaar','aadhaar_back','pan_card','passport_photo','bank_passbook','uan_card','esic_card',
+          'salary_slip','muster_roll','wage_register','offer_letter','service_certificate')
+     NOT NULL`,
+    'documents.doc_type ENUM expanded with pan_card'
   );
 
   console.log('\n✅ All migrations complete. Safe to restart the app.');

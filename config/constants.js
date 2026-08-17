@@ -31,6 +31,7 @@ module.exports = {
 
   DOC_TYPES: {
     AADHAAR: 'aadhaar',
+    AADHAAR_BACK: 'aadhaar_back',
     PASSPORT_PHOTO: 'passport_photo',
     BANK_PASSBOOK: 'bank_passbook',
     UAN_CARD: 'uan_card',

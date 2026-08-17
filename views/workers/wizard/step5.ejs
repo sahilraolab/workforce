@@ -15,6 +15,7 @@
       <div class="col-md-4"><strong><%= t('wiz_label_dob') %>:</strong> <%= draft.dob %></div>
       <div class="col-md-4"><strong><%= t('wiz_label_gender') %>:</strong> <%= draft.gender %></div>
       <div class="col-md-4"><strong><%= t('wiz_label_aadhaar') %>:</strong> ••••••••<%= (draft.aadhaar || '').slice(-4) %></div>
+      <div class="col-md-4"><strong>PAN:</strong> <%= draft.pan_number ? '••••••' + (draft.pan_number).slice(-4) : t('wiz_step5_not_applicable') %></div>
       <div class="col-md-4"><strong><%= t('wiz_label_mobile') %>:</strong> <%= draft.mobile %></div>
       <div class="col-md-4"><strong><%= t('wiz_label_marital_status') %>:</strong> <%= draft.marital_status %></div>
       <div class="col-md-8"><strong><%= t('wiz_label_address_aadhaar') %>:</strong> <%= draft.address_aadhaar %></div>
@@ -37,6 +38,8 @@
       <% const uploads = draft._uploads || {}; %>
       <% const docLabels = {
         aadhaar: t('wiz_label_aadhaar_card'),
+        aadhaar_back: 'Aadhaar Card (Back)',
+        pan_card: 'PAN Card',
         passport_photo: t('wiz_label_passport_photo'),
         bank_passbook: t('wiz_label_bank_passbook'),
         uan_card: t('wiz_label_uan_card'),

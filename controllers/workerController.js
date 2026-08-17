@@ -7,6 +7,7 @@ const {
   WageMaster, ValidationResult, Subscription,
 } = require('../models');
 const { encrypt, decrypt } = require('../services/cryptoService');
+const ocrService = require('../services/ocrService');
 const { scopeWhere, assertTenantOwnership } = require('../middlewares/tenantScope');
 const { logAudit } = require('../middlewares/auditLogger');
 const { runValidation } = require('../services/validationEngine');
@@ -260,55 +261,131 @@ exports.showRegister = async (req, res) => {
     }
   }
 
-  const sites = await Site.findAll({
-    where: scopeWhere(req, { status: 'active' }, { allowSiteFilter: false }),
-    attributes: ['id', 'name'],
-  });
-
-  // If site_supervisor, pre-select their site
-  const defaultSiteId = req.tenantScope.site_id || null;
-
   // Draft worker stored in session?
   const draft = req.session.workerDraft || {};
 
   res.render('workers/wizard/step1', {
     title: 'Register Worker — Step 1',
-    sites,
     draft,
-    defaultSiteId,
     errors: [],
     step: 1,
   });
 };
 
+// Documents a worker must provide before the wizard lets them move past the
+// upload step — matches the red-asterisk fields shown in step1.ejs.
+const REQUIRED_STEP1_DOCS = {
+  aadhaar: 'Aadhaar Card (Front)',
+  aadhaar_back: 'Aadhaar Card (Back)',
+  passport_photo: 'Passport Photo',
+  bank_passbook: 'Bank Passbook',
+};
+
+// Runs OCR against whatever was just uploaded (Aadhaar front/back, PAN, bank
+// passbook) and merges what it can read into one field set. This is the only
+// place OCR runs during onboarding — once, right after upload — so the next
+// step (Personal Details) can render already filled in instead of asking the
+// worker to retype what's on the document they just handed over.
+async function extractOcrFromUploads(uploads) {
+  const extracted = {};
+
+  if (uploads.aadhaar && ocrService.isOcrSupported(uploads.aadhaar.mimetype)) {
+    try {
+      const lines = await ocrService.extractLines(uploads.aadhaar.path, uploads.aadhaar.mimetype);
+      Object.assign(extracted, ocrService.parseAadhaarFields(lines));
+    } catch (err) {
+      console.error('OCR (Aadhaar front) failed:', err.message);
+    }
+  }
+
+  if (uploads.aadhaar_back && ocrService.isOcrSupported(uploads.aadhaar_back.mimetype)) {
+    try {
+      const lines = await ocrService.extractLines(uploads.aadhaar_back.path, uploads.aadhaar_back.mimetype);
+      const backFields = ocrService.parseAadhaarFields(lines);
+      // The back side is the more reliable source for the printed address.
+      if (backFields.address) extracted.address = backFields.address;
+      if (!extracted.aadhaar && backFields.aadhaar) extracted.aadhaar = backFields.aadhaar;
+    } catch (err) {
+      console.error('OCR (Aadhaar back) failed:', err.message);
+    }
+  }
+
+  if (uploads.pan_card && ocrService.isOcrSupported(uploads.pan_card.mimetype)) {
+    try {
+      const lines = await ocrService.extractLines(uploads.pan_card.path, uploads.pan_card.mimetype);
+      const panFields = ocrService.parsePanFields(lines);
+      if (panFields.pan_number) extracted.pan_number = panFields.pan_number;
+      // Only fall back to the PAN card's name/DOB if the Aadhaar scan didn't
+      // already give us one — Aadhaar is the primary identity document here.
+      if (!extracted.name && panFields.name) extracted.name = panFields.name;
+      if (!extracted.dob && panFields.dob) extracted.dob = panFields.dob;
+    } catch (err) {
+      console.error('OCR (PAN card) failed:', err.message);
+    }
+  }
+
+  if (uploads.bank_passbook && ocrService.isOcrSupported(uploads.bank_passbook.mimetype)) {
+    try {
+      const lines = await ocrService.extractLines(uploads.bank_passbook.path, uploads.bank_passbook.mimetype);
+      const bankFields = ocrService.parseBankPassbookFields(lines);
+      if (bankFields.bank_account) extracted.bank_account = bankFields.bank_account;
+      if (bankFields.ifsc_code) extracted.ifsc_code = bankFields.ifsc_code;
+    } catch (err) {
+      console.error('OCR (bank passbook) failed:', err.message);
+    }
+  }
+
+  return extracted;
+}
+
 exports.saveStep1 = async (req, res) => {
   try {
-    const errors = validationResult(req);
-    const sites = await Site.findAll({ where: scopeWhere(req, { status: 'active' }, { allowSiteFilter: false }), attributes: ['id', 'name'] });
-
-    if (!errors.isEmpty()) {
-      return res.render('workers/wizard/step1', {
-        title: 'Register Worker — Step 1',
-        sites,
-        draft: req.body,
-        defaultSiteId: req.body.site_id,
-        errors: errors.array(),
-        step: 1,
-      });
+    const uploads = {};
+    if (req.files) {
+      for (const [fieldname, files] of Object.entries(req.files)) {
+        if (files.length > 0) {
+          uploads[fieldname] = {
+            path: files[0].path,
+            originalname: files[0].originalname,
+            size: files[0].size,
+            mimetype: files[0].mimetype,
+          };
+        }
+      }
     }
 
-    if (req.session.user.role === ROLES.SITE_SUPERVISOR) {
-      req.body.site_id = req.tenantScope.site_id;
+    if (uploads.passport_photo && uploads.passport_photo.size > 100 * 1024) {
+      fs.unlinkSync(uploads.passport_photo.path);
+      req.flash('error', res.locals.t('err_photo_size'));
+      return res.redirect('/workers/register');
     }
 
-    req.session.workerDraft = { ...req.session.workerDraft, ...req.body, _step: 1 };
+    // Persist whatever was uploaded even if the set is incomplete, so the
+    // worker doesn't have to redo files they already provided.
+    const mergedUploads = { ...(req.session.workerDraft && req.session.workerDraft._uploads), ...uploads };
+    const ocrExtracted = await extractOcrFromUploads(uploads);
+
+    req.session.workerDraft = {
+      ...req.session.workerDraft,
+      _uploads: mergedUploads,
+      _ocrExtracted: { ...(req.session.workerDraft && req.session.workerDraft._ocrExtracted), ...ocrExtracted },
+    };
+
+    const missing = Object.keys(REQUIRED_STEP1_DOCS).filter(key => !mergedUploads[key]);
+    if (missing.length > 0) {
+      req.flash('error', `Please upload: ${missing.map(k => REQUIRED_STEP1_DOCS[k]).join(', ')}.`);
+      req.session.save(() => res.redirect('/workers/register'));
+      return;
+    }
+
+    req.session.workerDraft._step = 1;
     req.session.save(err => {
       if (err) { req.flash('error', res.locals.t('err_session')); return res.redirect('/workers/register'); }
       res.redirect('/workers/register/step2');
     });
   } catch (err) {
     console.error('Step1 save error:', err);
-    req.flash('error', res.locals.t('err_save_step1'));
+    req.flash('error', res.locals.t('err_save_documents'));
     res.redirect('/workers/register');
   }
 };
@@ -317,16 +394,19 @@ exports.showStep2 = async (req, res) => {
   if (!req.session.workerDraft || !req.session.workerDraft._step) {
     return res.redirect('/workers/register');
   }
-  const wageCompanyId = await resolveDraftCompanyId(req);
-  const wageMasters = await WageMaster.findAll({
-    where: { company_id: wageCompanyId },
-    order: [['effective_from', 'DESC']],
+  const sites = await Site.findAll({
+    where: scopeWhere(req, { status: 'active' }, { allowSiteFilter: false }),
+    attributes: ['id', 'name'],
   });
+
+  // If site_supervisor, pre-select their site
+  const defaultSiteId = req.tenantScope.site_id || null;
 
   res.render('workers/wizard/step2', {
     title: 'Register Worker — Step 2',
+    sites,
     draft: req.session.workerDraft,
-    wageMasters,
+    defaultSiteId,
     errors: [],
     step: 2,
   });
@@ -335,16 +415,21 @@ exports.showStep2 = async (req, res) => {
 exports.saveStep2 = async (req, res) => {
   try {
     const errors = validationResult(req);
-    const wageMasters = await WageMaster.findAll({ where: { company_id: await resolveDraftCompanyId(req) } });
+    const sites = await Site.findAll({ where: scopeWhere(req, { status: 'active' }, { allowSiteFilter: false }), attributes: ['id', 'name'] });
 
     if (!errors.isEmpty()) {
       return res.render('workers/wizard/step2', {
         title: 'Register Worker — Step 2',
+        sites,
         draft: { ...req.session.workerDraft, ...req.body },
-        wageMasters,
+        defaultSiteId: req.body.site_id,
         errors: errors.array(),
         step: 2,
       });
+    }
+
+    if (req.session.user.role === ROLES.SITE_SUPERVISOR) {
+      req.body.site_id = req.tenantScope.site_id;
     }
 
     req.session.workerDraft = { ...req.session.workerDraft, ...req.body, _step: 2 };
@@ -354,16 +439,23 @@ exports.saveStep2 = async (req, res) => {
     });
   } catch (err) {
     console.error('Step2 save error:', err);
-    req.flash('error', res.locals.t('err_save_step2'));
+    req.flash('error', res.locals.t('err_save_step1'));
     res.redirect('/workers/register/step2');
   }
 };
 
-exports.showStep3 = (req, res) => {
+exports.showStep3 = async (req, res) => {
   if (!req.session.workerDraft || req.session.workerDraft._step < 2) return res.redirect('/workers/register');
+  const wageCompanyId = await resolveDraftCompanyId(req);
+  const wageMasters = await WageMaster.findAll({
+    where: { company_id: wageCompanyId },
+    order: [['effective_from', 'DESC']],
+  });
+
   res.render('workers/wizard/step3', {
     title: 'Register Worker — Step 3',
     draft: req.session.workerDraft,
+    wageMasters,
     errors: [],
     step: 3,
   });
@@ -371,40 +463,27 @@ exports.showStep3 = (req, res) => {
 
 exports.saveStep3 = async (req, res) => {
   try {
-  const uploads = {};
-  if (req.files) {
-    for (const [fieldname, files] of Object.entries(req.files)) {
-      if (files.length > 0) {
-        uploads[fieldname] = {
-          path: files[0].path,
-          originalname: files[0].originalname,
-          size: files[0].size,
-          mimetype: files[0].mimetype,
-        };
-      }
+    const errors = validationResult(req);
+    const wageMasters = await WageMaster.findAll({ where: { company_id: await resolveDraftCompanyId(req) } });
+
+    if (!errors.isEmpty()) {
+      return res.render('workers/wizard/step3', {
+        title: 'Register Worker — Step 3',
+        draft: { ...req.session.workerDraft, ...req.body },
+        wageMasters,
+        errors: errors.array(),
+        step: 3,
+      });
     }
-  }
 
-  if (uploads.passport_photo && uploads.passport_photo.size > 100 * 1024) {
-    fs.unlinkSync(uploads.passport_photo.path);
-    req.flash('error', res.locals.t('err_photo_size'));
-    return res.redirect('/workers/register/step3');
-  }
-
-  req.session.workerDraft = {
-    ...req.session.workerDraft,
-    _uploads: { ...req.session.workerDraft._uploads, ...uploads },
-    bank_account: req.body.bank_account,
-    ifsc_code: req.body.ifsc_code,
-    _step: 3,
-  };
-  req.session.save(err => {
-    if (err) { req.flash('error', res.locals.t('err_session')); return res.redirect('/workers/register/step3'); }
-    res.redirect('/workers/register/step4');
-  });
+    req.session.workerDraft = { ...req.session.workerDraft, ...req.body, _step: 3 };
+    req.session.save(err => {
+      if (err) { req.flash('error', res.locals.t('err_session')); return res.redirect('/workers/register/step3'); }
+      res.redirect('/workers/register/step4');
+    });
   } catch (err) {
     console.error('Step3 save error:', err);
-    req.flash('error', res.locals.t('err_save_documents'));
+    req.flash('error', res.locals.t('err_save_step2'));
     res.redirect('/workers/register/step3');
   }
 };
@@ -472,9 +551,63 @@ exports.showStep5 = (req, res) => {
   });
 };
 
+// Re-OCRs the stored Aadhaar / bank passbook upload against what the worker
+// typed on earlier steps, so verifiers get an automatic mismatch flag instead
+// of having to eyeball scanned documents. Runs before the DB transaction
+// since OCR is slow (seconds) and shouldn't hold a transaction open.
+async function computeOcrVerification(fieldname, fileInfo, draft) {
+  if (!['aadhaar', 'aadhaar_back', 'pan_card', 'bank_passbook'].includes(fieldname)) return null;
+  if (!fileInfo || !ocrService.isOcrSupported(fileInfo.mimetype)) return null;
+
+  try {
+    const lines = await ocrService.extractLines(fileInfo.path, fileInfo.mimetype);
+    if (lines === null) return null;
+
+    if (fieldname === 'aadhaar' || fieldname === 'aadhaar_back') {
+      const fields = ocrService.parseAadhaarFields(lines);
+      const declaredLast4 = (draft.aadhaar || '').slice(-4);
+      const extractedLast4 = fields.aadhaar ? fields.aadhaar.slice(-4) : null;
+      // The back side often doesn't repeat the Aadhaar number clearly enough
+      // to OCR reliably — only flag a mismatch, never require a match, for it.
+      const match = extractedLast4 && declaredLast4 ? extractedLast4 === declaredLast4 : null;
+      return { fields, match: fieldname === 'aadhaar_back' && match !== false ? null : match };
+    }
+
+    if (fieldname === 'pan_card') {
+      const fields = ocrService.parsePanFields(lines);
+      const match = fields.pan_number && draft.pan_number
+        ? fields.pan_number.toUpperCase() === draft.pan_number.toUpperCase()
+        : null;
+      return { fields, match };
+    }
+
+    const fields = ocrService.parseBankPassbookFields(lines);
+    let match = null;
+    if (fields.bank_account && draft.bank_account) {
+      match = fields.bank_account.slice(-4) === (draft.bank_account || '').slice(-4);
+    }
+    if (fields.ifsc_code && draft.ifsc_code) {
+      const ifscMatch = fields.ifsc_code.toUpperCase() === draft.ifsc_code.toUpperCase();
+      match = match === null ? ifscMatch : (match && ifscMatch);
+    }
+    return { fields, match };
+  } catch (err) {
+    console.error(`OCR verification failed for ${fieldname}:`, err.message);
+    return null;
+  }
+}
+
 exports.submit = async (req, res) => {
   const draft = req.session.workerDraft;
   if (!draft || draft._step < 4) return res.redirect('/workers/register');
+
+  // OCR-verify uploaded identity documents against typed fields ahead of the
+  // transaction (OCR is slow and must not hold a DB transaction open).
+  const uploadsForOcr = draft._uploads || {};
+  const ocrResults = {};
+  for (const [fieldname, fileInfo] of Object.entries(uploadsForOcr)) {
+    ocrResults[fieldname] = await computeOcrVerification(fieldname, fileInfo, draft);
+  }
 
   const t = await require('../config/db').transaction();
   try {
@@ -494,6 +627,8 @@ exports.submit = async (req, res) => {
       gender: draft.gender,
       aadhaar_encrypted: encrypt(aadhaarNum),
       aadhaar_last4: aadhaarNum.slice(-4),
+      pan_encrypted: encrypt(draft.pan_number),
+      pan_last4: (draft.pan_number || '').slice(-4),
       address_aadhaar: draft.address_aadhaar,
       present_address: draft.present_address,
       mobile: draft.mobile,
@@ -525,6 +660,7 @@ exports.submit = async (req, res) => {
     const uploads = draft._uploads || {};
     for (const [fieldname, fileInfo] of Object.entries(uploads)) {
       if (fileInfo) {
+        const ocrResult = ocrResults[fieldname];
         await Document.create({
           worker_id: worker.id,
           doc_type: fieldname,
@@ -532,6 +668,8 @@ exports.submit = async (req, res) => {
           file_size: fileInfo.size,
           mime_type: fileInfo.mimetype,
           original_name: fileInfo.originalname,
+          ocr_data: ocrResult ? ocrResult.fields : null,
+          ocr_match: ocrResult && ocrResult.match !== null ? (ocrResult.match ? 'match' : 'mismatch') : 'unchecked',
           status: 'pending',
           uploaded_by: req.session.user.id,
           created_by: req.session.user.id,
